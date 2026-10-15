@@ -12,7 +12,8 @@
 - [x] Couverture calculée, statuts, couleurs + icônes, tableau de bord, filtres (statut, chien, propriétaire)
 - [x] Notifications internes, préférences, temps réel
 - [x] Notifications push (Web Push + VAPID), test depuis le profil, désabonnement à la déconnexion
-- [ ] Vérification des notifications push sur un vrai iPhone
+- [x] Notification de test reçue sur un vrai iPhone (PWA installée) — 2026-10-16
+- [ ] Notification déclenchée par l'action d'un autre membre, reçue app fermée
 - [x] PWA : manifeste, icônes, service worker minimal, page hors ligne, aide à l'installation iPhone
 - [x] RLS complète testée, tests unitaires et base de données
 - [ ] Tests E2E exécutés contre le projet réel (en attente de la clé serveur en local)
