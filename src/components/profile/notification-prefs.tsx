@@ -43,8 +43,7 @@ export function NotificationPrefs({ initial }: { initial: NotificationPreference
         ))}
       </ul>
       <p className="px-1 text-[13px] text-ink-3">
-        Notifications visibles dans l&apos;application (cloche). Les notifications push sur iPhone ne sont pas encore
-        disponibles.
+        S&apos;applique à la cloche de l&apos;application et aux notifications sur vos appareils.
       </p>
     </div>
   );

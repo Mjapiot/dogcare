@@ -40,8 +40,7 @@ export function InstallHint({ always = false }: { always?: boolean }) {
         </li>
       </ol>
       <p className="mt-2 text-[13px] opacity-80">
-        L&apos;application s&apos;ouvrira en plein écran, comme une app native. Les rappels par notification arriveront
-        dans une prochaine version.
+        L&apos;application s&apos;ouvrira en plein écran, comme une app native, et pourra recevoir des notifications.
       </p>
       {!always && (
         <button

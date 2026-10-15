@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { displayNameSchema, groupNameSchema, uuid } from "@/lib/validation";
 import { CURRENT_GROUP_COOKIE, requireUserId } from "@/server/session";
 import { toUserMessage } from "@/server/errors";
+import { schedulePushDispatch } from "@/server/push";
 import type { ActionResult } from "@/lib/types";
 
 const COOKIE_OPTIONS = { path: "/", sameSite: "lax" as const, httpOnly: true, secure: true, maxAge: 60 * 60 * 24 * 365 };
@@ -92,6 +93,7 @@ export async function acceptInvitation(token: string): Promise<ActionResult<{ gr
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("accept_invitation", { p_token: parsed.data });
   if (error) return { ok: false, error: toUserMessage(error) };
+  schedulePushDispatch();
   (await cookies()).set(CURRENT_GROUP_COOKIE, data as string, COOKIE_OPTIONS);
   revalidatePath("/", "layout");
   return { ok: true, data: { groupId: data as string } };

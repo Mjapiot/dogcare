@@ -120,6 +120,7 @@ aider : alerte rouge, modification, relance via partage), F (garde annulée : re
   de mes groupes.
 - **« Relancer »** ouvre la feuille de partage du téléphone avec un message et le lien de la demande
   (pas de notification cachée).
-- **Web Push** reporté en phase 2 ; les notifications sont internes (cloche).
+- **Notifications push** : chaque notification de la cloche est aussi envoyée sur les appareils où
+  l'utilisateur les a activées (Profil). Mêmes préférences pour les deux canaux.
 - Les gardes d'un même gardien sur deux chiens en même temps ne sont pas bloquées (il peut promener deux
   chiens) ; la détection existe (`findAssignmentConflicts`) pour un affichage futur.

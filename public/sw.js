@@ -4,7 +4,7 @@
  * - Page navigations: always network; if offline, show the static /offline page.
  * - Private data (pages, API, Supabase) is never cached.
  */
-const VERSION = "dogcare-v1";
+const VERSION = "dogcare-v2";
 const STATIC_CACHE = `${VERSION}-static`;
 const OFFLINE_URL = "/offline";
 
@@ -55,27 +55,40 @@ self.addEventListener("fetch", (event) => {
   }
 });
 
-// Phase 2: Web Push. Kept here so the worker is ready once VAPID is configured.
+// Web Push: notifications created by the app are delivered here.
 self.addEventListener("push", (event) => {
-  if (!event.data) return;
-  let payload = {};
-  try {
-    payload = event.data.json();
-  } catch {
-    payload = { title: "Dogcare", body: event.data.text() };
+  let payload = { title: "Dogcare", body: "", url: "/notifications", tag: undefined };
+  if (event.data) {
+    try {
+      payload = { ...payload, ...event.data.json() };
+    } catch {
+      payload.body = event.data.text();
+    }
   }
   event.waitUntil(
-    self.registration.showNotification(payload.title || "Dogcare", {
+    self.registration.showNotification(payload.title, {
       body: payload.body,
       icon: "/pwa-icon/192",
       badge: "/pwa-icon/192",
-      data: { url: payload.url || "/" },
+      tag: payload.tag,
+      data: { url: payload.url },
     }),
   );
 });
 
+// Opens (or focuses) the app on the related screen.
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const target = (event.notification.data && event.notification.data.url) || "/";
-  event.waitUntil(self.clients.openWindow(target));
+  const path = (event.notification.data && event.notification.data.url) || "/";
+  const target = new URL(path, self.location.origin).href;
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
+      for (const client of clients) {
+        if (client.url.startsWith(self.location.origin) && "focus" in client) {
+          return client.focus().then((c) => ("navigate" in c ? c.navigate(target) : c));
+        }
+      }
+      return self.clients.openWindow(target);
+    }),
+  );
 });

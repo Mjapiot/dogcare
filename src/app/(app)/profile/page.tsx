@@ -9,6 +9,8 @@ import { InstallHint } from "@/components/pwa/install-hint";
 import { ProfileForm } from "@/components/profile/profile-form";
 import { NotificationPrefs } from "@/components/profile/notification-prefs";
 import { AccountActions } from "@/components/profile/account-actions";
+import { PushSettings } from "@/components/profile/push-settings";
+import { getVapidPublicKey } from "@/server/push";
 
 export const metadata: Metadata = { title: "Profil" };
 
@@ -91,8 +93,13 @@ export default async function ProfilePage() {
       </section>
 
       <section className="flex flex-col gap-3">
-        <SectionTitle>Notifications dans l&apos;app</SectionTitle>
+        <SectionTitle>Notifications</SectionTitle>
         <NotificationPrefs initial={prefs} />
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <SectionTitle>Notifications sur cet appareil</SectionTitle>
+        <PushSettings vapidPublicKey={getVapidPublicKey()} />
       </section>
 
       <section className="flex flex-col gap-3">

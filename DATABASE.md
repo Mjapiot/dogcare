@@ -10,6 +10,7 @@ déjà appliquée : en créer une nouvelle (`YYYYMMDDHHMMSS_description.sql`).
 | `…120100_security.sql` | fonctions d'accès (`private.*`), RLS, privilèges par colonne |
 | `…120200_business_logic.sql` | RPC, triggers métier, notifications, audit |
 | `…120300_storage_realtime.sql` | bucket `dog-photos` + politiques, publication temps réel |
+| `20261016090000_web_push.sql` | état d'envoi push des notifications, RPC d'abonnement et de distribution |
 
 ## Tables
 
@@ -29,7 +30,7 @@ déjà appliquée : en créer une nouvelle (`YYYYMMDDHHMMSS_description.sql`).
 | `care_assignments` | gardes confirmées | **contrainte d'exclusion** : deux gardes non annulées d'une même demande ne se chevauchent jamais (`tstzrange [)`) ; statut `confirmed` / `pending_reconfirmation` / `cancelled` |
 | `notifications` | notifications internes | écrites uniquement par la base |
 | `notification_preferences` | préférences | absence de ligne = tout activé |
-| `push_subscriptions` | Web Push (phase 2) | non utilisée par le MVP |
+| `push_subscriptions` | appareils abonnés aux notifications push | un appareil (endpoint) appartient au compte connecté dessus ; supprimé après 404/410 ou 5 échecs |
 | `audit_events` | journal des événements critiques | aucun accès client |
 
 Écarts assumés par rapport au schéma initial proposé :
@@ -63,7 +64,9 @@ Les fonctions internes (`private.notify`, `private.audit`, …) ne sont exécuta
 
 `create_group`, `set_member_role`, `create_invitation`, `revoke_invitation`, `get_invitation`,
 `accept_invitation`, `create_dog`, `add_dog_caretaker`, `confirm_assignment`, `cancel_assignment`,
-`answer_reconfirmation`, `delete_my_account`. Toutes exigent un utilisateur connecté et vérifient ses
+`answer_reconfirmation`, `delete_my_account`, `register_push_subscription`.
+Réservées au serveur (`service_role`) : `claim_push_batch` (réservation atomique des notifications à
+envoyer, `FOR UPDATE SKIP LOCKED`, abandon au-delà de 30 min) et `complete_push_batch`. Toutes exigent un utilisateur connecté et vérifient ses
 droits ; les erreurs métier sont levées en français avec le code `P0001`.
 
 ## Triggers métier
@@ -84,4 +87,4 @@ en cascade ; demandes conservées sans auteur ; chiens sans responsable archivé
 ## Tests
 
 `npm run test:db` exécute toutes les migrations sur un PostgreSQL embarqué (PGlite) qui émule les rôles,
-`auth.uid()` et le stockage de Supabase, puis vérifie 41 scénarios d'autorisation et de règles métier.
+`auth.uid()` et le stockage de Supabase, puis vérifie 44 scénarios d'autorisation et de règles métier.

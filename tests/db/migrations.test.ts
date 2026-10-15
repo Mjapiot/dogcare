@@ -339,6 +339,53 @@ describe("notifications privacy", () => {
   });
 });
 
+describe("web push", () => {
+  const sub = (endpoint: string) => [endpoint, "B".repeat(87), "A".repeat(22), "iPhone"];
+
+  it("a device registers for its current user and moves when another account signs in", async () => {
+    await asUser(db, EMMA, (tx) => tx.query("select public.register_push_subscription($1, $2, $3, $4)", sub("https://push.example/device-1")));
+    expect(await asUser(db, EMMA, (tx) => rows(tx, "select endpoint from push_subscriptions"))).toHaveLength(1);
+    await asUser(db, CHLOE, (tx) => tx.query("select public.register_push_subscription($1, $2, $3, $4)", sub("https://push.example/device-1")));
+    expect(await asUser(db, EMMA, (tx) => rows(tx, "select endpoint from push_subscriptions"))).toEqual([]);
+    expect(await asUser(db, CHLOE, (tx) => rows(tx, "select endpoint from push_subscriptions"))).toHaveLength(1);
+    expect(await asUser(db, MAX, (tx) => rows(tx, "select endpoint from push_subscriptions"))).toEqual([]);
+  });
+
+  it("rejects malformed subscriptions", async () => {
+    await expect(
+      asUser(db, EMMA, (tx) => tx.query("select public.register_push_subscription('http://insecure', 'x', 'y')")),
+    ).rejects.toThrow(/invalide/);
+  });
+
+  it("only the server (service role) can claim notifications to push", async () => {
+    await expect(asUser(db, EMMA, (tx) => tx.query("select * from public.claim_push_batch(10)"))).rejects.toThrow(/permission denied/);
+    await expect(
+      asUser(db, EMMA, (tx) => tx.query("update notifications set push_state = 'sent' where user_id = $1", [EMMA])),
+    ).rejects.toThrow(/permission denied/);
+  });
+
+  it("claims each pending notification once, then marks it sent", async () => {
+    await db.query(
+      "insert into notifications (user_id, notification_type, title) values ($1, 'new_request', 'Test push')",
+      [EMMA],
+    );
+    const claim = () =>
+      db.transaction(async (tx) => {
+        await tx.exec("set local role service_role");
+        return rows<{ id: string; title: string }>(tx, "select * from public.claim_push_batch(50)");
+      });
+    const first = await claim();
+    expect(first.map((r) => r.title)).toContain("Test push");
+    expect(await claim()).toEqual([]); // already being sent
+    await db.transaction(async (tx) => {
+      await tx.exec("set local role service_role");
+      await tx.query("select public.complete_push_batch($1::uuid[])", [first.map((r) => r.id)]);
+    });
+    const states = await rows<{ push_state: string }>(db, "select push_state from notifications where title = 'Test push'");
+    expect(states).toEqual([{ push_state: "sent" }]);
+  });
+});
+
 describe("storage", () => {
   it("only caretakers upload photos into their dog's folder", async () => {
     await asUser(db, JULIE, (tx) =>

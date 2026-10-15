@@ -15,7 +15,19 @@ iPhone (PWA) ──HTTPS──> Vercel (Next.js App Router)
 ```
 
 Toutes les requêtes à la base se font **en tant qu'utilisateur connecté** (clé publishable + session) :
-la RLS s'applique partout. L'application n'utilise aucune clé secrète.
+la RLS s'applique partout. Seule exception : la distribution des notifications push (`src/server/push.ts`)
+utilise la clé secrète côté serveur pour lire les abonnements des destinataires.
+
+## Notifications push
+
+1. Une action (demande, réponse, confirmation…) crée des notifications en base (triggers/RPC).
+2. La Server Action programme `schedulePushDispatch()` via `after()` : après la réponse HTTP, le serveur
+   réserve atomiquement les notifications en attente (`claim_push_batch`), les envoie avec `web-push`
+   (VAPID) à chaque appareil du destinataire, nettoie les abonnements expirés, puis les marque envoyées.
+3. Le service worker affiche la notification ; la toucher ouvre la demande concernée.
+
+Sur iPhone, les push exigent l'app installée sur l'écran d'accueil (iOS 16.4+) et une autorisation
+demandée après un geste (Profil → « Activer sur cet appareil »). À la déconnexion, l'appareil est désabonné.
 
 ## Arborescence
 
@@ -62,7 +74,7 @@ public/sw.js           service worker minimal
 | État client | Aucune librairie globale | `useTransition`, état local, `router.refresh()` |
 | Règles critiques | En base (RLS, contraintes, RPC `SECURITY DEFINER`) | Impossible à contourner depuis le client |
 | Statuts | Calculés en TypeScript (`src/domain`) à partir des lignes lues | Testables, une seule source de vérité |
-| Notifications | Générées par des triggers/RPC SQL | Atomiques avec l'action, impossibles à falsifier |
+| Notifications | Générées par des triggers/RPC SQL, puis envoyées en push par le serveur | Atomiques avec l'action, impossibles à falsifier, pas de webhook à configurer |
 | Temps | `timestamptz`, intervalles `[début, fin)`, `@date-fns/tz` | Pas de comparaison de chaînes, DST correct |
 | Auth | Code e-mail (OTP) via `@supabase/ssr` | Reste dans la PWA installée sur iPhone |
 | Temps réel | Supabase Realtime → `router.refresh()` + rafraîchissement au retour dans l'app | L'app reste juste même sans connexion temps réel |

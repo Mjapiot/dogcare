@@ -7,6 +7,7 @@ import { careRequestSchema, responseSchema, uuid } from "@/lib/validation";
 import { zonedInstant } from "@/domain/time";
 import { requireUserId } from "@/server/session";
 import { toUserMessage } from "@/server/errors";
+import { schedulePushDispatch } from "@/server/push";
 import type { ActionResult } from "@/lib/types";
 
 function toPeriod(v: { startDate: string; startTime: string; endDate: string; endTime: string }) {
@@ -53,6 +54,7 @@ export async function createCareRequest(
     if (error.code === "23503") return { ok: false, error: "Ce chien n'est pas visible dans ce groupe." };
     return { ok: false, error: toUserMessage(error) };
   }
+  schedulePushDispatch();
   revalidatePath("/", "layout");
   return { ok: true, data: { requestId: (data as { id: string }).id } };
 }
@@ -84,6 +86,7 @@ export async function updateCareRequest(
     .select("id");
   if (error) return { ok: false, error: toUserMessage(error) };
   if (!data?.length) return { ok: false, error: "Seul un responsable du chien peut modifier cette demande." };
+  schedulePushDispatch();
   revalidatePath("/", "layout");
   return { ok: true, data: undefined };
 }
@@ -98,6 +101,7 @@ export async function cancelCareRequest(requestId: string, reason: string): Prom
     .select("id");
   if (error) return { ok: false, error: toUserMessage(error) };
   if (!data?.length) return { ok: false, error: "Seul un responsable du chien peut annuler cette demande." };
+  schedulePushDispatch();
   revalidatePath("/", "layout");
   return { ok: true, data: undefined };
 }
@@ -126,6 +130,7 @@ export async function respondToRequest(input: z.input<typeof responseSchema>): P
     if (error.code === "42501") return { ok: false, error: "Vous ne pouvez plus répondre à cette demande." };
     return { ok: false, error: toUserMessage(error) };
   }
+  schedulePushDispatch();
   revalidatePath("/", "layout");
   return { ok: true, data: undefined };
 }
@@ -153,6 +158,7 @@ export async function confirmAssignment(input: {
     p_ends_at: parsed.data.endsAt ?? null,
   });
   if (error) return { ok: false, error: toUserMessage(error) };
+  schedulePushDispatch();
   revalidatePath("/", "layout");
   return { ok: true, data: undefined };
 }
@@ -165,6 +171,7 @@ export async function cancelAssignment(assignmentId: string, reason: string): Pr
     p_reason: reason.trim().slice(0, 500) || null,
   });
   if (error) return { ok: false, error: toUserMessage(error) };
+  schedulePushDispatch();
   revalidatePath("/", "layout");
   return { ok: true, data: undefined };
 }
@@ -174,6 +181,7 @@ export async function answerReconfirmation(assignmentId: string, accept: boolean
   const supabase = await createClient();
   const { error } = await supabase.rpc("answer_reconfirmation", { p_assignment_id: assignmentId, p_accept: accept });
   if (error) return { ok: false, error: toUserMessage(error) };
+  schedulePushDispatch();
   revalidatePath("/", "layout");
   return { ok: true, data: undefined };
 }

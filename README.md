@@ -7,7 +7,8 @@ Application web progressive (PWA) privée pour qu'un groupe d'amis coordonne la 
 - Disponibilités par créneaux (matin, après-midi, soir, nuit) et habitudes hebdomadaires
 - Demandes de garde, réponses Oui / Non, confirmation par le propriétaire, gardes partagées entre plusieurs personnes
 - Calcul de couverture fiable (créneaux non couverts identifiés à la minute près)
-- Notifications dans l'application, groupes privés sur invitation, sécurité garantie par la base de données (RLS)
+- Notifications dans l'application et notifications push (iPhone : app installée sur l'écran d'accueil)
+- Groupes privés sur invitation, sécurité garantie par la base de données (RLS)
 
 Documentation : [PRODUCT_SPEC](PRODUCT_SPEC.md) · [ARCHITECTURE](ARCHITECTURE.md) · [DATABASE](DATABASE.md) ·
 [DESIGN_SYSTEM](DESIGN_SYSTEM.md) · [TEST_PLAN](TEST_PLAN.md) · [ROADMAP](ROADMAP.md) · [CLAUDE.md](CLAUDE.md)
@@ -58,7 +59,14 @@ Variables d'environnement Vercel (Production + Preview) :
 Les noms préfixés `NEXT_PUBLIC_` sont aussi acceptés. Ces deux valeurs sont publiques par nature
 (la sécurité repose sur la RLS) : le serveur les transmet au navigateur pour le temps réel et les photos.
 
-Aucune clé secrète n'est nécessaire au fonctionnement de l'application.
+Pour les notifications push (facultatif — sans elles, l'app fonctionne avec la cloche) :
+
+- `SUPABASE_SECRET_KEY` (Supabase → Project Settings → API Keys → Secret keys) — **secret**
+- `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` (**secret**), `VAPID_SUBJECT` (`mailto:…`) — générées avec
+  `npx web-push generate-vapid-keys`
+
+La clé secrète Supabase n'est utilisée que côté serveur, pour retrouver les appareils des membres à notifier.
+Elle ne doit jamais porter le préfixe `NEXT_PUBLIC_`.
 
 ### Réglages Supabase à faire une fois (tableau de bord)
 

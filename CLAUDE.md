@@ -42,7 +42,7 @@ shadcn/ui (radix), Lucide, Zod 4, Supabase (`@supabase/ssr`), Vitest, Playwright
 - Ne jamais faire confiance à un `user_id` venant du client (utiliser `auth.uid()` / défaut en base).
 - Fonctions `SECURITY DEFINER` : `set search_path = ''`, noms qualifiés, `revoke` pour `public`/`anon`.
 - Aucun secret dans le dépôt (public). Jamais de clé secrète dans une variable `NEXT_PUBLIC_`.
-  L'application n'utilise pas de clé secrète ; seuls les tests E2E en local en ont besoin.
+  La clé secrète Supabase n'est utilisée que dans `src/server/push.ts` (distribution des push) et les tests E2E.
 - Aucune donnée privée mise en cache par le service worker ; aucune action possible hors ligne.
 
 ## Commandes
