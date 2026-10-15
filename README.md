@@ -52,8 +52,11 @@ Le projet Vercel est relié au dépôt : chaque push sur `main` déploie la prod
 
 Variables d'environnement Vercel (Production + Preview) :
 
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (ou `NEXT_PUBLIC_SUPABASE_ANON_KEY`)
+- `SUPABASE_URL` (Supabase → Project Settings → Data API → Project URL)
+- `SUPABASE_PUBLISHABLE_KEY` (Supabase → Project Settings → API Keys)
+
+Les noms préfixés `NEXT_PUBLIC_` sont aussi acceptés. Ces deux valeurs sont publiques par nature
+(la sécurité repose sur la RLS) : le serveur les transmet au navigateur pour le temps réel et les photos.
 
 Aucune clé secrète n'est nécessaire au fonctionnement de l'application.
 

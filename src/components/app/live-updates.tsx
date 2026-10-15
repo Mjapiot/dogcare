@@ -3,7 +3,7 @@
 import { useEffect, useRef, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { WifiOff } from "lucide-react";
-import { getBrowserClient } from "@/lib/supabase/client";
+import { useBrowserClient } from "@/lib/supabase/client";
 
 function subscribeOnline(callback: () => void) {
   window.addEventListener("online", callback);
@@ -22,6 +22,7 @@ function subscribeOnline(callback: () => void) {
  */
 export function LiveUpdates({ groupId, userId }: { groupId: string; userId: string }) {
   const router = useRouter();
+  const supabase = useBrowserClient();
   const online = useSyncExternalStore(subscribeOnline, () => navigator.onLine, () => true);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -31,9 +32,8 @@ export function LiveUpdates({ groupId, userId }: { groupId: string; userId: stri
       timer.current = setTimeout(() => router.refresh(), 400);
     };
 
-    const supabase = getBrowserClient();
     const channel = supabase
-      .channel(`group-${groupId}`)
+      ?.channel(`group-${groupId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "care_requests", filter: `group_id=eq.${groupId}` }, refresh)
       .on("postgres_changes", { event: "*", schema: "public", table: "request_responses" }, refresh)
       .on("postgres_changes", { event: "*", schema: "public", table: "care_assignments" }, refresh)
@@ -51,11 +51,11 @@ export function LiveUpdates({ groupId, userId }: { groupId: string; userId: stri
     window.addEventListener("online", onOnline);
     return () => {
       if (timer.current) clearTimeout(timer.current);
-      supabase.removeChannel(channel);
+      if (supabase && channel) supabase.removeChannel(channel);
       document.removeEventListener("visibilitychange", onVisibility);
       window.removeEventListener("online", onOnline);
     };
-  }, [groupId, userId, router]);
+  }, [groupId, userId, router, supabase]);
 
   if (online) return null;
   return (

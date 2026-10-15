@@ -101,7 +101,8 @@ export function LoginForm({ next, expired }: { next: string; expired: boolean })
         Changer d&apos;adresse
       </button>
       <p className="text-[15px] text-ink-2" aria-live="polite">
-        Code envoyé à <strong className="text-ink">{email}</strong>. Pensez à vérifier vos spams.
+        E-mail envoyé à <strong className="text-ink">{email}</strong>. Saisissez le code reçu, ou ouvrez le lien de
+        l&apos;e-mail dans ce même navigateur. Pensez à vérifier vos spams.
       </p>
       <Field label="Code reçu par e-mail" htmlFor="code" error={error ?? undefined}>
         <TextInput

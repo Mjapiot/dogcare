@@ -4,7 +4,7 @@ import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Camera, Loader2 } from "lucide-react";
-import { getBrowserClient } from "@/lib/supabase/client";
+import { useBrowserClient } from "@/lib/supabase/client";
 import { setDogPhoto } from "@/server/actions/dogs";
 import { DogAvatar } from "@/components/domain/request-bits";
 
@@ -30,6 +30,7 @@ async function resize(file: File): Promise<Blob> {
 
 export function PhotoUploader({ dogId, name, photoUrl }: { dogId: string; name: string; photoUrl: string | null }) {
   const router = useRouter();
+  const supabase = useBrowserClient();
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [, startTransition] = useTransition();
@@ -37,12 +38,13 @@ export function PhotoUploader({ dogId, name, photoUrl }: { dogId: string; name: 
   const onFile = async (file: File) => {
     if (!file.type.startsWith("image/")) return toast.error("Choisissez une image.");
     if (file.size > MAX_INPUT_BYTES) return toast.error("Image trop lourde (15 Mo maximum).");
+    if (!supabase) return toast.error("Envoi de photo indisponible pour le moment.");
     setBusy(true);
     try {
       const blob = await resize(file);
       const ext = blob.type === "image/webp" ? "webp" : "jpg";
       const path = `${dogId}/${crypto.randomUUID()}.${ext}`;
-      const { error } = await getBrowserClient().storage.from("dog-photos").upload(path, blob, { contentType: blob.type, upsert: false });
+      const { error } = await supabase.storage.from("dog-photos").upload(path, blob, { contentType: blob.type, upsert: false });
       if (error) throw error;
       startTransition(async () => {
         const r = await setDogPhoto(dogId, path);

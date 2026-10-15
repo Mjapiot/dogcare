@@ -2,7 +2,7 @@ import { defineConfig, devices } from "@playwright/test";
 
 /**
  * End-to-end tests run against a real Supabase project (see TEST_PLAN.md).
- * Required env: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+ * Required env: SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY,
  * SUPABASE_SECRET_KEY (server-side only, never committed).
  * E2E_BASE_URL targets a deployed URL; otherwise a local server is started.
  */

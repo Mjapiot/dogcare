@@ -14,9 +14,16 @@ export async function GET(request: NextRequest) {
   const nextParam = searchParams.get("next") ?? "/";
   const next = nextParam.startsWith("/") && !nextParam.startsWith("//") ? nextParam : "/";
 
+  const code = searchParams.get("code");
   if (tokenHash && type) {
     const supabase = await createClient();
     const { error } = await supabase.auth.verifyOtp({ type, token_hash: tokenHash });
+    if (!error) return NextResponse.redirect(new URL(next, origin));
+  } else if (code) {
+    // default Supabase "Magic Link" template (PKCE): works when the link is
+    // opened in the same browser that requested it
+    const supabase = await createClient();
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) return NextResponse.redirect(new URL(next, origin));
   }
   return NextResponse.redirect(new URL("/login?error=link", origin));

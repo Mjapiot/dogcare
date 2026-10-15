@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Inter_Tight } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { ServiceWorkerRegister } from "@/components/pwa/service-worker-register";
+import { SupabaseConfigProvider } from "@/lib/supabase/client";
+import { getSupabaseEnv } from "@/lib/env";
 import "./globals.css";
 
 const sans = Inter_Tight({
@@ -30,7 +32,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="fr" className={`${sans.variable} h-full`}>
       <body className="min-h-dvh">
-        {children}
+        <SupabaseConfigProvider value={getSupabaseEnv()}>{children}</SupabaseConfigProvider>
         <Toaster />
         <ServiceWorkerRegister />
       </body>

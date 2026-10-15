@@ -15,7 +15,7 @@ Ils utilisent le **projet Supabase réel** (un seul projet) : des comptes `e2e+�
 via l'API d'administration (aucun e-mail envoyé), puis **supprimés avec leurs groupes en fin de test**.
 
 ```bash
-# .env.local : NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, SUPABASE_SECRET_KEY
+# .env.local : SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, SUPABASE_SECRET_KEY
 npx playwright install webkit
 npm run test:e2e
 # ou contre la production :
