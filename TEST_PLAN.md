@@ -19,7 +19,7 @@ via l'API d'administration (aucun e-mail envoyé), puis **supprimés avec leurs 
 npx playwright install webkit
 npm run test:e2e
 # ou contre la production :
-E2E_BASE_URL=https://dogcare-mu.vercel.app npm run test:e2e
+E2E_BASE_URL=https://dogcare-gamma.vercel.app npm run test:e2e
 ```
 
 ## 2. Tests manuels sur iPhone (à faire par le porteur du projet)
@@ -44,7 +44,7 @@ Safari iOS puis PWA installée (Partager → « Sur l'écran d'accueil »).
 ## 3. Vérifications post-déploiement
 
 1. Les 4 migrations apparaissent dans Supabase (Database → Migrations), sans erreur.
-2. `https://dogcare-mu.vercel.app/manifest.webmanifest` et `/pwa-icon/192` répondent.
+2. `https://dogcare-gamma.vercel.app/manifest.webmanifest` et `/pwa-icon/192` répondent.
 3. Connexion par code en production, création d'un groupe, invitation d'un second compte.
 4. Parcours E2E contre la production (`E2E_BASE_URL`).
 5. Supabase → Advisors (Security, Performance) : aucune alerte critique.

@@ -48,7 +48,7 @@ de l'intégration GitHub de Supabase). Détails dans [DATABASE.md](DATABASE.md).
 ## Déploiement (Vercel)
 
 Le projet Vercel est relié au dépôt : chaque push sur `main` déploie la production
-(`dogcare-mu.vercel.app`), chaque branche/PR obtient une URL de prévisualisation.
+(`dogcare-gamma.vercel.app`), chaque branche/PR obtient une URL de prévisualisation.
 
 Variables d'environnement Vercel (Production + Preview) :
 
@@ -69,8 +69,8 @@ Aucune clé secrète n'est nécessaire au fonctionnement de l'application.
    <p style="font-size:28px;letter-spacing:6px"><strong>{{ .Token }}</strong></p>
    <p>Ce code expire dans 1 heure. Si vous n'êtes pas à l'origine de cette demande, ignorez cet e-mail.</p>
    ```
-2. **Authentication → URL Configuration** : Site URL `https://dogcare-mu.vercel.app`, et ajouter
-   `https://dogcare-mu.vercel.app/**` et `http://localhost:3000/**` aux Redirect URLs.
+2. **Authentication → URL Configuration** : Site URL `https://dogcare-gamma.vercel.app`, et ajouter
+   `https://dogcare-gamma.vercel.app/**` et `http://localhost:3000/**` aux Redirect URLs.
 3. **Authentication → Emails → SMTP** : l'envoi intégré est limité à quelques e-mails par heure.
    Avant d'inviter tout le groupe, configurer un SMTP (ex. Resend) avec un domaine vérifié.
 

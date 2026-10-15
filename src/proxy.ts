@@ -11,7 +11,11 @@ const PUBLIC_PATHS = ["/login", "/auth", "/offline", "/manifest.webmanifest", "/
  */
 export async function proxy(request: NextRequest) {
   const env = getSupabaseEnv();
-  if (!env) return NextResponse.next();
+  if (!env) {
+    // not configured yet: only the login page (which explains it) is reachable
+    const isPublicPath = PUBLIC_PATHS.some((p) => request.nextUrl.pathname === p || request.nextUrl.pathname.startsWith(`${p}/`));
+    return isPublicPath ? NextResponse.next() : NextResponse.redirect(new URL("/login", request.url));
+  }
 
   let response = NextResponse.next({ request });
   const supabase = createServerClient(env.url, env.key, {
