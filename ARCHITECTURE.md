@@ -1,0 +1,84 @@
+# Architecture — Dogcare
+
+## Vue d'ensemble
+
+```
+iPhone (PWA) ──HTTPS──> Vercel (Next.js App Router)
+                          │  Server Components : lecture des données (session utilisateur)
+                          │  Server Actions    : écritures validées par Zod
+                          ▼
+                       Supabase
+                          ├─ PostgreSQL : schéma, contraintes, RLS, fonctions (RPC), triggers
+                          ├─ Auth       : code e-mail à usage unique
+                          ├─ Storage    : photos des chiens (bucket privé, URL signées)
+                          └─ Realtime   : rafraîchissement des écrans (filtré par RLS)
+```
+
+Toutes les requêtes à la base se font **en tant qu'utilisateur connecté** (clé publishable + session) :
+la RLS s'applique partout. L'application n'utilise aucune clé secrète.
+
+## Arborescence
+
+```
+src/
+  app/                 routes (App Router)
+    (app)/             écrans connectés : layout = AppShell (en-tête, onglets, temps réel)
+    login, auth/confirm, onboarding, invite/[token], offline
+    manifest.ts, icon.tsx, apple-icon.tsx, pwa-icon/[variant]   PWA
+  domain/              logique métier PURE et testée (aucune dépendance React/Supabase)
+    config.ts          créneaux, fuseau horaire
+    intervals.ts       intervalles semi-ouverts [début, fin) : fusion, soustraction
+    time.ts            dates locales, Europe/Paris, changements d'heure, créneaux
+    availability.ts    résolution des disponibilités (ponctuel > habitude), évaluation d'une période
+    coverage.ts        couverture d'une demande, détection de conflits
+    status.ts          statuts calculés, tons, libellés
+    views.ts           assemblage des données en modèles d'écran (RequestView, jours, tableau de bord)
+  server/              code serveur uniquement
+    session.ts         utilisateur, profil, groupes, groupe courant, garde d'accès des écrans
+    data.ts            requêtes de lecture
+    actions/*.ts       Server Actions (auth, groupes, chiens, dispos, demandes, notifications)
+    errors.ts          messages d'erreur sûrs pour l'utilisateur
+  components/
+    ui/                primitives (kit.tsx + shadcn : dialog, sheet, switch, sonner)
+    app/               en-tête, navigation inférieure, mises à jour temps réel
+    calendar/          vues calendrier
+    availability/      matrice de disponibilités, habitudes, partage
+    domain/            cartes de demande, badges, réponses, confirmations
+    dogs/ groups/ profile/ pwa/
+  lib/                 clients Supabase, env, format FR, validation Zod, types
+  proxy.ts             rafraîchissement de session + redirection vers /login (vérif. optimiste)
+supabase/migrations/   schéma, sécurité, logique métier SQL, stockage et temps réel
+tests/unit             logique métier (Vitest)
+tests/db               migrations + RLS + RPC sur PostgreSQL embarqué (PGlite)
+tests/e2e              parcours complet (Playwright, projet Supabase réel)
+public/sw.js           service worker minimal
+```
+
+## Choix techniques
+
+| Sujet | Choix | Pourquoi |
+| --- | --- | --- |
+| Rendu | Server Components + Server Actions, `cacheComponents` désactivé | Tout dépend de l'utilisateur : rendu par requête, modèle simple |
+| État client | Aucune librairie globale | `useTransition`, état local, `router.refresh()` |
+| Règles critiques | En base (RLS, contraintes, RPC `SECURITY DEFINER`) | Impossible à contourner depuis le client |
+| Statuts | Calculés en TypeScript (`src/domain`) à partir des lignes lues | Testables, une seule source de vérité |
+| Notifications | Générées par des triggers/RPC SQL | Atomiques avec l'action, impossibles à falsifier |
+| Temps | `timestamptz`, intervalles `[début, fin)`, `@date-fns/tz` | Pas de comparaison de chaînes, DST correct |
+| Auth | Code e-mail (OTP) via `@supabase/ssr` | Reste dans la PWA installée sur iPhone |
+| Temps réel | Supabase Realtime → `router.refresh()` + rafraîchissement au retour dans l'app | L'app reste juste même sans connexion temps réel |
+| Hors ligne | Service worker : assets statiques + page /offline | Aucune donnée privée en cache, aucune action hors ligne |
+| Photos | Redimensionnées sur l'appareil (1024 px, WebP/JPEG), bucket privé 5 Mo | Légères, métadonnées EXIF supprimées |
+
+## Flux d'une action (exemple : confirmer une garde)
+
+1. Le propriétaire touche « Confirmer » → `confirmAssignment` (Server Action) valide les entrées (Zod).
+2. Appel RPC `confirm_assignment` : verrou sur la demande, vérification responsable / volontaire /
+   créneau, insertion protégée par la contrainte d'exclusion, notification au gardien, journal d'audit.
+3. `revalidatePath` + Realtime → tous les écrans concernés se rafraîchissent.
+4. Les statuts sont recalculés par `src/domain/views.ts`.
+
+## Gestion des états d'écran
+
+Chargement (`loading.tsx`, squelettes), vide (`EmptyState`), erreur (`error.tsx`, messages FR non
+révélateurs), non autorisé (redirection `/login`, 404 pour une ressource inaccessible), hors ligne
+(bandeau + page `/offline`).

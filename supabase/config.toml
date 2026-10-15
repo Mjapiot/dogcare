@@ -1,0 +1,3 @@
+# Supabase CLI / GitHub integration config.
+# Only migrations are deployed to production; Auth settings are managed in the dashboard (see README).
+project_id = "dogcare"

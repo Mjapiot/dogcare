@@ -1,0 +1,175 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Dogcare design tokens — see DESIGN_SYSTEM.md.
+ * Warm off-white canvas, anthracite text, black pill actions, and pastel
+ * status tones whose dark text keeps a contrast ratio above 7:1.
+ */
+:root {
+  color-scheme: light;
+
+  --canvas: #ebe8e2;
+  --surface: #fbfaf7;
+  --surface-2: #f3f1ec;
+  --ink: #1c1b19;
+  --ink-2: #4a4843;
+  --ink-3: #6e6b64;
+  --line: #dedad2;
+  --sage: #4f6f52;
+  --beige: #e9dfcf;
+
+  /* Status tones: background / foreground */
+  --tone-covered: #c9dcc4;
+  --tone-covered-ink: #1d3a20;
+  --tone-pending: #f3cd98;
+  --tone-pending-ink: #4f2e08;
+  --tone-uncovered: #eeb1ab;
+  --tone-uncovered-ink: #5e1510;
+  --tone-partial: #eeb1ab;
+  --tone-partial-ink: #5e1510;
+  --tone-info: #d2cbe8;
+  --tone-info-ink: #2b2450;
+  --tone-muted: #e2dfd8;
+  --tone-muted-ink: #45423d;
+  --tone-none: #e9e6df;
+  --tone-none-ink: #5c5952;
+
+  /* shadcn semantic tokens mapped onto the palette */
+  --background: var(--canvas);
+  --foreground: var(--ink);
+  --card: var(--surface);
+  --card-foreground: var(--ink);
+  --popover: var(--surface);
+  --popover-foreground: var(--ink);
+  --primary: var(--ink);
+  --primary-foreground: #fbfaf7;
+  --secondary: var(--surface-2);
+  --secondary-foreground: var(--ink);
+  --muted: var(--surface-2);
+  --muted-foreground: var(--ink-3);
+  --accent: var(--surface-2);
+  --accent-foreground: var(--ink);
+  --destructive: #b3261e;
+  --border: var(--line);
+  --input: var(--line);
+  --ring: #2f2e2b;
+  --radius: 1rem;
+
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --nav-height: 64px;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-sans);
+  --font-heading: var(--font-sans);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-line: var(--line);
+  --color-sage: var(--sage);
+  --color-beige: var(--beige);
+
+  --radius-sm: calc(var(--radius) * 0.5);
+  --radius-md: calc(var(--radius) * 0.75);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.25);
+  --radius-2xl: calc(var(--radius) * 1.5);
+  --radius-3xl: calc(var(--radius) * 2);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    overflow-x: hidden;
+    overscroll-behavior-y: none;
+  }
+  /* 16px minimum prevents iOS Safari from zooming on focus */
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
+}
+
+@layer utilities {
+  .pt-safe {
+    padding-top: var(--safe-top);
+  }
+  .pb-safe {
+    padding-bottom: var(--safe-bottom);
+  }
+  .pb-nav {
+    padding-bottom: calc(var(--nav-height) + var(--safe-bottom) + 24px);
+  }
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+  /* Diagonal hatch used for "partially covered", so it never relies on color only */
+  .hatch {
+    background-image: repeating-linear-gradient(
+      135deg,
+      rgb(255 255 255 / 0.22) 0 5px,
+      transparent 5px 14px
+    );
+  }
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
