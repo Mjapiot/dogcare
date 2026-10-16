@@ -111,3 +111,12 @@ Variables Vercel pour les notifications natives (clé APNs créée sur developer
 Les liens universels reposent sur `https://dogcare-gamma.vercel.app/.well-known/apple-app-site-association`.
 Si le domaine change, mettre à jour ce fichier, `ios/App/App/App.entitlements`, `capacitor.config.ts`,
 `native-shell/offline.html` et `src/components/app/native-bridge.tsx`.
+
+### TestFlight
+
+- Fiche App Store Connect : « Dogcare – Garde entre amis » (`app.dogcare.ios`, SKU `dogcare-ios`).
+  Sur l'écran d'accueil, l'app s'appelle « Dogcare ».
+- Groupe interne « Testeurs internes » avec distribution automatique : toute nouvelle version envoyée y
+  est proposée sans revue Apple.
+- Nouvelle version : `npm run ios:testflight` (compile, signe pour l'App Store et envoie ; le numéro de
+  build est horodaté automatiquement).
