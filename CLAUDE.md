@@ -45,6 +45,13 @@ shadcn/ui (radix), Lucide, Zod 4, Supabase (`@supabase/ssr`), Vitest, Playwright
   La clé secrète Supabase n'est utilisée que dans `src/server/push.ts` (distribution des push) et les tests E2E.
 - Aucune donnée privée mise en cache par le service worker ; aucune action possible hors ligne.
 
+## App iOS (Capacitor)
+
+- `ios/` est versionné. Après modification de `capacitor.config.ts` ou d'un plugin : `npm run ios:sync`.
+- Toute API native passe par `src/lib/native.ts` / `components/app/native-bridge.tsx` et doit avoir un
+  comportement web équivalent (l'app web reste la référence).
+- Ne jamais commiter `ios/App/App/capacitor.config.json` pointant vers localhost.
+
 ## Commandes
 
 ```bash

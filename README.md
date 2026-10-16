@@ -87,3 +87,27 @@ Elle ne doit jamais porter le préfixe `NEXT_PUBLIC_`.
 - Aucune donnée n'est accessible sans être membre du groupe : règles RLS testées automatiquement.
 - Aucun secret dans le dépôt (public). `.env.local` est ignoré par Git.
 - Les liens d'invitation ne sont stockés que sous forme d'empreinte (SHA-256), expirent et sont révocables.
+
+## Application iPhone native (Capacitor)
+
+Le dossier `ios/` contient l'app native (`app.dogcare.ios`, équipe Apple `G2SC6845GS`). Elle charge le site
+de production et ajoute : notifications natives (APNs), ouverture des liens Dogcare dans l'app (liens
+universels), partage natif, retours haptiques, page hors ligne embarquée.
+
+```bash
+npm run ios:sync    # après toute modification de capacitor.config.ts ou des plugins
+npm run ios:open    # ouvre Xcode → choisir l'iPhone → ▶︎ Run
+```
+
+Développement contre un serveur local : `CAP_SERVER_URL=http://localhost:3000 npx cap sync ios`
+(ne pas commiter `ios/App/App/capacitor.config.json`, il est régénéré).
+
+Variables Vercel pour les notifications natives (clé APNs créée sur developer.apple.com → Keys) :
+
+- `APNS_KEY_ID` (10 caractères), `APNS_TEAM_ID` = `G2SC6845GS`
+- `APNS_PRIVATE_KEY` : contenu complet du fichier `.p8` — **secret**
+- `APNS_BUNDLE_ID` (facultatif, défaut `app.dogcare.ios`)
+
+Les liens universels reposent sur `https://dogcare-gamma.vercel.app/.well-known/apple-app-site-association`.
+Si le domaine change, mettre à jour ce fichier, `ios/App/App/App.entitlements`, `capacitor.config.ts`,
+`native-shell/offline.html` et `src/components/app/native-bridge.tsx`.

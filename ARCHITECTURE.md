@@ -66,6 +66,14 @@ tests/e2e              parcours complet (Playwright, projet Supabase réel)
 public/sw.js           service worker minimal
 ```
 
+## App iPhone native
+
+`ios/` est un projet Xcode Capacitor 8 qui charge le site de production (`server.url`) : le site a
+besoin de son serveur (auth, actions), il n'est donc pas embarqué. Le code web détecte l'app
+(`src/lib/native.ts`) et utilise les plugins : notifications APNs (`register_native_push` + envoi HTTP/2
+dans `src/server/apns.ts`), liens universels et taps de notifications (`components/app/native-bridge.tsx`),
+partage, haptique, barre d'état. Sans réseau, l'app affiche `native-shell/offline.html` (embarquée).
+
 ## Choix techniques
 
 | Sujet | Choix | Pourquoi |
@@ -79,6 +87,7 @@ public/sw.js           service worker minimal
 | Auth | Code e-mail (OTP) via `@supabase/ssr` | Reste dans la PWA installée sur iPhone |
 | Temps réel | Supabase Realtime → `router.refresh()` + rafraîchissement au retour dans l'app | L'app reste juste même sans connexion temps réel |
 | Hors ligne | Service worker : assets statiques + page /offline | Aucune donnée privée en cache, aucune action hors ligne |
+| App iOS | Capacitor (coquille native + plugins) | Une seule base de code, fonctions natives là où elles comptent |
 | Photos | Redimensionnées sur l'appareil (1024 px, WebP/JPEG), bucket privé 5 Mo | Légères, métadonnées EXIF supprimées |
 
 ## Flux d'une action (exemple : confirmer une garde)

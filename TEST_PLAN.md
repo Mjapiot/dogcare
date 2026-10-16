@@ -5,7 +5,7 @@
 | Suite | Commande | Contenu | Statut |
 | --- | --- | --- | --- |
 | Unitaires | `npm run test:unit` | intervalles, créneaux, fuseau Europe/Paris et changements d'heure, disponibilités (habitudes, priorité des saisies ponctuelles, « À vérifier »), couverture (exemple Emma/Chloé, minute manquante), statuts (absence de réponse ≠ refus, sans solution, partiel), conflits, assemblage des vues, tableau de bord | ✅ 58 tests |
-| Base de données | `npm run test:db` | migrations réelles sur PostgreSQL embarqué : RLS (isolation entre groupes, intrus, usurpation d'identité), invitations (hash, révocation, expiration, quota), chiens, disponibilités et partage, demandes, réponses, confirmations concurrentes (contrainte d'exclusion, bornes semi-ouvertes), annulation, reconfirmation, notifications privées et non falsifiables, stockage, règles d'administration, suppression de compte | ✅ 44 tests |
+| Base de données | `npm run test:db` | migrations réelles sur PostgreSQL embarqué : RLS (isolation entre groupes, intrus, usurpation d'identité), invitations (hash, révocation, expiration, quota), chiens, disponibilités et partage, demandes, réponses, confirmations concurrentes (contrainte d'exclusion, bornes semi-ouvertes), annulation, reconfirmation, notifications privées et non falsifiables, stockage, règles d'administration, suppression de compte | ✅ 45 tests |
 | Bout en bout | `npm run test:e2e` | parcours complet Julie/Emma/Chloé sur iPhone 13 émulé + intrus | ⏳ écrit, à exécuter avec `SUPABASE_SECRET_KEY` |
 | Qualité | `npm run typecheck`, `npm run lint`, `npm run build` | | ✅ |
 
@@ -52,3 +52,15 @@ Safari iOS puis PWA installée (Partager → « Sur l'écran d'accueil »).
 3. Connexion par code en production, création d'un groupe, invitation d'un second compte.
 4. Parcours E2E contre la production (`E2E_BASE_URL`).
 5. Supabase → Advisors (Security, Performance) : aucune alerte critique.
+
+## 4. App iPhone native
+
+| # | Vérification | Attendu | Statut |
+| --- | --- | --- | --- |
+| 1 | Build simulateur (`xcodebuild … -sdk iphonesimulator`) | BUILD SUCCEEDED | ✅ |
+| 2 | Lancement dans le simulateur | écran de connexion de production, encoche et barre d'état respectées | ✅ |
+| 3 | Installation sur iPhone via Xcode (signature équipe G2SC6845GS) | l'app s'installe et s'ouvre | ⏳ |
+| 4 | Profil → Activer les notifications → Tester | notification native reçue (nécessite les variables APNS_*) | ⏳ |
+| 5 | Lien d'invitation ouvert depuis Mail/Messages | s'ouvre dans l'app, pas dans Safari | ⏳ |
+| 6 | Mode avion au lancement | page « Vous êtes hors ligne » embarquée | ⏳ |
+| 7 | Partager une invitation / relancer | feuille de partage iOS native | ⏳ |

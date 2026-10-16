@@ -11,6 +11,7 @@ déjà appliquée : en créer une nouvelle (`YYYYMMDDHHMMSS_description.sql`).
 | `…120200_business_logic.sql` | RPC, triggers métier, notifications, audit |
 | `…120300_storage_realtime.sql` | bucket `dog-photos` + politiques, publication temps réel |
 | `20261016090000_web_push.sql` | état d'envoi push des notifications, RPC d'abonnement et de distribution |
+| `20261016120000_native_push.sql` | appareils iOS natifs (`platform = 'ios'`, jeton APNs), RPC `register_native_push` |
 
 ## Tables
 
@@ -87,4 +88,4 @@ en cascade ; demandes conservées sans auteur ; chiens sans responsable archivé
 ## Tests
 
 `npm run test:db` exécute toutes les migrations sur un PostgreSQL embarqué (PGlite) qui émule les rôles,
-`auth.uid()` et le stockage de Supabase, puis vérifie 44 scénarios d'autorisation et de règles métier.
+`auth.uid()` et le stockage de Supabase, puis vérifie 45 scénarios d'autorisation et de règles métier.

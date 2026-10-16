@@ -15,6 +15,8 @@
 - [x] Notification de test reçue sur un vrai iPhone (PWA installée) — 2026-10-16
 - [ ] Notification déclenchée par l'action d'un autre membre, reçue app fermée
 - [x] PWA : manifeste, icônes, service worker minimal, page hors ligne, aide à l'installation iPhone
+- [x] App iPhone native (Capacitor) : notifications APNs, liens universels, partage natif, hors ligne
+- [ ] App iPhone : test sur appareil réel puis TestFlight
 - [x] RLS complète testée, tests unitaires et base de données
 - [ ] Tests E2E exécutés contre le projet réel (en attente de la clé serveur en local)
 - [ ] Vérification manuelle sur iPhone (voir TEST_PLAN.md)
