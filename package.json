@@ -15,7 +15,9 @@
     "check": "npm run typecheck && npm run lint && npm run test && npm run build",
     "ios:sync": "cap sync ios",
     "ios:open": "cap open ios",
-    "ios:dev": "CAP_SERVER_URL=http://localhost:3000 cap sync ios && cap open ios"
+    "ios:dev": "CAP_SERVER_URL=http://localhost:3000 cap sync ios && cap open ios",
+    "ios:release": "scripts/ios-release.sh",
+    "ios:testflight": "scripts/ios-release.sh --upload"
   },
   "dependencies": {
     "@capacitor/app": "^8.1.2",
