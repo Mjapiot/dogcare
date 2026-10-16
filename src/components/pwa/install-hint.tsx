@@ -2,6 +2,7 @@
 
 import { useSyncExternalStore, useState } from "react";
 import { Share, SquarePlus, X } from "lucide-react";
+import { isNativeApp } from "@/lib/native";
 
 const KEY = "dogcare:install-hint-dismissed";
 
@@ -17,6 +18,7 @@ function readEnvironment() {
   } catch {
     // storage unavailable (private mode): just show the hint
   }
+  if (isNativeApp()) return "native";
   return ios && !standalone && !dismissed ? "show" : "hide";
 }
 
@@ -26,7 +28,7 @@ const subscribe = () => () => {};
 export function InstallHint({ always = false }: { always?: boolean }) {
   const env = useSyncExternalStore(subscribe, readEnvironment, () => "hide");
   const [closed, setClosed] = useState(false);
-  if ((!always && env !== "show") || closed) return null;
+  if (env === "native" || (!always && env !== "show") || closed) return null;
 
   return (
     <aside className="relative mx-1 rounded-2xl bg-[var(--tone-info)] p-4 pr-12 text-[var(--tone-info-ink)]">

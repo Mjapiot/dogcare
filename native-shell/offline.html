@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Dogcare — hors ligne</title>
+    <style>
+      html, body { margin: 0; height: 100%; background: #ebe8e2; color: #1c1b19;
+        font-family: -apple-system, system-ui, sans-serif; }
+      main { min-height: 100%; box-sizing: border-box; display: flex; flex-direction: column;
+        align-items: center; justify-content: center; gap: 16px; text-align: center;
+        padding: calc(env(safe-area-inset-top) + 24px) 28px calc(env(safe-area-inset-bottom) + 24px); }
+      h1 { font-size: 28px; letter-spacing: -0.02em; margin: 0; }
+      p { font-size: 16px; line-height: 1.45; color: #4a4843; margin: 0; max-width: 320px; }
+      button { min-height: 48px; padding: 0 24px; border-radius: 999px; border: 0;
+        background: #1c1b19; color: #fbfaf7; font-size: 16px; font-weight: 600; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Vous êtes hors ligne</h1>
+      <p>Dogcare a besoin d'une connexion pour afficher des informations de garde à jour. Aucune action n'est enregistrée hors ligne.</p>
+      <button type="button" onclick="location.replace('https://dogcare-gamma.vercel.app/')">Réessayer</button>
+    </main>
+  </body>
+</html>

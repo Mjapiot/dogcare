@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter_Tight } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { ServiceWorkerRegister } from "@/components/pwa/service-worker-register";
+import { NativeBridge } from "@/components/app/native-bridge";
 import { SupabaseConfigProvider } from "@/lib/supabase/client";
 import { getSupabaseEnv } from "@/lib/env";
 import "./globals.css";
@@ -35,6 +36,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <SupabaseConfigProvider value={getSupabaseEnv()}>{children}</SupabaseConfigProvider>
         <Toaster />
         <ServiceWorkerRegister />
+        <NativeBridge />
       </body>
     </html>
   );

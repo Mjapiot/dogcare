@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Copy, Link2, LogOut, Share2, Shield, X } from "lucide-react";
 import { createInvitation, removeMember, renameGroup, revokeInvitation, setMemberRole } from "@/server/actions/groups";
 import { formatRelative } from "@/lib/format";
+import { shareLink } from "@/lib/native";
 import { Avatar, Card, Field, PillButton, Select, SectionTitle, TextInput } from "@/components/ui/kit";
 import { ConfirmationDialog } from "@/components/domain/confirmation-dialog";
 
@@ -46,13 +47,8 @@ export function GroupManage({
 
   const share = async (url: string) => {
     const text = `Rejoins notre groupe « ${groupName} » sur Dogcare pour organiser la garde de nos chiens :`;
-    try {
-      if (navigator.share) return await navigator.share({ title: "Dogcare", text, url });
-      await navigator.clipboard.writeText(url);
-      toast.success("Lien copié");
-    } catch {
-      // dismissed
-    }
+    const result = await shareLink({ title: "Dogcare", text, url });
+    if (result === "copied") toast.success("Lien copié");
   };
 
   const meMember = members.find((m) => m.userId === me);

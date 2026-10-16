@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Pencil, Send, Trash2 } from "lucide-react";
 import { cancelCareRequest } from "@/server/actions/requests";
 import { formatPeriod } from "@/lib/format";
+import { shareLink } from "@/lib/native";
 import { PillButton, PillLink } from "@/components/ui/kit";
 import { ConfirmationDialog } from "./confirmation-dialog";
 
@@ -29,16 +30,8 @@ export function OwnerActions({
   const relaunch = async () => {
     const url = `${window.location.origin}/requests/${requestId}`;
     const text = `Quelqu'un peut-il aider pour ${dogName} (${formatPeriod(period.start, period.end)}) ? Répondez ici :`;
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: "Dogcare", text, url });
-        return;
-      }
-      await navigator.clipboard.writeText(`${text} ${url}`);
-      toast.success("Message copié, collez-le dans votre conversation de groupe");
-    } catch {
-      // share sheet dismissed
-    }
+    const result = await shareLink({ title: "Dogcare", text, url });
+    if (result === "copied") toast.success("Message copié, collez-le dans votre conversation de groupe");
   };
 
   return (

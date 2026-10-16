@@ -9,6 +9,7 @@ import { PERIOD_AVAILABILITY_LABELS, type PeriodAvailability } from "@/domain/av
 import { intersect, overlaps, type Interval } from "@/domain/intervals";
 import { toLocalDate, toLocalTime, zonedInstant } from "@/domain/time";
 import { formatPeriod } from "@/lib/format";
+import { hapticSuccess } from "@/lib/native";
 import { cn } from "@/lib/utils";
 import { Avatar, Field, PillButton, TextInput } from "@/components/ui/kit";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -143,6 +144,7 @@ export function HelperList({
                 endsAt: new Date(range.end).toISOString(),
               });
               if (!r.ok) return void toast.error(r.error);
+              void hapticSuccess();
               toast.success(`${confirming.name} est prévenu·e : garde confirmée`);
               setConfirming(null);
               router.refresh();

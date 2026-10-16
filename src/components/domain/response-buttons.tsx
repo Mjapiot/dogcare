@@ -7,6 +7,7 @@ import { Check, Scissors, X } from "lucide-react";
 import { respondToRequest } from "@/server/actions/requests";
 import { toLocalDate, toLocalTime, zonedInstant } from "@/domain/time";
 import { formatPeriod } from "@/lib/format";
+import { hapticSuccess } from "@/lib/native";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Field, PillButton, TextArea, TextInput } from "@/components/ui/kit";
@@ -47,6 +48,7 @@ export function ResponseButtons({ requestId, current, period, splittable, propos
         toast.error(result.error);
         return;
       }
+      void hapticSuccess();
       toast.success(status === "yes" ? "Merci ! Le propriétaire est prévenu de votre proposition." : "Réponse enregistrée");
       setPartOpen(false);
       router.refresh();

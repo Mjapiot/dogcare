@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { BellOff, BellRing, Send } from "lucide-react";
-import { removePushSubscription, savePushSubscription, sendTestPush } from "@/server/actions/push";
+import { removePushSubscription, saveNativePushToken, savePushSubscription, sendTestPush } from "@/server/actions/push";
+import { getRememberedNativeToken, isNativeApp, rememberNativeToken } from "@/lib/native";
 import { urlBase64ToUint8Array } from "@/lib/push-payload";
 import { PillButton } from "@/components/ui/kit";
 import { InstallHint } from "@/components/pwa/install-hint";
@@ -29,8 +30,38 @@ async function getRegistration() {
   return navigator.serviceWorker.ready;
 }
 
+/** Asks iOS for permission and returns the APNs device token (native app). */
+async function registerNative(): Promise<string | null> {
+  const { PushNotifications } = await import("@capacitor/push-notifications");
+  let perm = await PushNotifications.checkPermissions();
+  if (perm.receive === "prompt" || perm.receive === "prompt-with-rationale") perm = await PushNotifications.requestPermissions();
+  if (perm.receive !== "granted") return null;
+  return new Promise<string | null>((resolve) => {
+    const handles: Array<{ remove: () => Promise<void> }> = [];
+    const done = (value: string | null) => {
+      clearTimeout(timeout);
+      for (const h of handles) void h.remove();
+      resolve(value);
+    };
+    const timeout = setTimeout(() => done(null), 15_000);
+    void Promise.all([
+      PushNotifications.addListener("registration", ({ value }) => done(value)),
+      PushNotifications.addListener("registrationError", () => done(null)),
+    ]).then((hs) => {
+      handles.push(...hs);
+      void PushNotifications.register();
+    });
+  });
+}
+
 /** Removes this device's subscription (used on sign-out). */
 export async function forgetThisDevice() {
+  if (isNativeApp()) {
+    const endpoint = getRememberedNativeToken();
+    if (endpoint) await removePushSubscription(endpoint).catch(() => {});
+    rememberNativeToken(null);
+    return;
+  }
   try {
     if (!("serviceWorker" in navigator)) return;
     const reg = await navigator.serviceWorker.getRegistration("/");
@@ -47,8 +78,27 @@ export function PushSettings({ vapidPublicKey }: { vapidPublicKey: string | null
   const [state, setState] = useState<State>("loading");
   const [endpoint, setEndpoint] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const [nativeApp] = useState(() => typeof window !== "undefined" && isNativeApp());
 
   const refresh = useCallback(async () => {
+    if (isNativeApp()) {
+      const { PushNotifications } = await import("@capacitor/push-notifications");
+      const perm = await PushNotifications.checkPermissions();
+      if (perm.receive === "denied") return setState("denied");
+      if (perm.receive === "granted") {
+        // re-attach this iPhone to the account currently signed in
+        const token = await registerNative();
+        if (token) {
+          const r = await saveNativePushToken(token, navigator.userAgent);
+          if (r.ok) {
+            rememberNativeToken(r.data.endpoint);
+            setEndpoint(r.data.endpoint);
+            return setState("on");
+          }
+        }
+      }
+      return setState("off");
+    }
     const supported = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
     if (!supported) return setState(isIos() && !isStandalone() ? "ios-browser" : "unsupported");
     if (Notification.permission === "denied") return setState("denied");
@@ -71,6 +121,23 @@ export function PushSettings({ vapidPublicKey }: { vapidPublicKey: string | null
 
   const enable = () =>
     startTransition(async () => {
+      if (isNativeApp()) {
+        const token = await registerNative();
+        if (!token) {
+          const { PushNotifications } = await import("@capacitor/push-notifications");
+          const perm = await PushNotifications.checkPermissions();
+          setState(perm.receive === "denied" ? "denied" : "off");
+          if (perm.receive !== "denied") toast.error("Impossible d'activer les notifications sur cet iPhone.");
+          return;
+        }
+        const r = await saveNativePushToken(token, navigator.userAgent);
+        if (!r.ok) return void toast.error(r.error);
+        rememberNativeToken(r.data.endpoint);
+        setEndpoint(r.data.endpoint);
+        setState("on");
+        toast.success("Notifications activées sur cet iPhone");
+        return;
+      }
       if (!vapidPublicKey) return void toast.error("Les notifications ne sont pas encore configurées sur le serveur.");
       try {
         const permission = await Notification.requestPermission();
@@ -131,6 +198,7 @@ export function PushSettings({ vapidPublicKey }: { vapidPublicKey: string | null
         <p className="text-[14px] text-ink-2">
           Les notifications ont été refusées pour Dogcare. Pour les réactiver : Réglages de l&apos;iPhone → Notifications →
           Dogcare → Autoriser les notifications, puis revenez ici.
+          {nativeApp && " (Réglages → Apps → Dogcare → Notifications sur les versions récentes d'iOS.)"}
         </p>
       )}
       {state === "off" && (
@@ -139,10 +207,10 @@ export function PushSettings({ vapidPublicKey }: { vapidPublicKey: string | null
             Recevez les nouvelles demandes, propositions d&apos;aide, confirmations et annulations même quand l&apos;app est
             fermée. Les préférences ci-dessus s&apos;appliquent aussi.
           </p>
-          <PillButton onClick={enable} loading={pending} disabled={!vapidPublicKey}>
+          <PillButton onClick={enable} loading={pending} disabled={!vapidPublicKey && !nativeApp}>
             <BellRing className="size-4" aria-hidden /> Activer sur cet appareil
           </PillButton>
-          {!vapidPublicKey && <p className="text-[13px] text-ink-3">Configuration serveur en attente.</p>}
+          {!vapidPublicKey && !nativeApp && <p className="text-[13px] text-ink-3">Configuration serveur en attente.</p>}
         </>
       )}
       {state === "on" && (

@@ -4,7 +4,7 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { requireUserId } from "@/server/session";
 import { toUserMessage } from "@/server/errors";
-import { isPushConfigured, sendPushToSubscriptions } from "@/server/push";
+import { isPushConfigured, sendPushToSubscriptions, SUBSCRIPTION_COLUMNS } from "@/server/push";
 import type { ActionResult } from "@/lib/types";
 
 const subscriptionSchema = z.object({
@@ -27,8 +27,19 @@ export async function savePushSubscription(input: unknown, userAgent: string): P
   return { ok: true, data: undefined };
 }
 
+/** Native iOS app: registers the APNs device token of this iPhone. */
+export async function saveNativePushToken(token: string, userAgent: string): Promise<ActionResult<{ endpoint: string }>> {
+  const parsed = z.string().regex(/^[0-9a-fA-F]{64,200}$/).safeParse(token);
+  if (!parsed.success) return { ok: false, error: "Jeton de notification invalide." };
+  await requireUserId();
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("register_native_push", { p_token: parsed.data, p_user_agent: userAgent.slice(0, 300) });
+  if (error) return { ok: false, error: toUserMessage(error) };
+  return { ok: true, data: { endpoint: `apns:${parsed.data.toLowerCase()}` } };
+}
+
 export async function removePushSubscription(endpoint: string): Promise<ActionResult> {
-  const parsed = z.url().max(1000).safeParse(endpoint);
+  const parsed = z.string().min(10).max(1000).safeParse(endpoint);
   if (!parsed.success) return { ok: false, error: "Abonnement invalide." };
   const userId = await requireUserId();
   const supabase = await createClient();
@@ -44,7 +55,7 @@ export async function sendTestPush(endpoint: string): Promise<ActionResult<{ sen
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("push_subscriptions")
-    .select("id, user_id, endpoint, p256dh, auth, failure_count")
+    .select(SUBSCRIPTION_COLUMNS)
     .eq("user_id", userId)
     .eq("endpoint", endpoint);
   if (error) return { ok: false, error: toUserMessage(error) };

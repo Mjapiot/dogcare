@@ -351,6 +351,17 @@ describe("web push", () => {
     expect(await asUser(db, MAX, (tx) => rows(tx, "select endpoint from push_subscriptions"))).toEqual([]);
   });
 
+  it("registers a native iOS device token for the signed-in user", async () => {
+    const token = "a".repeat(64);
+    await asUser(db, EMMA, (tx) => tx.query("select public.register_native_push($1, 'iPhone')", [token]));
+    const mine = await asUser(db, EMMA, (tx) => rows<{ endpoint: string; platform: string }>(tx, "select endpoint, platform from push_subscriptions where platform = 'ios'"));
+    expect(mine).toEqual([{ endpoint: `apns:${token}`, platform: "ios" }]);
+    await expect(asUser(db, EMMA, (tx) => tx.query("select public.register_native_push('not-a-token')"))).rejects.toThrow(/invalide/);
+    await expect(
+      db.query("insert into push_subscriptions (user_id, endpoint, platform) values ($1, 'https://x', 'web')", [EMMA]),
+    ).rejects.toThrow(/push_subscriptions_web_keys/);
+  });
+
   it("rejects malformed subscriptions", async () => {
     await expect(
       asUser(db, EMMA, (tx) => tx.query("select public.register_push_subscription('http://insecure', 'x', 'y')")),
