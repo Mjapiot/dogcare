@@ -53,17 +53,17 @@ export function isPushConfigured(): boolean {
   return isWebPushConfigured() || isApnsConfigured();
 }
 
-type SendOutcome = { status: "ok" | "gone" | "error"; apnsEnvironment?: ApnsEnvironment | null };
+type SendOutcome = { status: "ok" | "gone" | "error"; apnsEnvironment?: ApnsEnvironment | null; reason?: string };
 
 async function sendToSubscription(sub: SubscriptionRow, payload: PushPayload): Promise<SendOutcome> {
   if (sub.platform === "ios") {
-    if (!isApnsConfigured()) return { status: "error" };
+    if (!isApnsConfigured()) return { status: "error", reason: "APNs non configuré (variables APNS_*)" };
     const token = sub.endpoint.replace(/^apns:/, "");
     try {
-      const { result, environment } = await sendApns(token, payload, sub.apns_environment);
-      return { status: result === "ok" ? "ok" : result === "gone" ? "gone" : "error", apnsEnvironment: environment };
-    } catch {
-      return { status: "error" };
+      const { result, environment, reason } = await sendApns(token, payload, sub.apns_environment);
+      return { status: result === "ok" ? "ok" : result === "gone" ? "gone" : "error", apnsEnvironment: environment, reason };
+    } catch (error) {
+      return { status: "error", reason: error instanceof Error ? error.message : "unknown" };
     }
   }
   if (!configureVapid() || !sub.p256dh || !sub.auth) return { status: "error" };
@@ -166,8 +166,13 @@ export function schedulePushDispatch() {
 /** Sends a test push to the current user's own devices (no secret key needed). */
 export async function sendPushToSubscriptions(subs: SubscriptionRow[], payload: PushPayload) {
   let sent = 0;
-  for (const sub of subs) if ((await sendToSubscription(sub, payload)).status === "ok") sent++;
-  return { sent, total: subs.length };
+  const reasons: string[] = [];
+  for (const sub of subs) {
+    const outcome = await sendToSubscription(sub, payload);
+    if (outcome.status === "ok") sent++;
+    else if (outcome.reason) reasons.push(outcome.reason);
+  }
+  return { sent, total: subs.length, reasons };
 }
 
 export { SUBSCRIPTION_COLUMNS };

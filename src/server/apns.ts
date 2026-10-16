@@ -42,8 +42,9 @@ function providerToken(): string {
 }
 
 export type ApnsResult = "ok" | "gone" | "wrong-environment" | "error";
+type ApnsResponse = { result: ApnsResult; reason: string };
 
-function request(session: ClientHttp2Session, deviceToken: string, payload: PushPayload): Promise<ApnsResult> {
+function request(session: ClientHttp2Session, deviceToken: string, payload: PushPayload, token: string): Promise<ApnsResponse> {
   return new Promise((resolve) => {
     const body = JSON.stringify({
       aps: {
@@ -56,7 +57,7 @@ function request(session: ClientHttp2Session, deviceToken: string, payload: Push
     const req = session.request({
       [constants.HTTP2_HEADER_METHOD]: "POST",
       [constants.HTTP2_HEADER_PATH]: `/3/device/${deviceToken}`,
-      authorization: `bearer ${providerToken()}`,
+      authorization: `bearer ${token}`,
       "apns-topic": process.env.APNS_BUNDLE_ID ?? "app.dogcare.ios",
       "apns-push-type": "alert",
       "apns-priority": "10",
@@ -71,19 +72,21 @@ function request(session: ClientHttp2Session, deviceToken: string, payload: Push
     });
     req.on("data", (chunk) => (data += chunk));
     req.on("end", () => {
-      if (status === 200) return resolve("ok");
+      if (status === 200) return resolve({ result: "ok", reason: "" });
       let reason = "";
       try {
         reason = (JSON.parse(data) as { reason?: string }).reason ?? "";
       } catch {
         // empty body
       }
-      if (status === 410 || reason === "Unregistered") return resolve("gone");
-      if (reason === "BadDeviceToken" || reason === "BadEnvironmentKeyInToken") return resolve("wrong-environment");
+      if (status === 410 || reason === "Unregistered") return resolve({ result: "gone", reason: reason || "Unregistered" });
+      if (reason === "BadDeviceToken" || reason === "BadEnvironmentKeyInToken") {
+        return resolve({ result: "wrong-environment", reason });
+      }
       console.error("[dogcare] apns error", status, reason);
-      resolve("error");
+      resolve({ result: "error", reason: `${status} ${reason}`.trim() });
     });
-    req.on("error", () => resolve("error"));
+    req.on("error", (e) => resolve({ result: "error", reason: `network: ${e.message}` }));
     req.end(body);
   });
 }
@@ -97,17 +100,26 @@ export async function sendApns(
   deviceToken: string,
   payload: PushPayload,
   known: ApnsEnvironment | null,
-): Promise<{ result: ApnsResult; environment: ApnsEnvironment | null }> {
+): Promise<{ result: ApnsResult; environment: ApnsEnvironment | null; reason: string }> {
+  let token: string;
+  try {
+    token = providerToken();
+  } catch {
+    // APNS_PRIVATE_KEY is not a valid .p8 key
+    return { result: "error", environment: known, reason: "InvalidPrivateKey (APNS_PRIVATE_KEY)" };
+  }
   const order: ApnsEnvironment[] = known === "sandbox" ? ["sandbox", "production"] : ["production", "sandbox"];
+  const reasons: string[] = [];
   for (const env of order) {
     const session = connect(HOSTS[env]);
     session.on("error", () => {});
     try {
-      const result = await request(session, deviceToken, payload);
-      if (result !== "wrong-environment") return { result, environment: result === "ok" ? env : known };
+      const { result, reason } = await request(session, deviceToken, payload, token);
+      if (result !== "wrong-environment") return { result, environment: result === "ok" ? env : known, reason };
+      reasons.push(`${env}: ${reason}`);
     } finally {
       session.close();
     }
   }
-  return { result: "gone", environment: known };
+  return { result: "gone", environment: known, reason: reasons.join(", ") };
 }
