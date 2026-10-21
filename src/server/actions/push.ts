@@ -70,8 +70,9 @@ export async function sendTestPush(endpoint: string): Promise<ActionResult<{ sen
     tag: "test",
   });
   if (result.sent === 0) {
-    const detail = result.reasons.length ? ` (${result.reasons.join(" ; ")})` : "";
-    return { ok: false, error: `L'envoi a échoué${detail}. Désactivez puis réactivez les notifications.` };
+    // technical details stay in the server logs (Vercel), never on screen
+    console.error("[dogcare] test push failed", result.reasons.join(" ; "));
+    return { ok: false, error: "L'envoi a échoué. Désactivez puis réactivez les notifications, ou réessayez plus tard." };
   }
   return { ok: true, data: { sent: result.sent } };
 }

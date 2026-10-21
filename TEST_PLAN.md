@@ -59,8 +59,8 @@ Safari iOS puis PWA installée (Partager → « Sur l'écran d'accueil »).
 | --- | --- | --- | --- |
 | 1 | Build simulateur (`xcodebuild … -sdk iphonesimulator`) | BUILD SUCCEEDED | ✅ |
 | 2 | Lancement dans le simulateur | écran de connexion de production, encoche et barre d'état respectées | ✅ |
-| 3 | Installation sur iPhone via Xcode (signature équipe G2SC6845GS) | l'app s'installe et s'ouvre | ⏳ |
-| 4 | Profil → Activer les notifications → Tester | notification native reçue (nécessite les variables APNS_*) | ⏳ |
+| 3 | Installation sur iPhone (TestFlight) | l'app s'installe et s'ouvre | ✅ |
+| 4 | Profil → Activer les notifications → Tester | notification native reçue (nécessite les variables APNS_*) | ✅ 2026-10-21 (TestFlight) |
 | 5 | Lien d'invitation ouvert depuis Mail/Messages | s'ouvre dans l'app, pas dans Safari | ⏳ |
 | 6 | Mode avion au lancement | page « Vous êtes hors ligne » embarquée | ⏳ |
 | 7 | Partager une invitation / relancer | feuille de partage iOS native | ⏳ |

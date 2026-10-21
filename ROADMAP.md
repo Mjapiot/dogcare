@@ -17,6 +17,7 @@
 - [x] PWA : manifeste, icônes, service worker minimal, page hors ligne, aide à l'installation iPhone
 - [x] App iPhone native (Capacitor) : notifications APNs, liens universels, partage natif, hors ligne
 - [x] App iPhone sur TestFlight (version 1.0 build 1)
+- [x] Notification native (APNs) reçue sur iPhone via TestFlight — 2026-10-21
 - [x] Code de groupe permanent, compte de démonstration, pages confidentialité et assistance
 - [ ] Préparer le compte de démonstration (`npm run demo:seed`) et renseigner `SUPPORT_EMAIL`
 - [x] RLS complète testée, tests unitaires et base de données
