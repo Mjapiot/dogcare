@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getMyGroups, getProfile, requireUserId } from "@/server/session";
+import { safeRedirectPath } from "@/lib/safe-redirect";
 import { NameForm } from "./name-form";
 
 export const metadata: Metadata = { title: "Bienvenue" };
@@ -8,7 +9,7 @@ export const metadata: Metadata = { title: "Bienvenue" };
 export default async function OnboardingPage({ searchParams }: PageProps<"/onboarding">) {
   await requireUserId();
   const params = await searchParams;
-  const next = typeof params.next === "string" && params.next.startsWith("/") ? params.next : null;
+  const next = params.next === undefined ? null : safeRedirectPath(params.next);
   const profile = await getProfile();
   const groups = await getMyGroups();
   const afterName = next ?? (groups.length ? "/" : "/onboarding/group");

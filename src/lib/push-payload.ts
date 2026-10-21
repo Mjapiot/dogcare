@@ -29,3 +29,20 @@ export function urlBase64ToUint8Array(base64: string): Uint8Array<ArrayBuffer> {
   for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
   return out;
 }
+
+const PUSH_SERVICE_HOSTS = [
+  /^fcm\.googleapis\.com$/, // Chrome, Edge (Chromium), Android
+  /^updates\.push\.services\.mozilla\.com$/, // Firefox
+  /^web\.push\.apple\.com$/, // Safari / iOS home-screen apps
+  /^[a-z0-9-]+\.notify\.windows\.com$/, // legacy Edge / Windows
+];
+
+/** Only well-known push services may receive server-side requests. */
+export function isAllowedPushEndpoint(endpoint: string): boolean {
+  try {
+    const url = new URL(endpoint);
+    return url.protocol === "https:" && !url.port && PUSH_SERVICE_HOSTS.some((re) => re.test(url.hostname));
+  } catch {
+    return false;
+  }
+}

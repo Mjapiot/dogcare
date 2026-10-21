@@ -2,15 +2,16 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getUserId } from "@/server/session";
 import { getSupabaseEnv } from "@/lib/env";
+import { safeRedirectPath } from "@/lib/safe-redirect";
 import { LoginForm } from "./login-form";
 
 export const metadata: Metadata = { title: "Connexion" };
 
 export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   const params = await searchParams;
-  const next = typeof params.next === "string" ? params.next : "/";
+  const next = safeRedirectPath(params.next);
   const configured = Boolean(getSupabaseEnv());
-  if (configured && (await getUserId())) redirect(next.startsWith("/") ? next : "/");
+  if (configured && (await getUserId())) redirect(next);
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col px-5 pt-safe pb-safe">

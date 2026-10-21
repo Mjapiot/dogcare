@@ -4,11 +4,10 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { codeSchema, emailSchema } from "@/lib/validation";
+import { safeRedirectPath } from "@/lib/safe-redirect";
 import type { ActionResult } from "@/lib/types";
 
-function safeNext(next: unknown): string {
-  return typeof next === "string" && next.startsWith("/") && !next.startsWith("//") ? next : "/";
-}
+const safeNext = (next: unknown) => safeRedirectPath(next);
 
 export async function sendLoginCode(input: { email: string; next?: string }): Promise<ActionResult> {
   const parsed = emailSchema.safeParse({ email: input.email.trim().toLowerCase() });

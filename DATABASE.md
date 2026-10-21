@@ -12,6 +12,7 @@ déjà appliquée : en créer une nouvelle (`YYYYMMDDHHMMSS_description.sql`).
 | `…120300_storage_realtime.sql` | bucket `dog-photos` + politiques, publication temps réel |
 | `20261016090000_web_push.sql` | état d'envoi push des notifications, RPC d'abonnement et de distribution |
 | `20261016120000_native_push.sql` | appareils iOS natifs (`platform = 'ios'`, jeton APNs), RPC `register_native_push` |
+| `20261021090000_review_fixes_departures.sql` | suppression de groupe avec demandes, retrait des engagements d'un membre qui part ou supprime son compte, écritures directes interdites sur `push_subscriptions` |
 
 ## Tables
 
@@ -31,7 +32,7 @@ déjà appliquée : en créer une nouvelle (`YYYYMMDDHHMMSS_description.sql`).
 | `care_assignments` | gardes confirmées | **contrainte d'exclusion** : deux gardes non annulées d'une même demande ne se chevauchent jamais (`tstzrange [)`) ; statut `confirmed` / `pending_reconfirmation` / `cancelled` |
 | `notifications` | notifications internes | écrites uniquement par la base |
 | `notification_preferences` | préférences | absence de ligne = tout activé |
-| `push_subscriptions` | appareils abonnés aux notifications push | un appareil (endpoint) appartient au compte connecté dessus ; supprimé après 404/410 ou 5 échecs |
+| `push_subscriptions` | appareils abonnés aux notifications push | écriture uniquement via `register_push_subscription` / `register_native_push` (le client ne peut que lire et supprimer ses appareils) ; format d'adresse contrôlé en base ; le serveur n'appelle que des services connus (FCM, Apple, Mozilla, Windows) |
 | `audit_events` | journal des événements critiques | aucun accès client |
 
 Écarts assumés par rapport au schéma initial proposé :
@@ -77,6 +78,9 @@ droits ; les erreurs métier sont levées en français avec le code `P0001`.
 - Demande annulée → gardes annulées, gardiens et volontaires prévenus.
 - Horaires/type modifiés → gardes impactées en reconfirmation (ou annulées si hors période), réponses
   remises à zéro, notifications.
+- Départ d'un membre (il quitte, est retiré, ou supprime son compte) : ses gardes **futures** sont annulées,
+  ses réponses aux demandes à venir retirées et les responsables du chien notifiés ; l'historique passé est conservé.
+- Supprimer un groupe supprime ses demandes (un chien ne peut toujours pas être retiré d'un groupe où il a des demandes).
 - Garde-fous : un groupe garde toujours un admin (promotion automatique si le dernier supprime son compte),
   un groupe vide est supprimé, un chien garde un responsable (archivé si le dernier supprime son compte).
 

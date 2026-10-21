@@ -6,6 +6,7 @@ import { requireUserId } from "@/server/session";
 import { toUserMessage } from "@/server/errors";
 import { isPushConfigured, sendPushToSubscriptions, SUBSCRIPTION_COLUMNS } from "@/server/push";
 import type { ActionResult } from "@/lib/types";
+import { isAllowedPushEndpoint } from "@/lib/push-payload";
 
 const subscriptionSchema = z.object({
   endpoint: z.url().startsWith("https://").max(1000),
@@ -14,7 +15,9 @@ const subscriptionSchema = z.object({
 
 export async function savePushSubscription(input: unknown, userAgent: string): Promise<ActionResult> {
   const parsed = subscriptionSchema.safeParse(input);
-  if (!parsed.success) return { ok: false, error: "Abonnement aux notifications invalide." };
+  if (!parsed.success || !isAllowedPushEndpoint(parsed.data.endpoint)) {
+    return { ok: false, error: "Ce navigateur utilise un service de notifications non pris en charge." };
+  }
   await requireUserId();
   const supabase = await createClient();
   const { error } = await supabase.rpc("register_push_subscription", {

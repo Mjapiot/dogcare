@@ -3,7 +3,7 @@ import { after } from "next/server";
 import webpush, { WebPushError, type PushSubscription } from "web-push";
 import { createClient as createAdminClient, type SupabaseClient } from "@supabase/supabase-js";
 import { getSupabaseEnv } from "@/lib/env";
-import { buildPushPayload, type PushNotificationInput, type PushPayload } from "@/lib/push-payload";
+import { buildPushPayload, isAllowedPushEndpoint, type PushNotificationInput, type PushPayload } from "@/lib/push-payload";
 import { isApnsConfigured, sendApns, type ApnsEnvironment } from "@/server/apns";
 
 type SubscriptionRow = {
@@ -66,6 +66,8 @@ async function sendToSubscription(sub: SubscriptionRow, payload: PushPayload): P
       return { status: "error", reason: error instanceof Error ? error.message : "unknown" };
     }
   }
+  // never call an address that is not a known push service (SSRF guard)
+  if (!isAllowedPushEndpoint(sub.endpoint)) return { status: "gone", reason: "unsupported push service" };
   if (!configureVapid() || !sub.p256dh || !sub.auth) return { status: "error" };
   const target: PushSubscription = { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } };
   try {

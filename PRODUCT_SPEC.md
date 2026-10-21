@@ -61,6 +61,11 @@ plusieurs personnes. Durée maximale : 31 jours.
   et les personnes concernées invitées à répondre à nouveau.
 - Changement de précisions : les gardiens sont informés.
 
+### Départ d'un membre
+
+Si un gardien quitte le groupe, en est retiré ou supprime son compte, ses gardes à venir sont annulées
+et le propriétaire est prévenu : le jour redevient « à organiser » au lieu de rester faussement couvert.
+
 ## Réponses
 
 Oui / Non / Pas encore répondu. Pour une garde partageable de plus de 4 h, un volontaire peut proposer

@@ -3,17 +3,21 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { isNativeApp } from "@/lib/native";
+import { safeRedirectPath } from "@/lib/safe-redirect";
 
 const APP_HOST = "dogcare-gamma.vercel.app";
 
 /** In-app path for a universal link or a notification URL, or null. */
 function toInAppPath(raw: string | undefined | null): string | null {
   if (!raw) return null;
-  if (raw.startsWith("/") && !raw.startsWith("//")) return raw;
+  if (raw.startsWith("/")) {
+    const path = safeRedirectPath(raw, "");
+    return path || null;
+  }
   try {
     const url = new URL(raw);
     if (url.host !== APP_HOST && url.host !== window.location.host) return null;
-    return `${url.pathname}${url.search}`;
+    return safeRedirectPath(`${url.pathname}${url.search}`, "") || null;
   } catch {
     return null;
   }
