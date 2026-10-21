@@ -2,6 +2,7 @@ import "server-only";
 import { connect, constants, type ClientHttp2Session } from "node:http2";
 import { createPrivateKey, sign } from "node:crypto";
 import type { PushPayload } from "@/lib/push-payload";
+import { normalizeP8Key } from "@/lib/apns-key";
 
 /**
  * Apple Push Notification service (token-based auth, HTTP/2).
@@ -30,7 +31,7 @@ function providerToken(): string {
   if (cachedJwt && now - cachedJwt.issuedAt < 50 * 60) return cachedJwt.token;
   const keyId = process.env.APNS_KEY_ID!;
   const teamId = process.env.APNS_TEAM_ID!;
-  const pem = process.env.APNS_PRIVATE_KEY!.replace(/\\n/g, "\n");
+  const pem = normalizeP8Key(process.env.APNS_PRIVATE_KEY!);
   const header = base64url(JSON.stringify({ alg: "ES256", kid: keyId }));
   const claims = base64url(JSON.stringify({ iss: teamId, iat: now }));
   const signature = sign("sha256", Buffer.from(`${header}.${claims}`), {
