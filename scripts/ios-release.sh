@@ -15,7 +15,7 @@ ARCHIVE=build/Dogcare.xcarchive
 DESTINATION=export
 [[ "${1:-}" == "--upload" ]] && DESTINATION=upload
 
-(cd ../.. && CAP_SERVER_URL= npx cap sync ios >/dev/null)
+(cd ../.. && env -u CAP_SERVER_URL npx cap sync ios >/dev/null)
 grep -q '"url": "https://dogcare-gamma.vercel.app"' App/capacitor.config.json || {
   echo "capacitor.config.json does not point to production" >&2; exit 1; }
 

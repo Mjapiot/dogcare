@@ -5,7 +5,9 @@ import type { CapacitorConfig } from "@capacitor/cli";
  * server for auth and actions) and adds native capabilities through plugins.
  * For local development: CAP_SERVER_URL=http://localhost:3000 npx cap run ios
  */
-const serverUrl = process.env.CAP_SERVER_URL ?? "https://dogcare-gamma.vercel.app";
+const PRODUCTION_URL = "https://dogcare-gamma.vercel.app";
+// an empty or unset variable always means production
+const serverUrl = process.env.CAP_SERVER_URL?.trim() || PRODUCTION_URL;
 
 const config: CapacitorConfig = {
   appId: "app.dogcare.ios",
