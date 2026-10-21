@@ -196,3 +196,174 @@ describe("push endpoints can only be registered through validated functions", ()
     ).rejects.toThrow(/push_subscriptions_endpoint_format/);
   });
 });
+
+async function respond(helper: string, requestId: string, from?: string, to?: string) {
+  await asUser(db, helper, (tx) =>
+    tx.query(
+      "insert into request_responses (request_id, response_status, proposed_starts_at, proposed_ends_at) values ($1, 'yes', $2, $3)",
+      [requestId, from ?? null, to ?? null],
+    ),
+  );
+}
+
+async function moveRequestToPast(requestId: string) {
+  await db.exec(`
+    alter table care_requests disable trigger care_requests_before;
+    alter table care_requests disable trigger care_requests_after_update;
+    update care_requests set starts_at = now() - interval '3 days', ends_at = now() - interval '2 days' where id = '${requestId}';
+    alter table care_requests enable trigger care_requests_before;
+    alter table care_requests enable trigger care_requests_after_update;
+  `);
+}
+
+describe("notification preferences only control push, never the in-app bell", () => {
+  it("a helper who disabled confirmations still sees the reconfirmation request", async () => {
+    const s = await scenario(1);
+    const [emma] = s.helpers;
+    await confirmHelper(s, emma);
+    await asUser(db, emma, (tx) =>
+      tx.query("insert into notification_preferences (confirmations_enabled, cancellations_enabled) values (false, false)"),
+    );
+    await asUser(db, s.owner, (tx) => tx.query("update care_requests set ends_at = $2 where id = $1", [s.requestId, inDays(3, 15)]));
+    const n = await rows<{ push_state: string }>(
+      db,
+      "select push_state from notifications where user_id = $1 and notification_type = 'reconfirmation_needed'",
+      [emma],
+    );
+    expect(n).toEqual([{ push_state: "skipped" }]);
+  });
+
+  it("enabled preferences still lead to a push", async () => {
+    const s = await scenario(1);
+    const [emma] = s.helpers;
+    const n = await rows<{ push_state: string }>(
+      db,
+      "select push_state from notifications where user_id = $1 and notification_type = 'new_request'",
+      [emma],
+    );
+    expect(n).toEqual([{ push_state: "pending" }]);
+  });
+});
+
+describe("a helper with two slots on the same request", () => {
+  it("can cancel one slot and keep the other", async () => {
+    const s = await scenario(1);
+    const [emma] = s.helpers;
+    await respond(emma, s.requestId);
+    await asUser(db, s.owner, (tx) =>
+      tx.query("select public.confirm_assignment($1, $2, $3, $4)", [s.requestId, emma, inDays(3, 8), inDays(3, 10)]),
+    );
+    await asUser(db, s.owner, (tx) =>
+      tx.query("select public.confirm_assignment($1, $2, $3, $4)", [s.requestId, emma, inDays(3, 14), inDays(3, 16)]),
+    );
+    const [first] = await rows<{ id: string }>(db, "select id from care_assignments where request_id = $1 order by starts_at", [s.requestId]);
+    await asUser(db, emma, (tx) => tx.query("select public.cancel_assignment($1)", [first.id]));
+    const live = await rows(db, "select id from care_assignments where request_id = $1 and status = 'confirmed'", [s.requestId]);
+    expect(live).toHaveLength(1);
+    const r = await one<{ response_status: string }>(db, "select response_status from request_responses where request_id = $1", [s.requestId]);
+    expect(r.response_status).toBe("yes");
+
+    const remaining = await one<{ id: string }>(db, "select id from care_assignments where request_id = $1 and status = 'confirmed'", [s.requestId]);
+    await asUser(db, emma, (tx) => tx.query("select public.cancel_assignment($1)", [remaining.id]));
+    const after = await one<{ response_status: string }>(db, "select response_status from request_responses where request_id = $1", [s.requestId]);
+    expect(after.response_status).toBe("no");
+  });
+});
+
+describe("response integrity", () => {
+  it("an answer cannot be moved to another request", async () => {
+    const s = await scenario(1);
+    const [emma] = s.helpers;
+    await respond(emma, s.requestId);
+    const other = (
+      await asUser(db, s.owner, (tx) =>
+        one<{ id: string }>(
+          tx,
+          "insert into care_requests (group_id, dog_id, request_type, necessity, starts_at, ends_at) values ($1, $2, 'care', 'required', $3, $4) returning id",
+          [s.groupId, s.dogId, inDays(5, 8), inDays(5, 20)],
+        ),
+      )
+    ).id;
+    await expect(
+      asUser(db, emma, (tx) => tx.query("update request_responses set request_id = $1 where request_id = $2", [other, s.requestId])),
+    ).rejects.toThrow(/ne peut pas être déplacée/);
+  });
+
+  it("a confirmed helper cannot shrink their offer below their assignment", async () => {
+    const s = await scenario(1);
+    const [emma] = s.helpers;
+    await respond(emma, s.requestId, inDays(3, 10), inDays(3, 14));
+    await asUser(db, s.owner, (tx) => tx.query("select public.confirm_assignment($1, $2)", [s.requestId, emma]));
+    await expect(
+      asUser(db, emma, (tx) =>
+        tx.query("update request_responses set proposed_starts_at = $2, proposed_ends_at = $3 where request_id = $1", [
+          s.requestId,
+          inDays(3, 11),
+          inDays(3, 12),
+        ]),
+      ),
+    ).rejects.toThrow(/garde confirmée/);
+  });
+
+  it("a period change keeps the assignee's offer inside the new period", async () => {
+    const s = await scenario(1);
+    const [emma] = s.helpers;
+    await respond(emma, s.requestId, inDays(3, 10), inDays(3, 14));
+    await asUser(db, s.owner, (tx) => tx.query("select public.confirm_assignment($1, $2)", [s.requestId, emma]));
+    await asUser(db, s.owner, (tx) => tx.query("update care_requests set ends_at = $2 where id = $1", [s.requestId, inDays(3, 12)]));
+    const r = await one<{ proposed_ends_at: Date }>(db, "select proposed_ends_at from request_responses where request_id = $1", [s.requestId]);
+    expect(new Date(r.proposed_ends_at).toISOString()).toBe(inDays(3, 12));
+  });
+});
+
+describe("request changes", () => {
+  it("an information that becomes a real need is announced to the group", async () => {
+    const s = await scenario(1);
+    const [emma] = s.helpers;
+    const info = (
+      await asUser(db, s.owner, (tx) =>
+        one<{ id: string }>(
+          tx,
+          "insert into care_requests (group_id, dog_id, request_type, necessity, starts_at, ends_at) values ($1, $2, 'alone_info', 'info', $3, $4) returning id",
+          [s.groupId, s.dogId, inDays(6, 8), inDays(6, 18)],
+        ),
+      )
+    ).id;
+    expect(await rows(db, "select id from notifications where user_id = $1 and request_id = $2", [emma, info])).toEqual([]);
+    await asUser(db, s.owner, (tx) =>
+      tx.query("update care_requests set request_type = 'visit', necessity = 'nice_to_have' where id = $1", [info]),
+    );
+    const n = await rows(db, "select id from notifications where user_id = $1 and request_id = $2 and notification_type = 'new_request'", [emma, info]);
+    expect(n).toHaveLength(1);
+  });
+
+  it("a request cannot become non-splittable while it has partial assignments", async () => {
+    const s = await scenario(1);
+    const [emma] = s.helpers;
+    await respond(emma, s.requestId, inDays(3, 10), inDays(3, 14));
+    await asUser(db, s.owner, (tx) => tx.query("select public.confirm_assignment($1, $2)", [s.requestId, emma]));
+    await expect(
+      asUser(db, s.owner, (tx) => tx.query("update care_requests set splittable = false where id = $1", [s.requestId])),
+    ).rejects.toThrow(/gardes partielles/);
+  });
+
+  it("partial offers are reset (and their authors told) when a request becomes non-splittable", async () => {
+    const s = await scenario(1);
+    const [emma] = s.helpers;
+    await respond(emma, s.requestId, inDays(3, 10), inDays(3, 14));
+    await asUser(db, s.owner, (tx) => tx.query("update care_requests set splittable = false where id = $1", [s.requestId]));
+    expect(await rows(db, "select id from request_responses where request_id = $1", [s.requestId])).toEqual([]);
+    const n = await rows(db, "select id from notifications where user_id = $1 and request_id = $2 and notification_type = 'response_reset'", [emma, s.requestId]);
+    expect(n).toHaveLength(1);
+  });
+
+  it("a past request can no longer be confirmed", async () => {
+    const s = await scenario(1);
+    const [emma] = s.helpers;
+    await respond(emma, s.requestId);
+    await moveRequestToPast(s.requestId);
+    await expect(
+      asUser(db, s.owner, (tx) => tx.query("select public.confirm_assignment($1, $2)", [s.requestId, emma])),
+    ).rejects.toThrow(/terminée/);
+  });
+});

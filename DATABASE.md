@@ -12,6 +12,7 @@ déjà appliquée : en créer une nouvelle (`YYYYMMDDHHMMSS_description.sql`).
 | `…120300_storage_realtime.sql` | bucket `dog-photos` + politiques, publication temps réel |
 | `20261016090000_web_push.sql` | état d'envoi push des notifications, RPC d'abonnement et de distribution |
 | `20261016120000_native_push.sql` | appareils iOS natifs (`platform = 'ios'`, jeton APNs), RPC `register_native_push` |
+| `20261021100000_review_fixes_rules.sql` | préférences limitées au push, annulation d'un créneau parmi plusieurs, intégrité des réponses, information devenue besoin annoncée, passage en non partageable contrôlé, confirmation impossible sur une demande terminée |
 | `20261021090000_review_fixes_departures.sql` | suppression de groupe avec demandes, retrait des engagements d'un membre qui part ou supprime son compte, écritures directes interdites sur `push_subscriptions` |
 
 ## Tables

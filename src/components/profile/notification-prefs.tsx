@@ -43,7 +43,8 @@ export function NotificationPrefs({ initial }: { initial: NotificationPreference
         ))}
       </ul>
       <p className="px-1 text-[13px] text-ink-3">
-        S&apos;applique à la cloche de l&apos;application et aux notifications sur vos appareils.
+        Choisissez ce qui vous est envoyé sur vos appareils. La cloche de l&apos;application affiche toujours tout,
+        pour ne jamais manquer une garde qui vous concerne.
       </p>
     </div>
   );

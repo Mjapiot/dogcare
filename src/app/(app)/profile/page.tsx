@@ -93,7 +93,7 @@ export default async function ProfilePage() {
       </section>
 
       <section className="flex flex-col gap-3">
-        <SectionTitle>Notifications</SectionTitle>
+        <SectionTitle>Quelles notifications recevoir ?</SectionTitle>
         <NotificationPrefs initial={prefs} />
       </section>
 

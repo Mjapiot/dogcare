@@ -60,6 +60,10 @@ plusieurs personnes. Durée maximale : 31 jours.
   période est annulée avec notification. Les réponses données pour l'ancienne période sont remises à zéro
   et les personnes concernées invitées à répondre à nouveau.
 - Changement de précisions : les gardiens sont informés.
+- Une information (« Chien seul ») qui devient un besoin réel est annoncée au groupe comme une nouvelle demande.
+- Passer une demande en « non partageable » est refusé si des gardes partielles sont déjà confiées ;
+  les propositions partielles sont remises à zéro et leurs auteurs prévenus.
+- Une demande terminée ne peut plus recevoir de confirmation.
 
 ### Départ d'un membre
 
@@ -68,9 +72,13 @@ et le propriétaire est prévenu : le jour redevient « à organiser » au lieu 
 
 ## Réponses
 
+Une réponse reste attachée à sa demande (elle ne peut pas être déplacée). La proposition d'un gardien
+confirmé inclut toujours sa garde ; si la période change, elle est ramenée dans la nouvelle période.
+
 Oui / Non / Pas encore répondu. Pour une garde partageable de plus de 4 h, un volontaire peut proposer
 une partie seulement. Un gardien confirmé ne peut pas passer à « Non » : il doit annuler explicitement
-sa garde (le propriétaire est alors prévenu et son « Oui » est retiré).
+sa garde (le propriétaire est alors prévenu). Son « Oui » n'est retiré que lorsqu'il n'a plus aucun
+créneau confié sur la demande.
 
 ## Confirmation
 
@@ -125,7 +133,7 @@ aider : alerte rouge, modification, relance via partage), F (garde annulée : re
   de mes groupes.
 - **« Relancer »** ouvre la feuille de partage du téléphone avec un message et le lien de la demande
   (pas de notification cachée).
-- **Notifications push** : chaque notification de la cloche est aussi envoyée sur les appareils où
-  l'utilisateur les a activées (Profil). Mêmes préférences pour les deux canaux.
+- **Notifications** : tout s'affiche toujours dans la cloche ; les préférences du Profil ne règlent que
+  l'envoi push sur les appareils où l'utilisateur l'a activé.
 - Les gardes d'un même gardien sur deux chiens en même temps ne sont pas bloquées (il peut promener deux
   chiens) ; la détection existe (`findAssignmentConflicts`) pour un affichage futur.
