@@ -83,7 +83,7 @@ export function DogManage({
                   type="button"
                   disabled={pending}
                   onClick={() => run(() => removeCaretaker(dogId, c.userId), "Responsable retiré")}
-                  className="flex size-10 items-center justify-center rounded-full hover:bg-surface-2"
+                  className="flex size-11 items-center justify-center rounded-full hover:bg-surface-2"
                   aria-label={`Retirer ${c.name} des responsables`}
                 >
                   <X className="size-4" aria-hidden />

@@ -56,7 +56,7 @@ export function InstallHint({ always = false }: { always?: boolean }) {
             }
             setClosed(true);
           }}
-          className="absolute top-2 right-2 flex size-10 items-center justify-center rounded-full hover:bg-black/5"
+          className="absolute top-2 right-2 flex size-11 items-center justify-center rounded-full hover:bg-black/5"
         >
           <X className="size-4" aria-hidden />
         </button>

@@ -28,13 +28,14 @@ type Props = {
  */
 export function ResponseButtons({ requestId, current, period, splittable, proposed, locked, size = "md" }: Props) {
   const router = useRouter();
-  const [value, setValue] = useState(current);
+  // optimistic choice, ignored as soon as the server sends a different answer
+  const [optimistic, setOptimistic] = useState<{ value: "yes" | "no"; base: typeof current } | null>(null);
+  const value = optimistic && optimistic.base === current ? optimistic.value : current;
   const [pending, startTransition] = useTransition();
   const [partOpen, setPartOpen] = useState(false);
 
   const send = (status: "yes" | "no", part?: { start: number; end: number } | null, note?: string) => {
-    const previous = value;
-    setValue(status);
+    setOptimistic({ value: status, base: current });
     startTransition(async () => {
       const result = await respondToRequest({
         requestId,
@@ -44,7 +45,7 @@ export function ResponseButtons({ requestId, current, period, splittable, propos
         note: note ?? "",
       });
       if (!result.ok) {
-        setValue(previous);
+        setOptimistic(null);
         toast.error(result.error);
         return;
       }
@@ -87,20 +88,22 @@ export function ResponseButtons({ requestId, current, period, splittable, propos
         <button
           type="button"
           onClick={() => setPartOpen(true)}
-          className="inline-flex min-h-9 items-center gap-1.5 self-start text-[14px] font-medium text-ink-2 underline-offset-2 hover:underline"
+          className="inline-flex min-h-11 items-center gap-1.5 self-start text-[14px] font-medium text-ink-2 underline-offset-2 hover:underline"
         >
           <Scissors className="size-4" aria-hidden />
           {proposed && value === "yes" ? `Proposé : ${formatPeriod(proposed.start, proposed.end)}` : "Je peux seulement une partie"}
         </button>
       )}
-      <PartialOfferSheet
-        open={partOpen}
+      {partOpen && (
+        <PartialOfferSheet
+          open={partOpen}
         onOpenChange={setPartOpen}
         period={period}
         initial={proposed ?? null}
         pending={pending}
-        onSubmit={(part, note) => send("yes", part, note)}
-      />
+          onSubmit={(part, note) => send("yes", part, note)}
+        />
+      )}
     </div>
   );
 }

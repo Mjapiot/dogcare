@@ -367,3 +367,51 @@ describe("request changes", () => {
     ).rejects.toThrow(/terminée/);
   });
 });
+
+describe("push retries and retention", () => {
+  const asService = <T,>(fn: (tx: import("./harness").Tx) => Promise<T>) =>
+    db.transaction(async (tx) => {
+      await tx.exec("set local role service_role");
+      return fn(tx);
+    });
+
+  it("a released notification is retried later, and given up after 5 attempts", async () => {
+    const s = await scenario(0);
+    await db.query("insert into notifications (user_id, notification_type, title) values ($1, 'member_joined', 'retry-me')", [s.owner]);
+    const claim = () => asService((tx) => rows<{ id: string; title: string }>(tx, "select * from public.claim_push_batch(500)"));
+    const mine = async () => (await claim()).filter((n) => n.title === "retry-me");
+
+    const [first] = await mine();
+    await asService((tx) => tx.query("select public.release_push_batch($1::uuid[])", [[first.id]]));
+    expect(await mine()).toEqual([]); // not immediately re-claimed in the same run
+
+    for (let i = 0; i < 4; i++) {
+      await db.query("update notifications set push_state = 'sending', push_claimed_at = now() where id = $1", [first.id]);
+      await asService((tx) => tx.query("select public.release_push_batch($1::uuid[])", [[first.id]]));
+    }
+    const final = await one<{ push_state: string; push_attempts: number }>(
+      db,
+      "select push_state, push_attempts from notifications where id = $1",
+      [first.id],
+    );
+    expect(final).toEqual({ push_state: "skipped", push_attempts: 5 });
+  });
+
+  it("delivery and purge functions are reserved to the server", async () => {
+    const s = await scenario(0);
+    await expect(asUser(db, s.owner, (tx) => tx.query("select public.release_push_batch('{}'::uuid[])"))).rejects.toThrow(
+      /permission denied/,
+    );
+    await expect(asUser(db, s.owner, (tx) => tx.query("select public.purge_old_records()"))).rejects.toThrow(/permission denied/);
+  });
+
+  it("purges notifications older than 6 months", async () => {
+    const s = await scenario(0);
+    await db.query(
+      "insert into notifications (user_id, notification_type, title, created_at) values ($1, 'member_joined', 'old', now() - interval '200 days')",
+      [s.owner],
+    );
+    await asService((tx) => tx.query("select public.purge_old_records()"));
+    expect(await rows(db, "select id from notifications where title = 'old'")).toEqual([]);
+  });
+});

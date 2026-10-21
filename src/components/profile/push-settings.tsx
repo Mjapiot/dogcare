@@ -54,11 +54,11 @@ async function registerNative(): Promise<string | null> {
   });
 }
 
-/** Removes this device's subscription (used on sign-out). */
-export async function forgetThisDevice() {
+/** Removes this device's subscription (sign-out, account deletion). */
+export async function forgetThisDevice({ localOnly = false }: { localOnly?: boolean } = {}) {
   if (isNativeApp()) {
     const endpoint = getRememberedNativeToken();
-    if (endpoint) await removePushSubscription(endpoint).catch(() => {});
+    if (endpoint && !localOnly) await removePushSubscription(endpoint).catch(() => {});
     rememberNativeToken(null);
     return;
   }
@@ -67,7 +67,7 @@ export async function forgetThisDevice() {
     const reg = await navigator.serviceWorker.getRegistration("/");
     const sub = await reg?.pushManager.getSubscription();
     if (!sub) return;
-    await removePushSubscription(sub.endpoint);
+    if (!localOnly) await removePushSubscription(sub.endpoint);
     await sub.unsubscribe();
   } catch {
     // best effort
@@ -88,6 +88,10 @@ export function PushSettings({ vapidPublicKey }: { vapidPublicKey: string | null
       if (perm.receive === "granted") {
         // re-attach this iPhone to the account currently signed in
         const token = await registerNative();
+        if (token && getRememberedNativeToken() === `apns:${token.toLowerCase()}`) {
+          setEndpoint(`apns:${token.toLowerCase()}`);
+          return setState("on");
+        }
         if (token) {
           const r = await saveNativePushToken(token, navigator.userAgent);
           if (r.ok) {

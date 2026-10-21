@@ -1,16 +1,20 @@
 import { getMyGroups, requireAppContext } from "@/server/session";
-import { getToAnswerCount, getUnreadCount } from "@/server/data";
+import { getUnreadCount, getUpcomingSnapshot } from "@/server/data";
+import { buildRequestViews, needsMyAnswer } from "@/domain/views";
+import { requestNow } from "@/server/clock";
 import { AppHeader } from "@/components/app/app-header";
 import { BottomNavigation } from "@/components/app/bottom-navigation";
 import { LiveUpdates } from "@/components/app/live-updates";
 
 export default async function AppLayout({ children }: LayoutProps<"/">) {
   const { userId, group } = await requireAppContext();
-  const [groups, unread, toAnswer] = await Promise.all([
+  const [groups, unread, upcoming] = await Promise.all([
     getMyGroups(),
     getUnreadCount(),
-    getToAnswerCount(group.id, userId),
+    getUpcomingSnapshot(group.id, userId),
   ]);
+  // same rule as the dashboard and the "À répondre" list
+  const toAnswer = buildRequestViews(upcoming, requestNow()).filter(needsMyAnswer).length;
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-xl flex-col">

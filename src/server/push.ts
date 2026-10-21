@@ -5,6 +5,7 @@ import { createClient as createAdminClient, type SupabaseClient } from "@supabas
 import { getSupabaseEnv } from "@/lib/env";
 import { buildPushPayload, isAllowedPushEndpoint, type PushNotificationInput, type PushPayload } from "@/lib/push-payload";
 import { isApnsConfigured, sendApns, type ApnsEnvironment } from "@/server/apns";
+import { decideDevice, decideNotification, type DeviceOutcome } from "@/lib/push-delivery";
 
 type SubscriptionRow = {
   id: string;
@@ -53,11 +54,11 @@ export function isPushConfigured(): boolean {
   return isWebPushConfigured() || isApnsConfigured();
 }
 
-type SendOutcome = { status: "ok" | "gone" | "error"; apnsEnvironment?: ApnsEnvironment | null; reason?: string };
+type SendOutcome = { status: DeviceOutcome; apnsEnvironment?: ApnsEnvironment | null; reason?: string };
 
 async function sendToSubscription(sub: SubscriptionRow, payload: PushPayload): Promise<SendOutcome> {
   if (sub.platform === "ios") {
-    if (!isApnsConfigured()) return { status: "error", reason: "APNs non configuré (variables APNS_*)" };
+    if (!isApnsConfigured()) return { status: "unconfigured", reason: "APNs non configuré (variables APNS_*)" };
     const token = sub.endpoint.replace(/^apns:/, "");
     try {
       const { result, environment, reason } = await sendApns(token, payload, sub.apns_environment);
@@ -68,7 +69,8 @@ async function sendToSubscription(sub: SubscriptionRow, payload: PushPayload): P
   }
   // never call an address that is not a known push service (SSRF guard)
   if (!isAllowedPushEndpoint(sub.endpoint)) return { status: "gone", reason: "unsupported push service" };
-  if (!configureVapid() || !sub.p256dh || !sub.auth) return { status: "error" };
+  if (!configureVapid()) return { status: "unconfigured", reason: "Web Push non configuré (variables VAPID_*)" };
+  if (!sub.p256dh || !sub.auth) return { status: "gone", reason: "incomplete subscription" };
   const target: PushSubscription = { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } };
   try {
     await webpush.sendNotification(target, JSON.stringify(payload), {
@@ -86,7 +88,9 @@ async function sendToSubscription(sub: SubscriptionRow, payload: PushPayload): P
 
 /**
  * Delivers pending notifications as pushes. Safe to call concurrently:
- * notifications are claimed atomically in the database.
+ * notifications are claimed atomically in the database. A notification that
+ * could not reach any device because of a transient error is put back in the
+ * queue (retried on a later dispatch, at most 5 times within 30 minutes).
  */
 export async function dispatchPendingPush(): Promise<{ sent: number }> {
   if (!isPushConfigured()) return { sent: 0 };
@@ -104,52 +108,69 @@ export async function dispatchPendingPush(): Promise<{ sent: number }> {
     if (batch.length === 0) break;
 
     const userIds = [...new Set(batch.map((n) => n.user_id))];
-    const { data: subs } = await admin
-      .from("push_subscriptions")
-      .select(SUBSCRIPTION_COLUMNS)
-      .in("user_id", userIds);
+    const { data: subs } = await admin.from("push_subscriptions").select(SUBSCRIPTION_COLUMNS).in("user_id", userIds);
     const byUser = new Map<string, SubscriptionRow[]>();
-    for (const s of (subs ?? []) as SubscriptionRow[]) byUser.set(s.user_id, [...(byUser.get(s.user_id) ?? []), s]);
+    for (const sub of (subs ?? []) as SubscriptionRow[]) byUser.set(sub.user_id, [...(byUser.get(sub.user_id) ?? []), sub]);
 
-    const gone: string[] = [];
-    const succeeded = new Set<string>();
-    const failed = new Map<string, number>();
+    // every device gets one aggregated outcome per batch (it may receive several notifications)
+    const deviceOutcomes = new Map<string, DeviceOutcome[]>();
     const environments = new Map<string, ApnsEnvironment>();
+    const completed: string[] = [];
+    const retry: string[] = [];
+
     await Promise.all(
       batch.map(async (n) => {
         const payload = buildPushPayload(n);
+        const outcomes: DeviceOutcome[] = [];
         for (const sub of byUser.get(n.user_id) ?? []) {
           const outcome = await sendToSubscription(sub, payload);
+          outcomes.push(outcome.status);
+          deviceOutcomes.set(sub.id, [...(deviceOutcomes.get(sub.id) ?? []), outcome.status]);
+          if (outcome.status === "ok") sent++;
           if (outcome.apnsEnvironment && outcome.apnsEnvironment !== sub.apns_environment) {
             environments.set(sub.id, outcome.apnsEnvironment);
           }
-          if (outcome.status === "ok") {
-            succeeded.add(sub.id);
-            sent++;
-          } else if (outcome.status === "gone") gone.push(sub.id);
-          else failed.set(sub.id, sub.failure_count + 1);
         }
+        (decideNotification(outcomes) === "complete" ? completed : retry).push(n.id);
       }),
     );
 
-    if (gone.length) await admin.from("push_subscriptions").delete().in("id", gone);
-    if (succeeded.size) {
+    const allSubs = new Map(((subs ?? []) as SubscriptionRow[]).map((sub) => [sub.id, sub]));
+    const forget: string[] = [];
+    const succeeded: string[] = [];
+    for (const [id, outcomes] of deviceOutcomes) {
+      const aggregated: DeviceOutcome = outcomes.includes("ok")
+        ? "ok"
+        : outcomes.includes("gone")
+          ? "gone"
+          : outcomes.includes("error")
+            ? "error"
+            : "unconfigured";
+      const decision = decideDevice(aggregated, allSubs.get(id)?.failure_count ?? 0);
+      if (decision.action === "success") succeeded.push(id);
+      else if (decision.action === "forget") forget.push(id);
+      else if (decision.action === "count-failure") {
+        await admin.from("push_subscriptions").update({ failure_count: decision.failures }).eq("id", id);
+      }
+    }
+    if (forget.length) await admin.from("push_subscriptions").delete().in("id", forget);
+    if (succeeded.length) {
       await admin
         .from("push_subscriptions")
         .update({ last_success_at: new Date().toISOString(), failure_count: 0 })
-        .in("id", [...succeeded]);
+        .in("id", succeeded);
     }
     for (const [id, environment] of environments) {
       await admin.from("push_subscriptions").update({ apns_environment: environment }).eq("id", id);
     }
-    for (const [id, count] of failed) {
-      // a device failing repeatedly is forgotten; it can subscribe again
-      if (count >= 5) await admin.from("push_subscriptions").delete().eq("id", id);
-      else await admin.from("push_subscriptions").update({ failure_count: count }).eq("id", id);
-    }
-    await admin.rpc("complete_push_batch", { p_ids: batch.map((n) => n.id) });
+    if (completed.length) await admin.rpc("complete_push_batch", { p_ids: completed });
+    if (retry.length) await admin.rpc("release_push_batch", { p_ids: retry });
     if (batch.length < 100) break;
   }
+
+  // light housekeeping: old notifications and audit events
+  const { error: purgeError } = await admin.rpc("purge_old_records");
+  if (purgeError) console.error("[dogcare] purge_old_records", purgeError.code);
   return { sent };
 }
 

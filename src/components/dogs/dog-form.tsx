@@ -86,7 +86,7 @@ export function DogForm({
                   type="button"
                   aria-pressed={on}
                   onClick={() => setGroupIds((ids) => (on ? ids.filter((x) => x !== g.id) : [...ids, g.id]))}
-                  className={cn("min-h-10 rounded-full px-4 text-[14px] font-medium", on ? "bg-ink text-surface" : "bg-surface text-ink-2")}
+                  className={cn("min-h-11 rounded-full px-4 text-[14px] font-medium", on ? "bg-ink text-surface" : "bg-surface text-ink-2")}
                 >
                   {g.name}
                 </button>

@@ -15,7 +15,7 @@ const PILL_VARIANTS: Record<PillVariant, string> = {
 };
 
 const PILL_SIZES: Record<PillSize, string> = {
-  sm: "min-h-9 px-3.5 text-sm",
+  sm: "min-h-11 px-4 text-sm",
   md: "min-h-11 px-5 text-[15px]",
   lg: "min-h-13 px-6 text-base",
 };
@@ -210,7 +210,7 @@ export function Segmented<T extends string>({
           aria-checked={value === o.value}
           onClick={() => onChange(o.value)}
           className={cn(
-            "min-h-9 flex-1 rounded-full px-3 text-sm font-medium transition-colors",
+            "min-h-11 flex-1 rounded-full px-3 text-sm font-medium transition-colors",
             value === o.value ? "bg-ink text-surface" : "text-ink-2 hover:text-ink",
           )}
         >

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { saveNotificationPreferences } from "@/server/actions/notifications";
 import { Switch } from "@/components/ui/switch";
@@ -15,15 +15,19 @@ const ITEMS: Array<{ key: keyof NotificationPreferencesRow; label: string; hint:
 
 export function NotificationPrefs({ initial }: { initial: NotificationPreferencesRow }) {
   const [prefs, setPrefs] = useState(initial);
+  const latest = useRef(initial);
   const [, startTransition] = useTransition();
 
   const toggle = (key: keyof NotificationPreferencesRow, value: boolean) => {
-    const next = { ...prefs, [key]: value };
-    setPrefs(next);
+    // always save the most recent combination (quick successive toggles)
+    latest.current = { ...latest.current, [key]: value };
+    setPrefs(latest.current);
+    const snapshot = latest.current;
     startTransition(async () => {
-      const r = await saveNotificationPreferences(next);
+      const r = await saveNotificationPreferences(snapshot);
       if (!r.ok) {
-        setPrefs(prefs);
+        latest.current = { ...latest.current, [key]: !value };
+        setPrefs(latest.current);
         toast.error(r.error);
       }
     });

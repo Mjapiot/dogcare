@@ -46,12 +46,14 @@ export function PhotoUploader({ dogId, name, photoUrl }: { dogId: string; name: 
       const path = `${dogId}/${crypto.randomUUID()}.${ext}`;
       const { error } = await supabase.storage.from("dog-photos").upload(path, blob, { contentType: blob.type, upsert: false });
       if (error) throw error;
-      startTransition(async () => {
-        const r = await setDogPhoto(dogId, path);
-        if (!r.ok) toast.error(r.error);
-        else toast.success("Photo mise à jour");
-        router.refresh();
-      });
+      const r = await setDogPhoto(dogId, path);
+      if (!r.ok) {
+        await supabase.storage.from("dog-photos").remove([path]); // no orphan file
+        toast.error(r.error);
+      } else {
+        toast.success("Photo mise à jour");
+        startTransition(() => router.refresh());
+      }
     } catch {
       toast.error("Impossible d'envoyer la photo. Réessayez.");
     } finally {

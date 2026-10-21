@@ -58,7 +58,7 @@ export function RulesEditor({ rules }: { rules: AvailabilityRule[] }) {
         </p>
       </div>
       <details className="rounded-[28px] bg-surface p-3" open={rules.length > 0}>
-        <summary className="min-h-10 cursor-pointer px-2 py-2 text-[15px] font-medium text-ink">
+        <summary className="flex min-h-11 cursor-pointer items-center px-2 py-2 text-[15px] font-medium text-ink">
           {rules.length > 0 ? `${rules.length} habitude${rules.length > 1 ? "s" : ""} définie${rules.length > 1 ? "s" : ""}` : "Définir des habitudes"}
         </summary>
         <div className="mt-2 grid grid-cols-[76px_repeat(4,1fr)] gap-1.5 pb-2">

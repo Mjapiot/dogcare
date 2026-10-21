@@ -40,9 +40,10 @@ export function AccountActions() {
         pending={pending}
         onConfirm={() =>
           startTransition(async () => {
-            await forgetThisDevice();
             const r = await deleteMyAccount();
             if (!r.ok) return void toast.error(r.error);
+            // the server side is already gone with the account
+            await forgetThisDevice({ localOnly: true });
             router.replace("/login");
           })
         }

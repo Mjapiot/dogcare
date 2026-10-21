@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildRequestViews, bucketByDay, dashboardCounts, type GroupSnapshot } from "@/domain/views";
+import { buildRequestViews, bucketByDay, dashboardCounts, needsMyAnswer, type GroupSnapshot } from "@/domain/views";
 import { addDays, zonedInstant } from "@/domain/time";
 import type { CareAssignmentRow, CareRequestRow, RequestResponseRow } from "@/lib/types";
 
@@ -150,5 +150,28 @@ describe("bucketByDay and dashboard", () => {
     });
     const counts = dashboardCounts(buildRequestViews(snap, NOW), NOW);
     expect(counts).toMatchObject({ upcoming: 2, uncovered: 1, toOrganize: 2, toAnswer: 1, confirmed: 0 });
+  });
+});
+
+describe("needsMyAnswer (badge, dashboard and list share it)", () => {
+  it("counts only open requests I can answer and have not answered", () => {
+    const snap = snapshot({
+      requests: [
+        request("open"),
+        request("covered", { starts_at: iso(addDays(DAY, 1), "09:00"), ends_at: iso(addDays(DAY, 1), "18:00") }),
+        request("answered", { starts_at: iso(addDays(DAY, 2), "09:00"), ends_at: iso(addDays(DAY, 2), "18:00") }),
+        request("info", { request_type: "alone_info", necessity: "info" }),
+        request("gone", { lifecycle_status: "cancelled" }),
+      ],
+      responses: [response("answered", "emma", "no")],
+      assignments: [assignment("covered", "chloe", iso(addDays(DAY, 1), "09:00"), iso(addDays(DAY, 1), "18:00"))],
+    });
+    const ids = buildRequestViews(snap, NOW).filter(needsMyAnswer).map((v) => v.request.id);
+    expect(ids).toEqual(["open"]);
+  });
+
+  it("ignores requests that are over", () => {
+    const [v] = buildRequestViews(snapshot(), zonedInstant(addDays(DAY, 1), "12:00"));
+    expect(needsMyAnswer(v)).toBe(false);
   });
 });

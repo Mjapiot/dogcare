@@ -23,7 +23,10 @@ utilise la clé secrète côté serveur pour lire les abonnements des destinatai
 1. Une action (demande, réponse, confirmation…) crée des notifications en base (triggers/RPC).
 2. La Server Action programme `schedulePushDispatch()` via `after()` : après la réponse HTTP, le serveur
    réserve atomiquement les notifications en attente (`claim_push_batch`), les envoie avec `web-push`
-   (VAPID) à chaque appareil du destinataire, nettoie les abonnements expirés, puis les marque envoyées.
+   (VAPID) ou APNs à chaque appareil du destinataire. Les décisions sont pures et testées (`src/lib/push-delivery.ts`) :
+   une notification sans aucun appareil atteint à cause d'une erreur temporaire est remise en file
+   (`release_push_batch`, 5 essais max), un appareil n'est oublié qu'après 5 échecs consécutifs (jamais pour
+   une erreur de configuration serveur). Chaque passage purge aussi les données anciennes.
 3. Le service worker affiche la notification ; la toucher ouvre la demande concernée.
 
 Sur iPhone, les push exigent l'app installée sur l'écran d'accueil (iOS 16.4+) et une autorisation
@@ -47,7 +50,7 @@ src/
     views.ts           assemblage des données en modèles d'écran (RequestView, jours, tableau de bord)
   server/              code serveur uniquement
     session.ts         utilisateur, profil, groupes, groupe courant, garde d'accès des écrans
-    data.ts            requêtes de lecture
+    data.ts            requêtes de lecture (paginées par 1000, listes d'identifiants découpées)
     actions/*.ts       Server Actions (auth, groupes, chiens, dispos, demandes, notifications)
     errors.ts          messages d'erreur sûrs pour l'utilisateur
   components/

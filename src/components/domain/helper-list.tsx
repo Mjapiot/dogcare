@@ -114,7 +114,7 @@ export function HelperList({
                     <button
                       type="button"
                       onClick={() => setRemoving({ id: a.id, name: h.name })}
-                      className="inline-flex min-h-9 items-center gap-1 rounded-full px-2 text-[13px] font-medium hover:bg-black/5"
+                      className="inline-flex min-h-11 items-center gap-1 rounded-full px-2 text-[13px] font-medium hover:bg-black/5"
                     >
                       <X className="size-3.5" aria-hidden /> Retirer
                     </button>

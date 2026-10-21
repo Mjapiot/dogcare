@@ -1,7 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
-import { addDays, type LocalDate, zonedInstant } from "@/domain/time";
+import { addDays, toLocalDate, type LocalDate, zonedInstant } from "@/domain/time";
 import type { GroupSnapshot, MemberInfo } from "@/domain/views";
 import type {
   AvailabilityEntryRow,
@@ -26,6 +26,33 @@ const DOG_COLUMNS = "id, name, breed, birth_date, photo_path, care_notes, specia
 function must<T>(result: { data: T | null; error: unknown }): T {
   if (result.error) throw result.error;
   return (result.data ?? []) as T;
+}
+
+type PageResult = { data: unknown; error: unknown };
+const PAGE_SIZE = 1000; // PostgREST caps responses (max_rows), so never rely on one call
+const ID_CHUNK = 150; // keeps "in (...)" filters well under URL length limits
+
+/** Reads every row of a query, page by page. */
+async function fetchAll<T>(page: (from: number, to: number) => PromiseLike<PageResult>): Promise<T[]> {
+  const out: T[] = [];
+  for (let from = 0; ; from += PAGE_SIZE) {
+    const rows = must<T[]>((await page(from, from + PAGE_SIZE - 1)) as { data: T[] | null; error: unknown });
+    out.push(...rows);
+    if (rows.length < PAGE_SIZE) return out;
+  }
+}
+
+/** Same as fetchAll for an "id in (...)" query, split into chunks. */
+async function fetchAllByIds<T>(
+  ids: readonly string[],
+  page: (chunk: string[], from: number, to: number) => PromiseLike<PageResult>,
+): Promise<T[]> {
+  const out: T[] = [];
+  for (let i = 0; i < ids.length; i += ID_CHUNK) {
+    const chunk = ids.slice(i, i + ID_CHUNK);
+    out.push(...(await fetchAll<T>((from, to) => page(chunk, from, to))));
+  }
+  return out;
 }
 
 export const getGroupMembers = cache(async (groupId: string): Promise<MemberInfo[]> => {
@@ -66,49 +93,64 @@ export async function getGroupSnapshot(
   const supabase = await createClient();
   const [members, { dogs, caretakers }] = await Promise.all([getGroupMembers(groupId), getGroupDogs(groupId)]);
 
-  let requestQuery = supabase.from("care_requests").select(REQUEST_COLUMNS).eq("group_id", groupId);
-  if ("requestIds" in range) {
-    requestQuery = requestQuery.in("id", range.requestIds.length ? range.requestIds : ["00000000-0000-0000-0000-000000000000"]);
-  } else {
-    const fromInstant = new Date(zonedInstant(range.from, "00:00")).toISOString();
-    const toInstant = new Date(zonedInstant(addDays(range.to, 1), "00:00")).toISOString();
-    requestQuery = requestQuery.lt("starts_at", toInstant).gt("ends_at", fromInstant);
-  }
-  const requests = must<CareRequestRow[]>(await requestQuery.order("starts_at"));
+  const requests =
+    "requestIds" in range
+      ? await fetchAllByIds<CareRequestRow>(range.requestIds, (chunk, from, to) =>
+          supabase.from("care_requests").select(REQUEST_COLUMNS).eq("group_id", groupId).in("id", chunk).order("starts_at").range(from, to),
+        )
+      : await fetchAll<CareRequestRow>((from, to) =>
+          supabase
+            .from("care_requests")
+            .select(REQUEST_COLUMNS)
+            .eq("group_id", groupId)
+            .lt("starts_at", new Date(zonedInstant(addDays(range.to, 1), "00:00")).toISOString())
+            .gt("ends_at", new Date(zonedInstant(range.from, "00:00")).toISOString())
+            .order("starts_at")
+            .range(from, to),
+        );
+  requests.sort((a, b) => a.starts_at.localeCompare(b.starts_at));
   const ids = requests.map((r) => r.id);
 
-  // availability window covering every request (plus the previous night)
-  let minDate: string | null = null;
-  let maxDate: string | null = null;
+  // availability window covering every request in Paris time (plus the previous night)
+  let minDate: LocalDate | null = null;
+  let maxDate: LocalDate | null = null;
   for (const r of requests) {
-    const s = r.starts_at.slice(0, 10);
-    const e = r.ends_at.slice(0, 10);
+    const s = toLocalDate(r.starts_at);
+    const e = toLocalDate(r.ends_at);
     if (!minDate || s < minDate) minDate = s;
     if (!maxDate || e > maxDate) maxDate = e;
   }
 
   const memberIds = members.map((m) => m.user_id);
   const [responses, assignments, entries, rules] = await Promise.all([
-    ids.length
-      ? supabase
-          .from("request_responses")
-          .select("id, request_id, user_id, response_status, proposed_starts_at, proposed_ends_at, note, responded_at")
-          .in("request_id", ids)
-      : Promise.resolve({ data: [], error: null }),
-    ids.length
-      ? supabase.from("care_assignments").select(ASSIGNMENT_COLUMNS).in("request_id", ids)
-      : Promise.resolve({ data: [], error: null }),
-    minDate && maxDate && memberIds.length
-      ? supabase
-          .from("availability_entries")
-          .select("user_id, date, slot, status")
-          .in("user_id", memberIds)
-          .gte("date", addDays(minDate, -2))
-          .lte("date", addDays(maxDate, 1))
-      : Promise.resolve({ data: [], error: null }),
-    memberIds.length
-      ? supabase.from("availability_rules").select("id, user_id, weekday, slot, status").in("user_id", memberIds)
-      : Promise.resolve({ data: [], error: null }),
+    fetchAllByIds<RequestResponseRow>(ids, (chunk, from, to) =>
+      supabase
+        .from("request_responses")
+        .select("id, request_id, user_id, response_status, proposed_starts_at, proposed_ends_at, note, responded_at")
+        .in("request_id", chunk)
+        .order("id")
+        .range(from, to),
+    ),
+    fetchAllByIds<CareAssignmentRow>(ids, (chunk, from, to) =>
+      supabase.from("care_assignments").select(ASSIGNMENT_COLUMNS).in("request_id", chunk).order("id").range(from, to),
+    ),
+    minDate && maxDate
+      ? fetchAllByIds<AvailabilityEntryRow>(memberIds, (chunk, from, to) =>
+          supabase
+            .from("availability_entries")
+            .select("user_id, date, slot, status")
+            .in("user_id", chunk)
+            .gte("date", addDays(minDate, -1))
+            .lte("date", maxDate)
+            .order("date")
+            .order("user_id")
+            .order("slot")
+            .range(from, to),
+        )
+      : Promise.resolve([] as AvailabilityEntryRow[]),
+    fetchAllByIds<AvailabilityRuleRow>(memberIds, (chunk, from, to) =>
+      supabase.from("availability_rules").select("id, user_id, weekday, slot, status").in("user_id", chunk).order("id").range(from, to),
+    ),
   ]);
 
   return {
@@ -117,14 +159,14 @@ export async function getGroupSnapshot(
     dogs,
     caretakers,
     requests,
-    responses: must<RequestResponseRow[]>(responses),
-    assignments: must<CareAssignmentRow[]>(assignments),
-    availabilityEntries: must<AvailabilityEntryRow[]>(entries),
-    availabilityRules: must<AvailabilityRuleRow[]>(rules),
+    responses,
+    assignments,
+    availabilityEntries: entries,
+    availabilityRules: rules,
   };
 }
 
-/** Upcoming request ids where I am involved (answered, assigned or caretaker) or that I could answer. */
+/** Active requests of the group that are not over yet (most imminent first). */
 export async function getUpcomingRequestIds(groupId: string): Promise<string[]> {
   const supabase = await createClient();
   const rows = must<{ id: string }[]>(
@@ -132,12 +174,18 @@ export async function getUpcomingRequestIds(groupId: string): Promise<string[]> 
       .from("care_requests")
       .select("id")
       .eq("group_id", groupId)
+      .eq("lifecycle_status", "active")
       .gt("ends_at", new Date().toISOString())
       .order("starts_at")
-      .limit(200),
+      .limit(300),
   );
   return rows.map((r) => r.id);
 }
+
+/** Snapshot of upcoming requests, shared by the nav badge and the Demandes screen. */
+export const getUpcomingSnapshot = cache(async (groupId: string, me: string): Promise<GroupSnapshot> => {
+  return getGroupSnapshot(groupId, me, { requestIds: await getUpcomingRequestIds(groupId) });
+});
 
 export async function getMyAvailability(userId: string, from: LocalDate, to: LocalDate) {
   const supabase = await createClient();
@@ -234,26 +282,7 @@ export async function signDogPhotos(dogs: DogRow[]): Promise<Record<string, stri
   return out;
 }
 
-/** Upcoming requests of the group I could answer but have not answered yet. */
-export const getToAnswerCount = cache(async (groupId: string, userId: string): Promise<number> => {
-  const supabase = await createClient();
-  const [requests, mine, dogs] = await Promise.all([
-    supabase
-      .from("care_requests")
-      .select("id, dog_id")
-      .eq("group_id", groupId)
-      .eq("lifecycle_status", "active")
-      .neq("necessity", "info")
-      .gt("ends_at", new Date().toISOString()),
-    supabase.from("request_responses").select("request_id").eq("user_id", userId),
-    supabase.from("dog_caretakers").select("dog_id").eq("user_id", userId),
-  ]);
-  const answered = new Set((mine.data ?? []).map((r: { request_id: string }) => r.request_id));
-  const myDogs = new Set((dogs.data ?? []).map((d: { dog_id: string }) => d.dog_id));
-  return ((requests.data ?? []) as { id: string; dog_id: string }[]).filter(
-    (r) => !answered.has(r.id) && !myDogs.has(r.dog_id),
-  ).length;
-});
+
 
 /** Group of a request the user can see (RLS), or null. */
 export async function getRequestGroupId(requestId: string): Promise<string | null> {

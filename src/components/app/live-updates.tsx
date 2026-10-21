@@ -27,7 +27,14 @@ export function LiveUpdates({ groupId, userId }: { groupId: string; userId: stri
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
+    // while the app is in the background, changes are only remembered:
+    // one refresh happens when the user comes back
+    let staleWhileHidden = false;
     const refresh = () => {
+      if (document.visibilityState === "hidden") {
+        staleWhileHidden = true;
+        return;
+      }
       if (timer.current) clearTimeout(timer.current);
       timer.current = setTimeout(() => router.refresh(), 400);
     };
@@ -43,7 +50,10 @@ export function LiveUpdates({ groupId, userId }: { groupId: string; userId: stri
     let lastHidden = 0;
     const onVisibility = () => {
       if (document.visibilityState === "hidden") lastHidden = Date.now();
-      else if (Date.now() - lastHidden > 15_000) refresh();
+      else if (staleWhileHidden || Date.now() - lastHidden > 15_000) {
+        staleWhileHidden = false;
+        refresh();
+      }
     };
     const onOnline = () => refresh();
 

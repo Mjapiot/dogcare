@@ -46,20 +46,29 @@ export function NativeBridge() {
       if (disposed) return;
       StatusBar.setStyle({ style: Style.Light }).catch(() => {});
 
-      const urlListener = await App.addListener("appUrlOpen", ({ url }) => {
-        const path = toInAppPath(url);
-        if (path) router.push(path);
-      });
-      const tapListener = await PushNotifications.addListener("pushNotificationActionPerformed", (action) => {
-        const data = action.notification.data as { url?: string } | undefined;
-        const path = toInAppPath(data?.url) ?? "/notifications";
-        router.push(path);
-      });
-      const receivedListener = await PushNotifications.addListener("pushNotificationReceived", () => {
-        // app in foreground: refresh data so the bell and screens are up to date
-        router.refresh();
-      });
-      cleanups.push(() => urlListener.remove(), () => tapListener.remove(), () => receivedListener.remove());
+      const keep = (handle: { remove: () => Promise<void> }) => {
+        // the effect may have been cleaned up while we were awaiting
+        if (disposed) void handle.remove();
+        else cleanups.push(() => void handle.remove());
+      };
+      keep(
+        await App.addListener("appUrlOpen", ({ url }) => {
+          const path = toInAppPath(url);
+          if (path) router.push(path);
+        }),
+      );
+      keep(
+        await PushNotifications.addListener("pushNotificationActionPerformed", (action) => {
+          const data = action.notification.data as { url?: string } | undefined;
+          router.push(toInAppPath(data?.url) ?? "/notifications");
+        }),
+      );
+      keep(
+        await PushNotifications.addListener("pushNotificationReceived", () => {
+          // app in foreground: refresh data so the bell and screens are up to date
+          router.refresh();
+        }),
+      );
     })().catch(() => {});
 
     return () => {

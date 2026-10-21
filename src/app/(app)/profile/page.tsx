@@ -51,11 +51,11 @@ export default async function ProfilePage() {
         )}
         {archivedDogs.length > 0 && (
           <details className="rounded-2xl bg-surface/60 px-4 py-2 text-[14px] text-ink-2">
-            <summary className="min-h-9 cursor-pointer py-1.5 font-medium">Chiens archivés ({archivedDogs.length})</summary>
+            <summary className="flex min-h-11 cursor-pointer items-center py-1.5 font-medium">Chiens archivés ({archivedDogs.length})</summary>
             <ul className="flex flex-col gap-1 pb-2">
               {archivedDogs.map((d) => (
                 <li key={d.id}>
-                  <Link href={`/dogs/${d.id}`} className="block min-h-9 py-1.5 underline-offset-2 hover:underline">
+                  <Link href={`/dogs/${d.id}`} className="flex min-h-11 items-center py-1.5 underline-offset-2 hover:underline">
                     {d.name}
                   </Link>
                 </li>

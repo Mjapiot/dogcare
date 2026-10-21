@@ -43,7 +43,9 @@ export function CalendarView({ view, anchor, today, days, filters, dogs, owners 
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [selected, setSelected] = useState<CalendarDay | null>(null);
+  // keep only the date: the sheet always shows the latest data for that day
+  const [selectedDate, setSelectedDate] = useState<LocalDate | null>(null);
+  const selected = selectedDate ? (days.find((d) => d.date === selectedDate) ?? null) : null;
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   const setParams = (patch: Record<string, string | null>) => {
@@ -58,6 +60,9 @@ export function CalendarView({ view, anchor, today, days, filters, dogs, owners 
   const prevAnchor = view === "month" ? shiftMonth(anchor, -1) : addDays(anchor, -14);
   const nextAnchor = view === "month" ? shiftMonth(anchor, 1) : addDays(anchor, 14);
   const hasItems = days.some((d) => d.items.length > 0);
+  // the link is only useful when today is not in the period on screen
+  const showsToday =
+    view === "month" ? anchor.slice(0, 7) === today.slice(0, 7) : days.some((d) => d.date === today);
   const activeFilterCount = (filters.dog ? 1 : 0) + (filters.owner ? 1 : 0);
 
   const title =
@@ -89,7 +94,7 @@ export function CalendarView({ view, anchor, today, days, filters, dogs, owners 
               {title}
             </p>
           )}
-          {anchor !== today && (
+          {!showsToday && (
             <button type="button" onClick={() => setParams({ start: null })} className="text-[12px] font-medium text-ink-3 underline-offset-2 hover:underline">
               Revenir à aujourd&apos;hui
             </button>
@@ -135,7 +140,7 @@ export function CalendarView({ view, anchor, today, days, filters, dogs, owners 
             aria-pressed={filters.status === c.value}
             onClick={() => setParams({ status: c.value })}
             className={cn(
-              "min-h-9 shrink-0 rounded-full px-4 text-[14px] font-medium transition-colors",
+              "min-h-11 shrink-0 rounded-full px-4 text-[14px] font-medium transition-colors",
               filters.status === c.value ? "bg-ink text-surface" : "bg-surface text-ink-2",
             )}
           >
@@ -145,9 +150,9 @@ export function CalendarView({ view, anchor, today, days, filters, dogs, owners 
       </div>
 
       {view === "2w" ? (
-        <TwoWeeks days={days} today={today} onSelect={setSelected} />
+        <TwoWeeks days={days} today={today} onSelect={(d) => setSelectedDate(d.date)} />
       ) : (
-        <MonthGrid days={days} anchor={anchor} today={today} onSelect={setSelected} />
+        <MonthGrid days={days} anchor={anchor} today={today} onSelect={(d) => setSelectedDate(d.date)} />
       )}
 
       {!hasItems && (
@@ -165,7 +170,7 @@ export function CalendarView({ view, anchor, today, days, filters, dogs, owners 
 
       <Legend />
 
-      <DaySheet day={selected} onClose={() => setSelected(null)} />
+      <DaySheet day={selected} onClose={() => setSelectedDate(null)} />
 
       <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
         <SheetContent side="bottom" className="rounded-t-[28px] border-0 pb-safe">
@@ -371,7 +376,7 @@ function Legend() {
   const tones = ["covered", "pending", "uncovered", "partial", "info"] as const;
   return (
     <details className="rounded-2xl bg-surface px-4 py-3 text-[14px]">
-      <summary className="min-h-7 cursor-pointer font-medium text-ink-2">Que signifient les couleurs ?</summary>
+      <summary className="flex min-h-11 cursor-pointer items-center font-medium text-ink-2">Que signifient les couleurs ?</summary>
       <ul className="mt-3 flex flex-col gap-2">
         {tones.map((t) => {
           const Icon = TONE_ICONS[t];

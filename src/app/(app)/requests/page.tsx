@@ -2,9 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { CheckCheck, Inbox, PawPrint, Plus } from "lucide-react";
 import { requireAppContext } from "@/server/session";
-import { getGroupSnapshot, getUpcomingRequestIds } from "@/server/data";
-import { buildRequestViews, type RequestView } from "@/domain/views";
-import { needsOrganizing } from "@/domain/status";
+import { getUpcomingSnapshot } from "@/server/data";
+import { buildRequestViews, needsMyAnswer, type RequestView } from "@/domain/views";
 import { cn } from "@/lib/utils";
 import { formatPeriod } from "@/lib/format";
 import { EmptyState, PageTitle, PillLink } from "@/components/ui/kit";
@@ -29,14 +28,13 @@ export default async function RequestsPage({ searchParams }: PageProps<"/request
   const params = await searchParams;
   const tab: TabKey = TABS.some((t) => t.key === params.tab) ? (params.tab as TabKey) : "todo";
 
-  const ids = await getUpcomingRequestIds(group.id);
-  const snapshot = await getGroupSnapshot(group.id, userId, { requestIds: ids });
+  const snapshot = await getUpcomingSnapshot(group.id, userId);
   const views = buildRequestViews(snapshot, requestNow())
     .filter((v) => v.request.lifecycle_status === "active")
     .sort((a, b) => a.period.start - b.period.start);
 
   const lists: Record<TabKey, RequestView[]> = {
-    todo: views.filter((v) => v.iAmEligible && !v.myResponse && v.request.necessity !== "info" && needsOrganizing(v.status.status)),
+    todo: views.filter(needsMyAnswer),
     yes: views.filter((v) => v.myResponse?.response_status === "yes" && v.myAssignments.length === 0),
     no: views.filter((v) => v.myResponse?.response_status === "no"),
     guards: views.filter((v) => v.myAssignments.length > 0),
@@ -55,7 +53,7 @@ export default async function RequestsPage({ searchParams }: PageProps<"/request
             href={t.key === "todo" ? "/requests" : `/requests?tab=${t.key}`}
             aria-current={tab === t.key ? "page" : undefined}
             className={cn(
-              "inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-full px-4 text-[14px] font-medium",
+              "inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full px-4 text-[14px] font-medium",
               tab === t.key ? "bg-ink text-surface" : "bg-surface text-ink-2",
             )}
           >

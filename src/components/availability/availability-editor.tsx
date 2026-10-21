@@ -28,6 +28,12 @@ export function AvailabilityEditor({
 }) {
   const router = useRouter();
   const [entries, setEntries] = useState(initialEntries);
+  // fresh server data (after a refresh) replaces the local copy
+  const [serverEntries, setServerEntries] = useState(initialEntries);
+  if (initialEntries !== serverEntries) {
+    setServerEntries(initialEntries);
+    setEntries(initialEntries);
+  }
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [pending, startTransition] = useTransition();
 
@@ -54,15 +60,18 @@ export function AvailabilityEditor({
       const [date, slot] = k.split("|") as [string, SlotKey];
       return { date, slot };
     });
-    const previous = entries;
-    // optimistic update
-    const untouched = entries.filter((e) => !selected.has(key(e.date, e.slot)));
-    setEntries(status === "clear" ? untouched : [...untouched, ...cells.map((c) => ({ ...c, status }))]);
+    const touched = new Set(selected);
+    // what these cells looked like before, to undo only them if the save fails
+    const before = entries.filter((e) => touched.has(key(e.date, e.slot)));
+    setEntries((current) => {
+      const untouched = current.filter((e) => !touched.has(key(e.date, e.slot)));
+      return status === "clear" ? untouched : [...untouched, ...cells.map((c) => ({ ...c, status }))];
+    });
     setSelected(new Set());
     startTransition(async () => {
       const result = await applyAvailability({ cells, status });
       if (!result.ok) {
-        setEntries(previous);
+        setEntries((current) => [...current.filter((e) => !touched.has(key(e.date, e.slot))), ...before]);
         toast.error(result.error);
         return;
       }
@@ -181,7 +190,7 @@ export function AvailabilityEditor({
             <button
               type="button"
               onClick={() => setSelected(new Set())}
-              className="flex size-9 items-center justify-center rounded-full hover:bg-white/10"
+              className="flex size-11 items-center justify-center rounded-full hover:bg-white/10"
               aria-label="Annuler la sélection"
             >
               <X className="size-4" aria-hidden />

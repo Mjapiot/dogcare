@@ -191,6 +191,22 @@ export type DashboardCounts = {
   toAnswer: number;
 };
 
+/**
+ * Requests waiting for MY answer: I may help, I have not answered, and the
+ * request still needs someone (not covered, not past, not informational).
+ * Single source for the nav badge, the dashboard and the "À répondre" list.
+ */
+export function needsMyAnswer(v: RequestView): boolean {
+  return (
+    v.request.lifecycle_status === "active" &&
+    v.request.necessity !== "info" &&
+    v.iAmEligible &&
+    !v.myResponse &&
+    !v.status.isPast &&
+    needsOrganizing(v.status.status)
+  );
+}
+
 export function dashboardCounts(views: RequestView[], now: number): DashboardCounts {
   const upcoming = views.filter(
     (v) => v.request.lifecycle_status === "active" && v.period.end > now && v.status.status !== "informational",
@@ -202,7 +218,7 @@ export function dashboardCounts(views: RequestView[], now: number): DashboardCou
     uncovered: upcoming.filter((v) => v.status.tone === "uncovered").length,
     partial: upcoming.filter((v) => v.status.status === "partially_covered").length,
     toOrganize: upcoming.filter((v) => needsOrganizing(v.status.status)).length,
-    toAnswer: upcoming.filter((v) => v.iAmEligible && !v.myResponse && needsOrganizing(v.status.status)).length,
+    toAnswer: upcoming.filter(needsMyAnswer).length,
   };
 }
 

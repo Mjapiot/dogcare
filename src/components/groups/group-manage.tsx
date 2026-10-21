@@ -130,7 +130,7 @@ export function GroupManage({
                   <button
                     type="button"
                     onClick={() => run(() => revokeInvitation(i.id, groupId), "Lien révoqué")}
-                    className="inline-flex min-h-9 items-center gap-1 rounded-full px-3 font-medium text-[#9b1c14] hover:bg-[#f6dcd9]"
+                    className="inline-flex min-h-11 items-center gap-1 rounded-full px-3 font-medium text-[#9b1c14] hover:bg-[#f6dcd9]"
                   >
                     <X className="size-3.5" aria-hidden /> Révoquer
                   </button>
@@ -165,14 +165,14 @@ export function GroupManage({
                     onClick={() =>
                       run(() => setMemberRole(groupId, m.userId, m.role === "admin" ? "member" : "admin"), m.role === "admin" ? "Rôle retiré" : "Nommé administrateur")
                     }
-                    className="min-h-9 rounded-full px-3 text-[13px] font-medium text-ink-2 hover:bg-surface-2"
+                    className="min-h-11 rounded-full px-3 text-[13px] font-medium text-ink-2 hover:bg-surface-2"
                   >
                     {m.role === "admin" ? "Retirer admin" : "Nommer admin"}
                   </button>
                   <button
                     type="button"
                     onClick={() => setConfirm({ kind: "remove", member: m })}
-                    className="flex size-9 items-center justify-center rounded-full hover:bg-surface-2"
+                    className="flex size-11 items-center justify-center rounded-full hover:bg-surface-2"
                     aria-label={`Retirer ${m.name} du groupe`}
                   >
                     <X className="size-4" aria-hidden />
