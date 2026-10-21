@@ -112,6 +112,17 @@ Les liens universels reposent sur `https://dogcare-gamma.vercel.app/.well-known/
 Si le domaine change, mettre à jour ce fichier, `ios/App/App/App.entitlements`, `capacitor.config.ts`,
 `native-shell/offline.html` et `src/components/app/native-bridge.tsx`.
 
+### Publication App Store
+
+Variables Vercel supplémentaires :
+
+- `SUPPORT_EMAIL` : adresse de contact affichée sur `/assistance` et `/confidentialite` (obligatoire avant soumission).
+- `DEMO_ACCOUNT_EMAIL` : adresse du compte de démonstration (affiche le lien « Compte de démonstration »).
+
+Préparer le compte de démonstration (une fois, puis à chaque besoin) : dans `.env.local`, renseigner
+`SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `DEMO_ACCOUNT_EMAIL`, `DEMO_ACCOUNT_PASSWORD` (12 caractères minimum),
+puis `npm run demo:seed`. Identifiants à donner à Apple dans App Store Connect → « Informations de connexion ».
+
 ### TestFlight
 
 - Fiche App Store Connect : « Dogcare – Garde entre amis » (`app.dogcare.ios`, SKU `dogcare-ios`).

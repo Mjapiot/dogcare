@@ -2,8 +2,10 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Link2, Users } from "lucide-react";
-import { createGroup } from "@/server/actions/groups";
+import { KeyRound, Users } from "lucide-react";
+import { createGroup, joinGroupWithCode } from "@/server/actions/groups";
+import { normalizeJoinCode } from "@/lib/join-code";
+import { toast } from "sonner";
 import { Card, Field, PillButton, PillLink, TextInput } from "@/components/ui/kit";
 
 function extractToken(value: string): string | null {
@@ -23,6 +25,53 @@ export function GroupChoice({ hasGroups }: { hasGroups: boolean }) {
 
   return (
     <div className="flex flex-col gap-4">
+      <Card className="flex flex-col gap-4">
+        <div className="flex items-center gap-2 text-[17px] font-semibold text-ink">
+          <KeyRound className="size-5" aria-hidden /> Rejoindre un groupe
+        </div>
+        <form
+          className="flex flex-col gap-3"
+          onSubmit={(e) => {
+            e.preventDefault();
+            const code = normalizeJoinCode(link);
+            if (code) {
+              setLinkError(null);
+              startTransition(async () => {
+                const r = await joinGroupWithCode(code);
+                if (!r.ok) return setLinkError(r.error);
+                toast.success(`Bienvenue dans « ${r.data.groupName} » !`);
+                router.replace("/availability?welcome=1");
+              });
+              return;
+            }
+            const token = extractToken(link);
+            if (!token) return setLinkError("Saisissez le code du groupe (8 caractères) ou collez le lien reçu.");
+            router.push(`/invite/${token}`);
+          }}
+        >
+          <Field
+            label="Code du groupe ou lien d'invitation"
+            htmlFor="invite-link"
+            hint="Le code (ex. K7PQ-M2XD) vous est donné par un administrateur du groupe."
+            error={linkError ?? undefined}
+          >
+            <TextInput
+              id="invite-link"
+              autoCapitalize="characters"
+              autoCorrect="off"
+              placeholder="K7PQ-M2XD"
+              value={link}
+              onChange={(e) => {
+                setLink(e.target.value);
+                setLinkError(null);
+              }}
+            />
+          </Field>
+          <PillButton type="submit" variant="outline" loading={pending} disabled={!link.trim()}>
+            Rejoindre
+          </PillButton>
+        </form>
+      </Card>
       <Card className="flex flex-col gap-4">
         <div className="flex items-center gap-2 text-[17px] font-semibold text-ink">
           <Users className="size-5" aria-hidden /> Créer un groupe
@@ -54,43 +103,6 @@ export function GroupChoice({ hasGroups }: { hasGroups: boolean }) {
         </form>
       </Card>
 
-      <Card className="flex flex-col gap-4">
-        <div className="flex items-center gap-2 text-[17px] font-semibold text-ink">
-          <Link2 className="size-5" aria-hidden /> J&apos;ai un lien d&apos;invitation
-        </div>
-        <form
-          className="flex flex-col gap-3"
-          onSubmit={(e) => {
-            e.preventDefault();
-            const token = extractToken(link);
-            if (!token) return setLinkError("Collez le lien complet reçu de votre ami.");
-            router.push(`/invite/${token}`);
-          }}
-        >
-          <Field
-            label="Lien d'invitation"
-            htmlFor="invite-link"
-            hint="Le plus simple : ouvrez directement le lien reçu."
-            error={linkError ?? undefined}
-          >
-            <TextInput
-              id="invite-link"
-              inputMode="url"
-              autoCapitalize="none"
-              autoCorrect="off"
-              placeholder="https://…/invite/…"
-              value={link}
-              onChange={(e) => {
-                setLink(e.target.value);
-                setLinkError(null);
-              }}
-            />
-          </Field>
-          <PillButton type="submit" variant="outline" disabled={!link.trim()}>
-            Continuer
-          </PillButton>
-        </form>
-      </Card>
       {hasGroups && (
         <PillLink href="/" variant="ghost">
           Retour à l&apos;application

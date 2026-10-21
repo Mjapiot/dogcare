@@ -16,7 +16,9 @@
 - [ ] Notification déclenchée par l'action d'un autre membre, reçue app fermée
 - [x] PWA : manifeste, icônes, service worker minimal, page hors ligne, aide à l'installation iPhone
 - [x] App iPhone native (Capacitor) : notifications APNs, liens universels, partage natif, hors ligne
-- [ ] App iPhone : test sur appareil réel puis TestFlight
+- [x] App iPhone sur TestFlight (version 1.0 build 1)
+- [x] Code de groupe permanent, compte de démonstration, pages confidentialité et assistance
+- [ ] Préparer le compte de démonstration (`npm run demo:seed`) et renseigner `SUPPORT_EMAIL`
 - [x] RLS complète testée, tests unitaires et base de données
 - [ ] Tests E2E exécutés contre le projet réel (en attente de la clé serveur en local)
 - [ ] Vérification manuelle sur iPhone (voir TEST_PLAN.md)

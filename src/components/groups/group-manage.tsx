@@ -3,8 +3,17 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Copy, Link2, LogOut, Share2, Shield, X } from "lucide-react";
-import { createInvitation, removeMember, renameGroup, revokeInvitation, setMemberRole } from "@/server/actions/groups";
+import { Copy, KeyRound, Link2, LogOut, RefreshCw, Share2, Shield, X } from "lucide-react";
+import {
+  createGroupJoinCode,
+  createInvitation,
+  removeMember,
+  renameGroup,
+  resetGroupJoinCode,
+  revokeInvitation,
+  setMemberRole,
+} from "@/server/actions/groups";
+import { formatJoinCode } from "@/lib/join-code";
 import { formatRelative } from "@/lib/format";
 import { shareLink } from "@/lib/native";
 import { Avatar, Card, Field, PillButton, Select, SectionTitle, TextInput } from "@/components/ui/kit";
@@ -20,6 +29,7 @@ export function GroupManage({
   isAdmin,
   members,
   invitations,
+  joinCode,
 }: {
   groupId: string;
   groupName: string;
@@ -27,6 +37,7 @@ export function GroupManage({
   isAdmin: boolean;
   members: Member[];
   invitations: Invitation[];
+  joinCode: string | null;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -55,9 +66,11 @@ export function GroupManage({
 
   return (
     <div className="flex flex-col gap-7">
+      {isAdmin && <JoinCodeCard groupId={groupId} groupName={groupName} code={joinCode} />}
+
       {isAdmin && (
         <section className="flex flex-col gap-3">
-          <SectionTitle>Inviter des amis</SectionTitle>
+          <SectionTitle>Inviter avec un lien</SectionTitle>
           <Card className="flex flex-col gap-3">
             <p className="text-[14px] text-ink-2">
               Le lien est personnel au groupe, expire automatiquement et peut être révoqué. La personne doit se connecter
@@ -226,5 +239,96 @@ export function GroupManage({
         }}
       />
     </div>
+  );
+}
+
+/** Admin: the group's permanent code (share, renew, disable). */
+function JoinCodeCard({ groupId, groupName, code }: { groupId: string; groupName: string; code: string | null }) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+  const [confirm, setConfirm] = useState<"renew" | "disable" | null>(null);
+
+  const run = (fn: () => Promise<{ ok: boolean; error?: string }>, success: string) =>
+    startTransition(async () => {
+      const r = await fn();
+      if (!r.ok) return void toast.error(r.error ?? "Erreur");
+      toast.success(success);
+      router.refresh();
+    });
+
+  const share = async () => {
+    if (!code) return;
+    const text = `Rejoins « ${groupName} » sur Dogcare : ouvre l'app, puis saisis le code ${formatJoinCode(code)}.`;
+    const result = await shareLink({ title: "Dogcare", text, url: window.location.origin });
+    if (result === "copied") toast.success("Message copié");
+  };
+
+  return (
+    <section className="flex flex-col gap-3">
+      <SectionTitle>Code du groupe</SectionTitle>
+      <Card className="flex flex-col gap-3">
+        <p className="text-[14px] text-ink-2">
+          Toute personne connectée qui saisit ce code rejoint le groupe. Il reste valable jusqu&apos;à ce que vous le
+          changiez : ne le partagez qu&apos;avec vos proches.
+        </p>
+        {code ? (
+          <>
+            <p
+              className="rounded-2xl bg-surface-2 py-4 text-center text-[34px] font-semibold tracking-[0.18em] text-ink tabular"
+              aria-label={`Code du groupe : ${code.split("").join(" ")}`}
+            >
+              {formatJoinCode(code)}
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              <PillButton size="sm" onClick={share}>
+                <Share2 className="size-4" aria-hidden /> Partager
+              </PillButton>
+              <PillButton
+                size="sm"
+                variant="outline"
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(formatJoinCode(code));
+                    toast.success("Code copié");
+                  } catch {
+                    toast.error("Copie impossible, notez le code à la main.");
+                  }
+                }}
+              >
+                <Copy className="size-4" aria-hidden /> Copier
+              </PillButton>
+              <PillButton size="sm" variant="soft" disabled={pending} onClick={() => setConfirm("renew")}>
+                <RefreshCw className="size-4" aria-hidden /> Nouveau code
+              </PillButton>
+              <PillButton size="sm" variant="ghost" disabled={pending} onClick={() => setConfirm("disable")}>
+                Désactiver
+              </PillButton>
+            </div>
+          </>
+        ) : (
+          <PillButton loading={pending} onClick={() => run(() => createGroupJoinCode(groupId), "Code du groupe créé")}>
+            <KeyRound className="size-4" aria-hidden /> Créer un code de groupe
+          </PillButton>
+        )}
+      </Card>
+      <ConfirmationDialog
+        open={confirm !== null}
+        onOpenChange={(o) => !o && setConfirm(null)}
+        title={confirm === "renew" ? "Générer un nouveau code ?" : "Désactiver le code ?"}
+        description={
+          confirm === "renew"
+            ? "L'ancien code ne fonctionnera plus. Les membres actuels restent dans le groupe."
+            : "Plus personne ne pourra rejoindre le groupe avec un code. Les liens d'invitation restent possibles."
+        }
+        confirmLabel={confirm === "renew" ? "Nouveau code" : "Désactiver"}
+        destructive={confirm === "disable"}
+        pending={pending}
+        onConfirm={() => {
+          const enabled = confirm === "renew";
+          setConfirm(null);
+          run(() => resetGroupJoinCode(groupId, enabled), enabled ? "Nouveau code généré" : "Code désactivé");
+        }}
+      />
+    </section>
   );
 }

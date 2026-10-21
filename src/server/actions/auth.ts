@@ -49,3 +49,29 @@ export async function signOut() {
   await supabase.auth.signOut();
   redirect("/login");
 }
+
+/** The single demonstration account (App Store review), or null if not configured. */
+function demoAccountEmail(): string | null {
+  const email = process.env.DEMO_ACCOUNT_EMAIL?.trim().toLowerCase();
+  return email ? email : null;
+}
+
+/**
+ * Password sign-in, reserved to the demonstration account given to Apple's
+ * reviewers (they cannot receive our e-mail codes). Every other account
+ * signs in with an e-mail code.
+ */
+export async function signInDemoAccount(input: { email: string; password: string; next?: string }): Promise<ActionResult> {
+  const demo = demoAccountEmail();
+  const email = input.email.trim().toLowerCase();
+  if (!demo || email !== demo || input.password.length < 8 || input.password.length > 200) {
+    return { ok: false, error: "Identifiants de démonstration incorrects." };
+  }
+  const supabase = await createClient();
+  const { error } = await supabase.auth.signInWithPassword({ email, password: input.password });
+  if (error) {
+    if (error.status === 429) return { ok: false, error: "Trop de tentatives. Patientez une minute." };
+    return { ok: false, error: "Identifiants de démonstration incorrects." };
+  }
+  redirect(safeNext(input.next));
+}

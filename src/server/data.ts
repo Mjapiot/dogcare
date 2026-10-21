@@ -290,3 +290,11 @@ export async function getRequestGroupId(requestId: string): Promise<string | nul
   const { data } = await supabase.from("care_requests").select("group_id").eq("id", requestId).maybeSingle();
   return (data as { group_id: string } | null)?.group_id ?? null;
 }
+
+/** Admin only: current group code, or null if none / disabled. */
+export async function getGroupJoinCode(groupId: string): Promise<string | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("get_group_join_code", { p_group_id: groupId, p_create: false });
+  if (error) return null;
+  return (data as string | null) ?? null;
+}

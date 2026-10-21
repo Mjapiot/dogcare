@@ -415,3 +415,57 @@ describe("push retries and retention", () => {
     expect(await rows(db, "select id from notifications where title = 'old'")).toEqual([]);
   });
 });
+
+describe("permanent group join code", () => {
+  it("only admins can see or renew the code, and nobody reads the table directly", async () => {
+    const s = await scenario(1);
+    const [emma] = s.helpers;
+    const code = (await asUser(db, s.owner, (tx) => one<{ c: string }>(tx, "select public.get_group_join_code($1) as c", [s.groupId]))).c;
+    expect(code).toMatch(/^[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{8}$/);
+    // stable until renewed
+    const again = (await asUser(db, s.owner, (tx) => one<{ c: string }>(tx, "select public.get_group_join_code($1) as c", [s.groupId]))).c;
+    expect(again).toBe(code);
+    await expect(
+      asUser(db, emma, (tx) => tx.query("select public.get_group_join_code($1)", [s.groupId])),
+    ).rejects.toThrow(/administrateur/);
+    await expect(asUser(db, emma, (tx) => tx.query("select * from group_join_codes"))).rejects.toThrow(/permission denied/);
+  });
+
+  it("anyone signed in joins with the code (case and dash insensitive); admins are notified", async () => {
+    const s = await scenario(0);
+    const newcomer = await createUser(db, uid(), "Newcomer");
+    const code = (await asUser(db, s.owner, (tx) => one<{ c: string }>(tx, "select public.get_group_join_code($1) as c", [s.groupId]))).c;
+    const typed = `${code.slice(0, 4).toLowerCase()}-${code.slice(4)}`;
+    const r = await asUser(db, newcomer, (tx) => one<{ status: string; group_id: string }>(tx, "select * from public.join_group_with_code($1)", [typed]));
+    expect(r).toMatchObject({ status: "joined", group_id: s.groupId });
+    const again = await asUser(db, newcomer, (tx) => one<{ status: string }>(tx, "select * from public.join_group_with_code($1)", [code]));
+    expect(again.status).toBe("already_member");
+    const n = await rows(db, "select id from notifications where user_id = $1 and notification_type = 'member_joined'", [s.owner]);
+    expect(n).toHaveLength(1);
+  });
+
+  it("a renewed or disabled code stops working", async () => {
+    const s = await scenario(0);
+    const newcomer = await createUser(db, uid(), "Late");
+    const old = (await asUser(db, s.owner, (tx) => one<{ c: string }>(tx, "select public.get_group_join_code($1) as c", [s.groupId]))).c;
+    const renewed = (await asUser(db, s.owner, (tx) => one<{ c: string }>(tx, "select public.reset_group_join_code($1) as c", [s.groupId]))).c;
+    expect(renewed).not.toBe(old);
+    const r = await asUser(db, newcomer, (tx) => one<{ status: string }>(tx, "select * from public.join_group_with_code($1)", [old]));
+    expect(r.status).toBe("invalid");
+    await asUser(db, s.owner, (tx) => tx.query("select public.reset_group_join_code($1, false)", [s.groupId]));
+    const r2 = await asUser(db, newcomer, (tx) => one<{ status: string }>(tx, "select * from public.join_group_with_code($1)", [renewed]));
+    expect(r2.status).toBe("invalid");
+  });
+
+  it("guessing is throttled after 10 wrong codes in 15 minutes", async () => {
+    const s = await scenario(0);
+    const guesser = await createUser(db, uid(), "Guesser");
+    const code = (await asUser(db, s.owner, (tx) => one<{ c: string }>(tx, "select public.get_group_join_code($1) as c", [s.groupId]))).c;
+    for (let i = 0; i < 10; i++) {
+      const r = await asUser(db, guesser, (tx) => one<{ status: string }>(tx, "select * from public.join_group_with_code('ZZZZZZZZ')"));
+      expect(r.status).toBe("invalid");
+    }
+    const blocked = await asUser(db, guesser, (tx) => one<{ status: string }>(tx, "select * from public.join_group_with_code($1)", [code]));
+    expect(blocked.status).toBe("throttled");
+  });
+});

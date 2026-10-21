@@ -23,6 +23,8 @@ Une disponibilité n'est jamais une acceptation ; un « Oui » n'est jamais une 
 - Groupes privés : un administrateur au moins, des membres. Un utilisateur peut être dans plusieurs groupes.
 - Invitation par lien sécurisé : créé par un administrateur, expiration (24 h → 30 j), nombre d'utilisations
   limité, révocable, connexion obligatoire avant d'adhérer.
+- Code de groupe permanent (ex. K7PQ-M2XD), visible et renouvelable par les administrateurs, désactivable.
+  Toute personne connectée qui le saisit rejoint le groupe ; 10 essais erronés par quart d'heure au maximum.
 - Un chien a une fiche unique, un ou plusieurs responsables, et est visible dans un ou plusieurs groupes.
   Archivable sans perdre l'historique. Aucune information de santé obligatoire.
 - Ajouter un chien est facultatif : on peut simplement aider.
@@ -121,6 +123,14 @@ La couleur d'un jour = le statut le plus urgent de ses besoins.
 
 A (première utilisation), B (disponibilités), C (besoin d'aide), D (je veux aider), E (personne ne peut
 aider : alerte rouge, modification, relance via partage), F (garde annulée : recalcul, notification).
+
+## Publication App Store
+
+- Inscription ouverte : chacun crée son compte et son groupe ; les données restent privées par groupe.
+- Compte de démonstration pour la revue d'Apple : seul compte autorisé à se connecter par mot de passe
+  (lien discret « Compte de démonstration »), dans un groupe « Démo Dogcare » isolé et clairement fictif,
+  préparé par `npm run demo:seed`.
+- Pages publiques `/confidentialite` et `/assistance` (adresse de contact via `SUPPORT_EMAIL`).
 
 ## Arbitrages et décisions
 

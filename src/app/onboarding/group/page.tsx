@@ -20,7 +20,7 @@ export default async function OnboardingGroupPage() {
             Bonjour {profile.display_name.split(" ")[0]} !
           </h1>
           <p className="mt-3 text-[17px] text-ink-2">
-            Créez le groupe de vos amis, ou rejoignez-le grâce au lien d&apos;invitation que l&apos;on vous a envoyé.
+            Rejoignez le groupe de vos amis avec son code ou le lien reçu, ou créez le vôtre.
           </p>
         </div>
         <GroupChoice hasGroups={groups.length > 0} />

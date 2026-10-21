@@ -12,6 +12,7 @@ déjà appliquée : en créer une nouvelle (`YYYYMMDDHHMMSS_description.sql`).
 | `…120300_storage_realtime.sql` | bucket `dog-photos` + politiques, publication temps réel |
 | `20261016090000_web_push.sql` | état d'envoi push des notifications, RPC d'abonnement et de distribution |
 | `20261016120000_native_push.sql` | appareils iOS natifs (`platform = 'ios'`, jeton APNs), RPC `register_native_push` |
+| `20261021120000_group_join_codes.sql` | code de groupe permanent (`group_join_codes`), essais limités (`join_code_attempts`, 10 échecs / 15 min), RPC `get_group_join_code`, `reset_group_join_code`, `join_group_with_code` |
 | `20261021110000_review_fixes_delivery.sql` | relances push (5 essais en 30 min), purge (notifications > 6 mois, audit > 1 an), index de lecture et de clés étrangères |
 | `20261021100000_review_fixes_rules.sql` | préférences limitées au push, annulation d'un créneau parmi plusieurs, intégrité des réponses, information devenue besoin annoncée, passage en non partageable contrôlé, confirmation impossible sur une demande terminée |
 | `20261021090000_review_fixes_departures.sql` | suppression de groupe avec demandes, retrait des engagements d'un membre qui part ou supprime son compte, écritures directes interdites sur `push_subscriptions` |
@@ -35,6 +36,8 @@ déjà appliquée : en créer une nouvelle (`YYYYMMDDHHMMSS_description.sql`).
 | `notifications` | notifications internes | écrites uniquement par la base |
 | `notification_preferences` | préférences | absence de ligne = tout activé |
 | `push_subscriptions` | appareils abonnés aux notifications push | écriture uniquement via `register_push_subscription` / `register_native_push` (le client ne peut que lire et supprimer ses appareils) ; format d'adresse contrôlé en base ; le serveur n'appelle que des services connus (FCM, Apple, Mozilla, Windows) |
+| `group_join_codes` | code permanent d'un groupe (8 caractères sans ambiguïté) | aucun accès direct : lecture et changement réservés aux admins via RPC |
+| `join_code_attempts` | essais de code échoués | limite les tentatives par compte ; purgés après 1 jour |
 | `audit_events` | journal des événements critiques | aucun accès client |
 
 Écarts assumés par rapport au schéma initial proposé :
@@ -94,4 +97,4 @@ en cascade ; demandes conservées sans auteur ; chiens sans responsable archivé
 ## Tests
 
 `npm run test:db` exécute toutes les migrations sur un PostgreSQL embarqué (PGlite) qui émule les rôles,
-`auth.uid()` et le stockage de Supabase, puis vérifie 69 scénarios d'autorisation et de règles métier.
+`auth.uid()` et le stockage de Supabase, puis vérifie 73 scénarios d'autorisation et de règles métier.

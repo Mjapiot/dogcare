@@ -52,3 +52,22 @@ describe("isAllowedPushEndpoint", () => {
     expect(isAllowedPushEndpoint(url)).toBe(false);
   });
 });
+
+import { formatJoinCode, normalizeJoinCode } from "@/lib/join-code";
+
+describe("join codes", () => {
+  it("normalizes what people type", () => {
+    expect(normalizeJoinCode(" k7pq-m2xd ")).toBe("K7PQM2XD");
+    expect(normalizeJoinCode("K7PQ M2XD")).toBe("K7PQM2XD");
+  });
+
+  it("rejects impossible codes (wrong length, look-alike characters)", () => {
+    expect(normalizeJoinCode("K7PQM2X")).toBeNull();
+    expect(normalizeJoinCode("K7PQM2X0")).toBeNull(); // 0 is not in the alphabet
+    expect(normalizeJoinCode("https://dogcare/invite/abc")).toBeNull();
+  });
+
+  it("formats for display", () => {
+    expect(formatJoinCode("K7PQM2XD")).toBe("K7PQ-M2XD");
+  });
+});

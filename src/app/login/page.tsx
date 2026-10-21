@@ -4,6 +4,8 @@ import { getUserId } from "@/server/session";
 import { getSupabaseEnv } from "@/lib/env";
 import { safeRedirectPath } from "@/lib/safe-redirect";
 import { LoginForm } from "./login-form";
+import { DemoLogin } from "./demo-login";
+import Link from "next/link";
 
 export const metadata: Metadata = { title: "Connexion" };
 
@@ -28,13 +30,24 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
           </p>
         </div>
         {configured ? (
-          <LoginForm next={next} expired={params.error === "link"} />
+          <div className="flex flex-col gap-6">
+            <LoginForm next={next} expired={params.error === "link"} />
+            {process.env.DEMO_ACCOUNT_EMAIL && <DemoLogin next={next} />}
+          </div>
         ) : (
           <div className="rounded-3xl bg-surface p-5 text-[15px] text-ink-2" role="alert">
             L&apos;application n&apos;est pas encore configurée (variables Supabase manquantes).
           </div>
         )}
       </div>
+      <footer className="flex justify-center gap-4 pb-4 text-[13px] text-ink-3">
+        <Link href="/confidentialite" className="inline-flex min-h-11 items-center underline-offset-2 hover:underline">
+          Confidentialité
+        </Link>
+        <Link href="/assistance" className="inline-flex min-h-11 items-center underline-offset-2 hover:underline">
+          Assistance
+        </Link>
+      </footer>
     </main>
   );
 }

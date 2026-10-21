@@ -17,7 +17,8 @@
     "ios:open": "cap open ios",
     "ios:dev": "CAP_SERVER_URL=http://localhost:3000 cap sync ios && cap open ios",
     "ios:release": "scripts/ios-release.sh",
-    "ios:testflight": "scripts/ios-release.sh --upload"
+    "ios:testflight": "scripts/ios-release.sh --upload",
+    "demo:seed": "node --env-file=.env.local scripts/seed-demo.mjs"
   },
   "dependencies": {
     "@capacitor/app": "^8.1.2",

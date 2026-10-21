@@ -108,6 +108,15 @@ export default async function ProfilePage() {
       </section>
 
       <AccountActions />
+
+      <nav aria-label="Informations" className="flex justify-center gap-4 pb-2 text-[13px] text-ink-3">
+        <Link href="/confidentialite" className="inline-flex min-h-11 items-center underline-offset-2 hover:underline">
+          Confidentialité
+        </Link>
+        <Link href="/assistance" className="inline-flex min-h-11 items-center underline-offset-2 hover:underline">
+          Assistance
+        </Link>
+      </nav>
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { displayNameSchema, groupNameSchema, uuid } from "@/lib/validation";
+import { normalizeJoinCode } from "@/lib/join-code";
 import { CURRENT_GROUP_COOKIE, requireUserId } from "@/server/session";
 import { toUserMessage } from "@/server/errors";
 import { schedulePushDispatch } from "@/server/push";
@@ -144,4 +145,47 @@ export async function deleteMyAccount(): Promise<ActionResult> {
   if (error) return { ok: false, error: toUserMessage(error) };
   await supabase.auth.signOut();
   return { ok: true, data: undefined };
+}
+
+/** Admin: renew (the previous code stops working) or disable the group code. */
+export async function resetGroupJoinCode(groupId: string, enabled: boolean): Promise<ActionResult<{ code: string | null }>> {
+  if (!uuid.safeParse(groupId).success) return { ok: false, error: "Groupe invalide." };
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("reset_group_join_code", { p_group_id: groupId, p_enabled: enabled });
+  if (error) return { ok: false, error: toUserMessage(error) };
+  revalidatePath(`/groups/${groupId}`);
+  return { ok: true, data: { code: (data as string | null) ?? null } };
+}
+
+/** Admin: create the group code if it does not exist yet. */
+export async function createGroupJoinCode(groupId: string): Promise<ActionResult<{ code: string }>> {
+  if (!uuid.safeParse(groupId).success) return { ok: false, error: "Groupe invalide." };
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("get_group_join_code", { p_group_id: groupId, p_create: true });
+  if (error) return { ok: false, error: toUserMessage(error) };
+  revalidatePath(`/groups/${groupId}`);
+  return { ok: true, data: { code: data as string } };
+}
+
+/** Anyone signed in: join a group by typing its code. */
+export async function joinGroupWithCode(input: string): Promise<ActionResult<{ groupId: string; groupName: string }>> {
+  const code = normalizeJoinCode(input);
+  if (!code) return { ok: false, error: "Un code de groupe contient 8 caractères, par exemple K7PQ-M2XD." };
+  await requireUserId();
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("join_group_with_code", { p_code: code });
+  if (error) return { ok: false, error: toUserMessage(error) };
+  const row = ((data as Array<{ status: string; group_id: string | null; group_name: string | null }> | null) ?? [])[0];
+  switch (row?.status) {
+    case "joined":
+    case "already_member":
+      (await cookies()).set(CURRENT_GROUP_COOKIE, row.group_id!, COOKIE_OPTIONS);
+      schedulePushDispatch();
+      revalidatePath("/", "layout");
+      return { ok: true, data: { groupId: row.group_id!, groupName: row.group_name ?? "" } };
+    case "throttled":
+      return { ok: false, error: "Trop d'essais. Réessayez dans 15 minutes." };
+    default:
+      return { ok: false, error: "Ce code ne correspond à aucun groupe. Vérifiez-le auprès d'un administrateur." };
+  }
 }
