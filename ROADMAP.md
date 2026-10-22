@@ -17,6 +17,8 @@
 - [x] PWA : manifeste, icônes, service worker minimal, page hors ligne, aide à l'installation iPhone
 - [x] App iPhone native (Capacitor) : notifications APNs, liens universels, partage natif, hors ligne
 - [x] App iPhone sur TestFlight (version 1.0 build 1)
+- [x] Version 1.0 (build 202610221858) soumise à la vérification App Store — 2026-10-22
+- [ ] Approbation Apple et publication automatique
 - [x] Notification native (APNs) reçue sur iPhone via TestFlight — 2026-10-21
 - [x] Abonnement calendrier (gardes confirmées dans le Calendrier de l'iPhone, mises à jour automatiques) — abonnement vérifié sur iPhone le 2026-10-22
 - [x] Code de groupe permanent, compte de démonstration, pages confidentialité et assistance
