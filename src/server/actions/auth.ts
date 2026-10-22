@@ -3,18 +3,26 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { codeSchema, emailSchema } from "@/lib/validation";
+import { emailSchema } from "@/lib/validation";
 import { safeRedirectPath } from "@/lib/safe-redirect";
 import type { ActionResult } from "@/lib/types";
 
 const safeNext = (next: unknown) => safeRedirectPath(next);
 
-export async function sendLoginCode(input: { email: string; next?: string }): Promise<ActionResult> {
+/** Custom URL scheme of the iOS app (Info.plist), so the e-mail link reopens the app. */
+const NATIVE_SCHEME = "app.dogcare.ios";
+
+/**
+ * Sends a magic link (Supabase default "Magic Link" template). In the iOS app
+ * the link comes back through the app's URL scheme: the login then finishes
+ * inside the app, where the PKCE verifier cookie lives.
+ */
+export async function sendLoginLink(input: { email: string; next?: string; native?: boolean }): Promise<ActionResult> {
   const parsed = emailSchema.safeParse({ email: input.email.trim().toLowerCase() });
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message };
 
   const supabase = await createClient();
-  const origin = (await headers()).get("origin") ?? "";
+  const origin = input.native ? `${NATIVE_SCHEME}://` : ((await headers()).get("origin") ?? "");
   const { error } = await supabase.auth.signInWithOtp({
     email: parsed.data.email,
     options: {
@@ -24,24 +32,12 @@ export async function sendLoginCode(input: { email: string; next?: string }): Pr
   });
   if (error) {
     if (error.status === 429) {
-      return { ok: false, error: "Trop de demandes. Patientez une minute avant de redemander un code." };
+      return { ok: false, error: "Trop de demandes. Patientez une minute avant de redemander un lien." };
     }
     console.error("[dogcare] signInWithOtp", error.status, error.message);
-    return { ok: false, error: "Impossible d'envoyer le code pour le moment. Réessayez." };
+    return { ok: false, error: "Impossible d'envoyer le lien pour le moment. Réessayez." };
   }
   return { ok: true, data: undefined };
-}
-
-export async function verifyLoginCode(input: { email: string; code: string; next?: string }): Promise<ActionResult> {
-  const parsed = codeSchema.safeParse({ email: input.email.trim().toLowerCase(), code: input.code.replace(/\s/g, "") });
-  if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message };
-
-  const supabase = await createClient();
-  const { error } = await supabase.auth.verifyOtp({ email: parsed.data.email, token: parsed.data.code, type: "email" });
-  if (error) {
-    return { ok: false, error: "Code incorrect ou expiré. Vérifiez le dernier e-mail reçu ou demandez un nouveau code." };
-  }
-  redirect(safeNext(input.next));
 }
 
 export async function signOut() {
@@ -58,8 +54,8 @@ function demoAccountEmail(): string | null {
 
 /**
  * Password sign-in, reserved to the demonstration account given to Apple's
- * reviewers (they cannot receive our e-mail codes). Every other account
- * signs in with an e-mail code.
+ * reviewers (they cannot receive our e-mails). Every other account signs in
+ * with an e-mail link.
  */
 export async function signInDemoAccount(input: { email: string; password: string; next?: string }): Promise<ActionResult> {
   const demo = demoAccountEmail();

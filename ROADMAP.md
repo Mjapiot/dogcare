@@ -2,7 +2,7 @@
 
 ## MVP (cette version)
 
-- [x] Connexion par code e-mail, profil, onboarding (chien facultatif)
+- [x] Connexion par lien e-mail (retour dans l'app iPhone), profil, onboarding (chien facultatif)
 - [x] Groupes privés, invitations sécurisées, rôles admin/membre, quitter / retirer
 - [x] Chiens : fiche, photo, responsables multiples, visibilité par groupe, archivage
 - [x] Disponibilités par créneaux (2/4 semaines), saisie rapide, habitudes hebdomadaires, partage par groupe

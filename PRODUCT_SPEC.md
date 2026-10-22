@@ -19,7 +19,7 @@ Une disponibilité n'est jamais une acceptation ; un « Oui » n'est jamais une 
 
 ## Utilisateurs, groupes, chiens
 
-- Compte personnel par e-mail (code à usage unique). Profil : prénom affiché, fuseau horaire.
+- Compte personnel par e-mail (lien de connexion à usage unique, modèle Supabase par défaut ; à ouvrir sur l'appareil qui l'a demandé). Profil : prénom affiché, fuseau horaire.
 - Groupes privés : un administrateur au moins, des membres. Un utilisateur peut être dans plusieurs groupes.
 - Invitation par lien sécurisé : créé par un administrateur, expiration (24 h → 30 j), nombre d'utilisations
   limité, révocable, connexion obligatoire avant d'adhérer.

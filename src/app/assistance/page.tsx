@@ -21,8 +21,9 @@ export default function SupportPage() {
       <section>
         <h2>Se connecter</h2>
         <p>
-          Saisissez votre adresse e-mail : vous recevez un code à 6 chiffres. Pas de mot de passe. Si le code
-          n&apos;arrive pas, vérifiez vos courriers indésirables puis demandez-en un nouveau après une minute.
+          Saisissez votre adresse e-mail : vous recevez un lien de connexion. Pas de mot de passe. Ouvrez le lien
+          sur le téléphone où vous avez fait la demande. S&apos;il n&apos;arrive pas, vérifiez vos courriers
+          indésirables puis demandez-en un nouveau après une minute.
         </p>
       </section>
 

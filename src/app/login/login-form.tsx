@@ -1,20 +1,26 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
-import { ArrowLeft, Mail } from "lucide-react";
-import { sendLoginCode, verifyLoginCode } from "@/server/actions/auth";
+import { useEffect, useState, useTransition } from "react";
+import { ArrowLeft, Mail, MailCheck } from "lucide-react";
+import { sendLoginLink } from "@/server/actions/auth";
 import { Field, PillButton, TextInput } from "@/components/ui/kit";
+import { isNativeApp } from "@/lib/native";
 
 const RESEND_DELAY = 60;
 
+/**
+ * Passwordless sign-in with a magic link (Supabase default e-mail template).
+ * The link must be opened on the device that asked for it: in the iPhone app
+ * it comes back to the app through its URL scheme.
+ */
 export function LoginForm({ next, expired }: { next: string; expired: boolean }) {
-  const [step, setStep] = useState<"email" | "code">("email");
+  const [step, setStep] = useState<"email" | "sent">("email");
   const [email, setEmail] = useState("");
-  const [code, setCode] = useState("");
-  const [error, setError] = useState<string | null>(expired ? "Ce lien a expiré. Demandez un nouveau code." : null);
+  const [error, setError] = useState<string | null>(
+    expired ? "Ce lien n'est plus valide (expiré, déjà utilisé ou ouvert sur un autre appareil). Demandez-en un nouveau." : null,
+  );
   const [cooldown, setCooldown] = useState(0);
   const [pending, startTransition] = useTransition();
-  const codeRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (cooldown <= 0) return;
@@ -22,26 +28,13 @@ export function LoginForm({ next, expired }: { next: string; expired: boolean })
     return () => clearTimeout(t);
   }, [cooldown]);
 
-  useEffect(() => {
-    if (step === "code") codeRef.current?.focus();
-  }, [step]);
-
-  function requestCode() {
+  function requestLink() {
     setError(null);
     startTransition(async () => {
-      const result = await sendLoginCode({ email, next });
+      const result = await sendLoginLink({ email, next, native: isNativeApp() });
       if (!result.ok) return setError(result.error);
-      setStep("code");
+      setStep("sent");
       setCooldown(RESEND_DELAY);
-    });
-  }
-
-  function submitCode() {
-    setError(null);
-    startTransition(async () => {
-      const result = await verifyLoginCode({ email, code, next });
-      // on success the server redirects; we only get here on failure
-      if (result && !result.ok) setError(result.error);
     });
   }
 
@@ -51,7 +44,7 @@ export function LoginForm({ next, expired }: { next: string; expired: boolean })
         className="flex flex-col gap-4"
         onSubmit={(e) => {
           e.preventDefault();
-          requestCode();
+          requestLink();
         }}
       >
         <Field label="Adresse e-mail" htmlFor="email" error={error ?? undefined}>
@@ -71,28 +64,21 @@ export function LoginForm({ next, expired }: { next: string; expired: boolean })
         </Field>
         <PillButton type="submit" size="lg" loading={pending} disabled={!email.includes("@")}>
           <Mail className="size-4" aria-hidden />
-          Recevoir un code
+          Recevoir un lien de connexion
         </PillButton>
         <p className="text-center text-[13px] text-ink-3">
-          Pas de mot de passe : un code à usage unique vous est envoyé par e-mail.
+          Pas de mot de passe : un lien de connexion vous est envoyé par e-mail.
         </p>
       </form>
     );
   }
 
   return (
-    <form
-      className="flex flex-col gap-4"
-      onSubmit={(e) => {
-        e.preventDefault();
-        submitCode();
-      }}
-    >
+    <div className="flex flex-col gap-4">
       <button
         type="button"
         onClick={() => {
           setStep("email");
-          setCode("");
           setError(null);
         }}
         className="inline-flex min-h-11 items-center gap-1.5 self-start text-[15px] font-medium text-ink-2"
@@ -100,31 +86,26 @@ export function LoginForm({ next, expired }: { next: string; expired: boolean })
         <ArrowLeft className="size-4" aria-hidden />
         Changer d&apos;adresse
       </button>
-      <p className="text-[15px] text-ink-2" aria-live="polite">
-        E-mail envoyé à <strong className="text-ink">{email}</strong>. Saisissez le code reçu, ou ouvrez le lien de
-        l&apos;e-mail dans ce même navigateur. Pensez à vérifier vos spams.
-      </p>
-      <Field label="Code reçu par e-mail" htmlFor="code" error={error ?? undefined}>
-        <TextInput
-          ref={codeRef}
-          id="code"
-          inputMode="numeric"
-          autoComplete="one-time-code"
-          pattern="[0-9 ]*"
-          maxLength={12}
-          required
-          placeholder="123456"
-          className="text-center text-2xl tracking-[0.4em] tabular"
-          value={code}
-          onChange={(e) => setCode(e.target.value.replace(/[^\d]/g, ""))}
-        />
-      </Field>
-      <PillButton type="submit" size="lg" loading={pending} disabled={code.length < 6}>
-        Se connecter
+      <div className="flex flex-col gap-3 rounded-3xl bg-surface p-5" aria-live="polite">
+        <MailCheck className="size-7 text-[var(--tone-covered-ink)]" aria-hidden />
+        <p className="text-[17px] font-semibold text-ink">Vérifiez votre boîte mail</p>
+        <p className="text-[15px] text-ink-2">
+          Un lien de connexion a été envoyé à <strong className="text-ink">{email}</strong>.{" "}
+          <strong className="text-ink">Ouvrez-le sur cet appareil</strong> : vous serez connecté automatiquement.
+        </p>
+        <p className="text-[13px] text-ink-3">
+          Rien reçu ? Regardez dans les courriers indésirables. Le lien est valable une heure et ne sert qu&apos;une
+          fois.
+        </p>
+      </div>
+      {error && (
+        <p className="text-[14px] font-medium text-[#9b1c14]" role="alert">
+          {error}
+        </p>
+      )}
+      <PillButton variant="ghost" disabled={cooldown > 0 || pending} onClick={requestLink}>
+        {cooldown > 0 ? `Renvoyer le lien (${cooldown} s)` : "Renvoyer le lien"}
       </PillButton>
-      <PillButton variant="ghost" disabled={cooldown > 0 || pending} onClick={requestCode}>
-        {cooldown > 0 ? `Renvoyer un code (${cooldown} s)` : "Renvoyer un code"}
-      </PillButton>
-    </form>
+    </div>
   );
 }

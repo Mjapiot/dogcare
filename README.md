@@ -70,17 +70,13 @@ Elle ne doit jamais porter le préfixe `NEXT_PUBLIC_`.
 
 ### Réglages Supabase à faire une fois (tableau de bord)
 
-1. **Authentication → Emails → Templates → Magic Link** : le contenu doit afficher le code `{{ .Token }}`
-   (connexion par code à 6 chiffres, indispensable pour l'app installée sur iPhone). Modèle conseillé :
-   ```html
-   <h2>Votre code Dogcare</h2>
-   <p style="font-size:28px;letter-spacing:6px"><strong>{{ .Token }}</strong></p>
-   <p>Ce code expire dans 1 heure. Si vous n'êtes pas à l'origine de cette demande, ignorez cet e-mail.</p>
-   ```
+1. **Authentication → Emails → Templates → Magic Link** : garder le modèle par défaut. La connexion se fait
+   uniquement par lien (pas de code). Le lien doit être ouvert sur l'appareil qui l'a demandé.
 2. **Authentication → URL Configuration** : Site URL `https://dogcare-gamma.vercel.app`, et ajouter
-   `https://dogcare-gamma.vercel.app/**` et `http://localhost:3000/**` aux Redirect URLs.
+   `https://dogcare-gamma.vercel.app/**`, `http://localhost:3000/**` et `app.dogcare.ios://**` (retour du lien
+   de connexion dans l'app iPhone) aux Redirect URLs.
 3. **Authentication → Emails → SMTP** : l'envoi intégré est limité à quelques e-mails par heure.
-   Avant d'inviter tout le groupe, configurer un SMTP (ex. Resend) avec un domaine vérifié.
+   Avant d'inviter beaucoup de monde, configurer un SMTP (ex. Resend) avec un domaine vérifié.
 
 ## Sécurité
 

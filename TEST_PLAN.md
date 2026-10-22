@@ -29,7 +29,7 @@ Safari iOS puis PWA installée (Partager → « Sur l'écran d'accueil »).
 | # | Vérification | Attendu |
 | --- | --- | --- |
 | 1 | Installation | icône Dogcare, ouverture plein écran, barre d'état lisible |
-| 2 | Connexion par code | e-mail reçu avec un code, saisie auto-proposée par le clavier iOS, connexion **dans** l'app installée |
+| 2 | Connexion par lien | e-mail reçu, le lien ouvert depuis Mail rouvre l'app (même lancée à froid) et connecte **dans** l'app installée ; sur le web, connexion dans le même navigateur |
 | 3 | Fermeture / réouverture | session conservée, données rafraîchies au retour |
 | 4 | Safe areas | rien sous l'encoche / Dynamic Island ni sous la barre d'accueil |
 | 5 | Calendrier | défilement fluide, couleurs + icônes + libellés, feuille du jour |

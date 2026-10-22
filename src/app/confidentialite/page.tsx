@@ -23,7 +23,7 @@ export default function PrivacyPage() {
       <section>
         <h2>Données utilisées</h2>
         <ul>
-          <li><strong>Compte</strong> : adresse e-mail (pour vous envoyer votre code de connexion) et prénom affiché.</li>
+          <li><strong>Compte</strong> : adresse e-mail (pour vous envoyer votre lien de connexion) et prénom affiché.</li>
           <li><strong>Groupes</strong> : groupes dont vous êtes membre et votre rôle.</li>
           <li>
             <strong>Chiens</strong> : nom, race, date de naissance, photo et consignes de garde que vous choisissez de

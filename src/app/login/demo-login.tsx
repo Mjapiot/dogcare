@@ -37,7 +37,7 @@ export function DemoLogin({ next }: { next: string }) {
       }}
     >
       <p className="text-[14px] text-ink-2">
-        Réservé au compte de démonstration communiqué aux testeurs. Les autres comptes se connectent avec un code reçu
+        Réservé au compte de démonstration communiqué aux testeurs. Les autres comptes se connectent avec un lien reçu
         par e-mail.
       </p>
       <Field label="Identifiant" htmlFor="demo-email">

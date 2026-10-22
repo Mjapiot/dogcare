@@ -9,11 +9,6 @@ export const emailSchema = z.object({
   email: z.email({ message: "Adresse e-mail invalide." }).max(254),
 });
 
-export const codeSchema = z.object({
-  email: z.email({ message: "Adresse e-mail invalide." }).max(254),
-  code: z.string().trim().regex(/^\d{6,10}$/, "Le code contient uniquement des chiffres."),
-});
-
 export const displayNameSchema = z
   .string()
   .trim()

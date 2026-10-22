@@ -9,7 +9,7 @@ iPhone (PWA) ──HTTPS──> Vercel (Next.js App Router)
                           ▼
                        Supabase
                           ├─ PostgreSQL : schéma, contraintes, RLS, fonctions (RPC), triggers
-                          ├─ Auth       : code e-mail à usage unique
+                          ├─ Auth       : lien e-mail (PKCE), retour app via app.dogcare.ios://
                           ├─ Storage    : photos des chiens (bucket privé, URL signées)
                           └─ Realtime   : rafraîchissement des écrans (filtré par RLS)
 ```
