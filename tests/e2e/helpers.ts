@@ -10,7 +10,9 @@ export function adminClient(): SupabaseClient {
 
 /** Creates a confirmed test user (no e-mail is sent). Addresses are clearly fake. */
 export async function createTestUser(admin: SupabaseClient, name: string): Promise<{ id: string; email: string }> {
-  const email = `e2e+${name.toLowerCase()}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}@example.com`;
+  // e-mail addresses must stay ASCII ("Chloé" → "chloe")
+  const slug = name.normalize("NFD").replace(/[^A-Za-z0-9]/g, "").toLowerCase();
+  const email = `e2e+${slug}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}@example.com`;
   const { data, error } = await admin.auth.admin.createUser({ email, email_confirm: true, user_metadata: { display_name: name } });
   if (error || !data.user) throw error ?? new Error("createUser failed");
   return { id: data.user.id, email };

@@ -20,9 +20,9 @@
 - [x] Notification native (APNs) reçue sur iPhone via TestFlight — 2026-10-21
 - [x] Abonnement calendrier (gardes confirmées dans le Calendrier de l'iPhone, mises à jour automatiques) — abonnement vérifié sur iPhone le 2026-10-22
 - [x] Code de groupe permanent, compte de démonstration, pages confidentialité et assistance
-- [ ] Préparer le compte de démonstration (`npm run demo:seed`) et renseigner `SUPPORT_EMAIL`
+- [x] Compte de démonstration préparé (`npm run demo:seed`) et `SUPPORT_EMAIL` renseigné
 - [x] RLS complète testée, tests unitaires et base de données
-- [ ] Tests E2E exécutés contre le projet réel (en attente de la clé serveur en local)
+- [x] Tests E2E exécutés contre la production (2026-10-22)
 - [ ] Vérification manuelle sur iPhone (voir TEST_PLAN.md)
 - [ ] SMTP personnalisé pour lever la limite d'e-mails de Supabase
 

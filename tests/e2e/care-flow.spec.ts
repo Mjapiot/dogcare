@@ -1,6 +1,6 @@
 /**
  * Critical journey from the product spec (§20):
- * Julie creates a group → Emma joins → Julie adds Oscar → Emma declares
+ * Julie creates a group (onboarding: name, group, dog, habits) → Emma joins → Julie adds Oscar → Emma declares
  * availability → Julie posts a request → Emma says yes → Julie confirms →
  * calendar shows "Couvert" → Emma cancels → need is uncovered again →
  * Chloé offers help → Julie confirms Chloé. Plus: an outsider sees nothing.
@@ -37,7 +37,11 @@ test("full care coordination flow", async ({ browser }) => {
     await julie.waitForURL(/dogs\/new/);
     await julie.getByLabel("Nom").fill("Oscar");
     await julie.getByRole("button", { name: "Ajouter ce chien" }).click();
-    await julie.waitForURL(/availability/);
+    // last onboarding step: weekly habits (optional)
+    await julie.waitForURL(/onboarding\/habits/);
+    await expect(julie.getByText("Étape 4 sur 4 : Habitudes")).toBeAttached();
+    await julie.getByRole("link", { name: "Passer pour l'instant" }).click();
+    await julie.waitForURL((url) => url.pathname === "/");
     const { data: groups } = await admin.from("group_members").select("group_id").eq("user_id", users.julie.id);
     groupIds.push(...(groups ?? []).map((g) => g.group_id as string));
 
@@ -57,7 +61,7 @@ test("full care coordination flow", async ({ browser }) => {
         await page.getByRole("button", { name: "Continuer" }).click();
       }
       await page.getByRole("button", { name: "Rejoindre le groupe" }).click();
-      await page.waitForURL(/availability/);
+      await page.waitForURL(/onboarding\/habits/);
       await page.close();
     }
 
