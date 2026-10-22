@@ -45,6 +45,7 @@ Safari iOS puis PWA installée (Partager → « Sur l'écran d'accueil »).
 | 15 | Push : un autre compte crée une demande / répond / confirme | notification reçue app fermée ; la toucher ouvre la demande |
 | 16 | Push : déconnexion puis action d'un autre membre | plus aucune notification sur cet appareil |
 | 17 | Profil → « Ajouter au Calendrier » (PWA et app) | iOS propose de s'abonner ; les gardes confirmées apparaissent ; une garde annulée disparaît après actualisation |
+| 18 | Nouveau compte : prénom → groupe → chien → habitudes | barre de progression animée, étapes facultatives passables, arrivée sur l'accueil |
 
 ## 3. Vérifications post-déploiement
 

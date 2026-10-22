@@ -2,9 +2,11 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { CircleAlert, Users } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { getProfile, requireUserId } from "@/server/session";
+import { getMyGroups, getProfile, requireUserId } from "@/server/session";
 import { PillLink } from "@/components/ui/kit";
 import { JoinButton } from "./join-button";
+import { OnboardingProgress } from "@/components/onboarding/onboarding-progress";
+import { ONBOARDING_STEPS } from "@/lib/onboarding";
 
 export const metadata: Metadata = { title: "Invitation" };
 
@@ -27,11 +29,14 @@ export default async function InvitePage({ params }: PageProps<"/invite/[token]"
   const { data } = await supabase.rpc("get_invitation", { p_token: token });
   const preview = ((data as Preview[] | null) ?? [])[0] ?? { status: "invalid", group_id: null, group_name: null, inviter_name: null };
   if (preview.status === "already_member") redirect("/");
+  // first group: this is the onboarding's "group" step
+  const onboarding = (await getMyGroups()).length === 0;
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center gap-6 px-5 pt-safe pb-safe">
       {preview.status === "valid" ? (
         <>
+          {onboarding && <OnboardingProgress steps={ONBOARDING_STEPS.join} current={2} />}
           <div className="flex size-14 items-center justify-center rounded-full bg-[var(--tone-covered)]">
             <Users className="size-7 text-[var(--tone-covered-ink)]" aria-hidden />
           </div>
@@ -42,7 +47,7 @@ export default async function InvitePage({ params }: PageProps<"/invite/[token]"
               Vous verrez les besoins de garde du groupe et pourrez partager vos disponibilités.
             </p>
           </div>
-          <JoinButton token={token} />
+          <JoinButton token={token} next={onboarding ? "/onboarding/habits" : "/"} />
         </>
       ) : (
         <>

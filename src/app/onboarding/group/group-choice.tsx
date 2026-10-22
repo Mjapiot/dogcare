@@ -40,7 +40,7 @@ export function GroupChoice({ hasGroups }: { hasGroups: boolean }) {
                 const r = await joinGroupWithCode(code);
                 if (!r.ok) return setLinkError(r.error);
                 toast.success(`Bienvenue dans « ${r.data.groupName} » !`);
-                router.replace("/availability?welcome=1");
+                router.replace(hasGroups ? "/" : "/onboarding/habits");
               });
               return;
             }
@@ -84,7 +84,7 @@ export function GroupChoice({ hasGroups }: { hasGroups: boolean }) {
             startTransition(async () => {
               const result = await createGroup(name);
               if (!result.ok) return setError(result.error);
-              router.replace("/dogs/new?welcome=1");
+              router.replace(hasGroups ? "/" : "/dogs/new?welcome=1");
             });
           }}
         >

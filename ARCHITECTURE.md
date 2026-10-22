@@ -45,7 +45,7 @@ demandée après un geste (Profil → « Activer sur cet appareil »). À la dé
 src/
   app/                 routes (App Router)
     (app)/             écrans connectés : layout = AppShell (en-tête, onglets, temps réel)
-    login, auth/confirm, onboarding, invite/[token], offline
+    login, auth/confirm, onboarding (prénom, groupe, habitudes), invite/[token], offline
     manifest.ts, icon.tsx, apple-icon.tsx, pwa-icon/[variant]   PWA
   domain/              logique métier PURE et testée (aucune dépendance React/Supabase)
     config.ts          créneaux, fuseau horaire

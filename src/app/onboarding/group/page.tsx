@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getMyGroups, getProfile, requireUserId } from "@/server/session";
 import { GroupChoice } from "./group-choice";
+import { OnboardingProgress } from "@/components/onboarding/onboarding-progress";
+import { ONBOARDING_STEPS } from "@/lib/onboarding";
 
 export const metadata: Metadata = { title: "Votre groupe" };
 
@@ -14,9 +16,9 @@ export default async function OnboardingGroupPage() {
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col px-5 pt-safe pb-safe">
       <div className="flex flex-1 flex-col justify-center gap-8 py-10">
+        {groups.length === 0 && <OnboardingProgress steps={ONBOARDING_STEPS.create} current={2} />}
         <div>
-          <p className="text-[15px] font-medium text-ink-3">Étape 2 sur 2</p>
-          <h1 className="mt-2 text-[40px] font-semibold leading-[1] tracking-[-0.04em] text-ink">
+          <h1 className=" text-[40px] font-semibold leading-[1] tracking-[-0.04em] text-ink">
             Bonjour {profile.display_name.split(" ")[0]} !
           </h1>
           <p className="mt-3 text-[17px] text-ink-2">

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { BellOff, BellRing, Send } from "lucide-react";
+import { BellOff, BellRing, ChevronDown, Send } from "lucide-react";
 import { removePushSubscription, saveNativePushToken, savePushSubscription, sendTestPush } from "@/server/actions/push";
 import { getRememberedNativeToken, isNativeApp, rememberNativeToken } from "@/lib/native";
 import { urlBase64ToUint8Array } from "@/lib/push-payload";
@@ -74,7 +74,11 @@ export async function forgetThisDevice({ localOnly = false }: { localOnly?: bool
   }
 }
 
-export function PushSettings({ vapidPublicKey }: { vapidPublicKey: string | null }) {
+/**
+ * The single "Notifications" block: this device's push state and, once
+ * enabled, the (folded) choice of what to receive.
+ */
+export function PushSettings({ vapidPublicKey, preferences }: { vapidPublicKey: string | null; preferences: React.ReactNode }) {
   const [state, setState] = useState<State>("loading");
   const [endpoint, setEndpoint] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -209,7 +213,7 @@ export function PushSettings({ vapidPublicKey }: { vapidPublicKey: string | null
         <>
           <p className="text-[14px] text-ink-2">
             Recevez les nouvelles demandes, propositions d&apos;aide, confirmations et annulations même quand l&apos;app est
-            fermée. Les préférences ci-dessus s&apos;appliquent aussi.
+            fermée. Vous choisirez ensuite lesquelles recevoir.
           </p>
           <PillButton onClick={enable} loading={pending} disabled={!vapidPublicKey && !nativeApp}>
             <BellRing className="size-4" aria-hidden /> Activer sur cet appareil
@@ -230,6 +234,13 @@ export function PushSettings({ vapidPublicKey }: { vapidPublicKey: string | null
               <BellOff className="size-4" aria-hidden /> Désactiver
             </PillButton>
           </div>
+          <details className="group -mx-4 -mb-4 border-t border-line">
+            <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-2 px-4 text-[15px] font-medium text-ink [&::-webkit-details-marker]:hidden">
+              Choisir les notifications
+              <ChevronDown className="size-4 text-ink-3 transition-transform group-open:rotate-180" aria-hidden />
+            </summary>
+            {preferences}
+          </details>
         </>
       )}
     </div>

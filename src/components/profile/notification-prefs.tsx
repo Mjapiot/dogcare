@@ -34,8 +34,8 @@ export function NotificationPrefs({ initial }: { initial: NotificationPreference
   };
 
   return (
-    <div className="flex flex-col gap-2">
-      <ul className="flex flex-col divide-y divide-line rounded-[24px] bg-surface">
+    <div className="flex flex-col gap-2 pb-4">
+      <ul className="flex flex-col divide-y divide-line border-t border-line">
         {ITEMS.map((item) => (
           <li key={item.key} className="flex min-h-14 items-center justify-between gap-3 px-4 py-3">
             <label htmlFor={`pref-${item.key}`} className="flex flex-col">
@@ -46,7 +46,7 @@ export function NotificationPrefs({ initial }: { initial: NotificationPreference
           </li>
         ))}
       </ul>
-      <p className="px-1 text-[13px] text-ink-3">
+      <p className="px-4 text-[13px] text-ink-3">
         Choisissez ce qui vous est envoyé sur vos appareils. La cloche de l&apos;application affiche toujours tout,
         pour ne jamais manquer une garde qui vous concerne.
       </p>

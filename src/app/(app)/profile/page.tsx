@@ -4,10 +4,10 @@ import { headers } from "next/headers";
 import { ChevronRight, Plus, Users } from "lucide-react";
 import { getMyGroups, getUserEmail, requireAppContext } from "@/server/session";
 import { getCalendarFeedToken, getMyDogs, getNotificationPreferences, signDogPhotos } from "@/server/data";
-import { Card, PageTitle, PillLink, SectionTitle } from "@/components/ui/kit";
+import { Card, PillLink, SectionTitle } from "@/components/ui/kit";
 import { DogAvatar } from "@/components/domain/request-bits";
 import { InstallHint } from "@/components/pwa/install-hint";
-import { ProfileForm } from "@/components/profile/profile-form";
+import { ProfileHeader } from "@/components/profile/profile-header";
 import { NotificationPrefs } from "@/components/profile/notification-prefs";
 import { AccountActions } from "@/components/profile/account-actions";
 import { PushSettings } from "@/components/profile/push-settings";
@@ -33,7 +33,7 @@ export default async function ProfilePage() {
 
   return (
     <div className="flex flex-col gap-7 pt-2">
-      <PageTitle title={profile.display_name} subtitle={email ?? undefined} />
+      <ProfileHeader displayName={profile.display_name} email={email ?? null} />
 
       <section className="flex flex-col gap-3">
         <SectionTitle action={<PillLink href="/dogs/new" size="sm" variant="soft"><Plus className="size-4" aria-hidden /> Ajouter</PillLink>}>
@@ -98,23 +98,13 @@ export default async function ProfilePage() {
       </section>
 
       <section className="flex flex-col gap-3">
-        <SectionTitle>Mon compte</SectionTitle>
-        <ProfileForm displayName={profile.display_name} />
-      </section>
-
-      <section className="flex flex-col gap-3">
         <SectionTitle>Mes gardes dans mon calendrier</SectionTitle>
         <CalendarFeed origin={origin} initialToken={feedToken} />
       </section>
 
       <section className="flex flex-col gap-3">
-        <SectionTitle>Quelles notifications recevoir ?</SectionTitle>
-        <NotificationPrefs initial={prefs} />
-      </section>
-
-      <section className="flex flex-col gap-3">
-        <SectionTitle>Notifications sur cet appareil</SectionTitle>
-        <PushSettings vapidPublicKey={getVapidPublicKey()} />
+        <SectionTitle>Notifications</SectionTitle>
+        <PushSettings vapidPublicKey={getVapidPublicKey()} preferences={<NotificationPrefs initial={prefs} />} />
       </section>
 
       <section className="flex flex-col gap-3">

@@ -21,11 +21,6 @@ export default async function AvailabilityPage({ searchParams }: PageProps<"/ava
   return (
     <div className="flex flex-col gap-6 pt-2">
       <PageTitle title="Mes dispos" subtitle="Indiquez à l'avance quand vous pourriez aider. Ce n'est jamais un engagement." />
-      {params.welcome === "1" && (
-        <p className="rounded-2xl bg-[var(--tone-covered)] px-4 py-3 text-[15px] font-medium text-[var(--tone-covered-ink)]">
-          Bienvenue ! Commencez par indiquer vos disponibilités des deux prochaines semaines.
-        </p>
-      )}
       <AvailabilityEditor
         key={weeks}
         dates={dateRange(today, to)}

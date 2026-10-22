@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { acceptInvitation } from "@/server/actions/groups";
 import { PillButton } from "@/components/ui/kit";
 
-export function JoinButton({ token }: { token: string }) {
+export function JoinButton({ token, next }: { token: string; next: string }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -21,7 +21,7 @@ export function JoinButton({ token }: { token: string }) {
             const result = await acceptInvitation(token);
             if (!result.ok) return setError(result.error);
             toast.success("Bienvenue dans le groupe !");
-            router.replace("/availability?welcome=1");
+            router.replace(next);
           })
         }
       >

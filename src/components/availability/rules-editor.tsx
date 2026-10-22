@@ -14,7 +14,7 @@ const WEEKDAYS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "
 const key = (weekday: number, slot: SlotKey) => `${weekday}|${slot}`;
 
 /** Weekly habits (simple recurrence). One-off declarations always win. */
-export function RulesEditor({ rules }: { rules: AvailabilityRule[] }) {
+export function RulesEditor({ rules, embedded = false }: { rules: AvailabilityRule[]; embedded?: boolean }) {
   const router = useRouter();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [pending, startTransition] = useTransition();
@@ -49,7 +49,7 @@ export function RulesEditor({ rules }: { rules: AvailabilityRule[] }) {
 
   return (
     <section aria-labelledby="rules-title" className="flex flex-col gap-3">
-      <div>
+      <div className={embedded ? "sr-only" : undefined}>
         <h2 id="rules-title" className="text-[17px] font-semibold text-ink">
           Mes habitudes
         </h2>
@@ -57,7 +57,7 @@ export function RulesEditor({ rules }: { rules: AvailabilityRule[] }) {
           Par exemple « disponible tous les mercredis après-midi ». Ce que vous saisissez jour par jour reste prioritaire.
         </p>
       </div>
-      <details className="rounded-[28px] bg-surface p-3" open={rules.length > 0}>
+      <details className="rounded-[28px] bg-surface p-3" open={embedded || rules.length > 0}>
         <summary className="flex min-h-11 cursor-pointer items-center px-2 py-2 text-[15px] font-medium text-ink">
           {rules.length > 0 ? `${rules.length} habitude${rules.length > 1 ? "s" : ""} définie${rules.length > 1 ? "s" : ""}` : "Définir des habitudes"}
         </summary>
