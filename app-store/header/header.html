@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  html, body { width: 2622px; height: 1475px; }
+  body { background: #ebe8e2; font-family: "Inter Tight", sans-serif; color: #1c1b19; overflow: hidden; position: relative; }
+  .blob { position: absolute; border-radius: 50%; filter: blur(2px); }
+  .b1 { width: 900px; height: 900px; background: #c9dcc4; right: 120px; top: -260px; }
+  .b2 { width: 760px; height: 760px; background: #f3cd98; right: 820px; bottom: -420px; }
+  .b3 { width: 520px; height: 520px; background: #d2cbe8; right: -140px; bottom: 120px; }
+  .copy { position: absolute; left: 180px; top: 50%; transform: translateY(-50%); width: 900px; }
+  .kicker { font-size: 52px; font-weight: 500; color: #6e6b64; }
+  h1 { font-size: 270px; line-height: .86; font-weight: 600; letter-spacing: -0.055em; margin-top: 30px; }
+  .tag { margin-top: 56px; font-size: 56px; line-height: 1.18; font-weight: 500; color: #4a4843; letter-spacing: -0.01em; }
+  .chips { display: flex; gap: 22px; margin-top: 70px; flex-wrap: wrap; }
+  .chip { font-size: 36px; font-weight: 600; padding: 20px 32px; border-radius: 999px; }
+  .c1 { background: #c9dcc4; color: #1d3a20; } .c2 { background: #f3cd98; color: #4f2e08; } .c3 { background: #eeb1ab; color: #5e1510; }
+  .phones { position: absolute; right: 150px; top: 50%; transform: translateY(-50%); display: flex; align-items: center; gap: 56px; }
+  .phone { width: 410px; height: 891px; border-radius: 74px; background: #1c1b19; padding: 14px; box-shadow: 0 60px 120px rgba(28,27,25,.22); }
+  .phone img { width: 100%; height: 100%; border-radius: 61px; object-fit: cover; object-position: top; display: block; }
+  .phone.mid { transform: translateY(-60px) scale(1.06); }
+  .phone.side { transform: translateY(70px); }
+</style></head>
+<body>
+  <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
+  <div class="copy">
+    <p class="kicker">Entre amis, pour nos chiens</p>
+    <h1>Dog<br>care</h1>
+    <p class="tag">Qui peut garder le chien ? Voyez-le en un coup d'œil, et repérez tout de suite les jours sans solution.</p>
+    <div class="chips"><span class="chip c1">✓ Couvert</span><span class="chip c2">◷ À organiser</span><span class="chip c3">! Sans solution</span></div>
+  </div>
+  <div class="phones">
+    <div class="phone side"><img src="../screenshots/2-calendrier.png"></div>
+    <div class="phone mid"><img src="../screenshots/1-aujourdhui.png"></div>
+    <div class="phone side"><img src="../screenshots/4-demande.png"></div>
+  </div>
+</body></html>

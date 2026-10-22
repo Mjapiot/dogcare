@@ -5,7 +5,7 @@ Textes à copier-coller dans App Store Connect (onglet de la version 1.0).
 ## Informations de l'app
 
 - **Nom** : Dogcare – Garde entre amis
-- **Sous-titre** (30 car. max) : `Organisez la garde de vos chiens`
+- **Sous-titre** (30 car. max) : `Organisez vos gardes de chiens`
 - **Catégorie principale** : Style de vie
 - **Catégorie secondaire** : Productivité
 - **Prix** : Gratuit
@@ -58,8 +58,9 @@ chien,garde,dog sitting,amis,promenade,animaux,calendrier,disponibilités,pet si
 
 ## Captures d'écran
 
-Dossier `app-store/screenshots/` (1290 × 2796, emplacement « iPhone 6,9 pouces ») :
+Dossier `app-store/screenshots/` (1206 × 2622, emplacement « iPhone avec Dynamic Island (écran moyen) ») :
 1-aujourdhui, 2-calendrier, 3-demandes, 4-demande, 5-garde-partagee, 6-dispos.
+En-tête et résultats de recherche : `header-5244x2950.png`, généré depuis `app-store/header/header.html`.
 
 ## Confidentialité de l'app (questionnaire « App Privacy »)
 
