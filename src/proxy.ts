@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { getSupabaseEnv } from "@/lib/env";
 
-const PUBLIC_PATHS = ["/.well-known", "/confidentialite", "/assistance", "/login", "/auth", "/offline", "/manifest.webmanifest", "/sw.js"];
+const PUBLIC_PATHS = ["/.well-known", "/confidentialite", "/assistance", "/login", "/auth", "/calendar", "/offline", "/manifest.webmanifest", "/sw.js"];
 
 /**
  * Refreshes the Supabase session cookie on every navigation and sends

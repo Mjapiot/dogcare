@@ -4,8 +4,8 @@
 
 | Suite | Commande | Contenu | Statut |
 | --- | --- | --- | --- |
-| Unitaires | `npm run test:unit` | intervalles, créneaux, fuseau Europe/Paris et changements d'heure, disponibilités (habitudes, priorité des saisies ponctuelles, « À vérifier »), couverture (exemple Emma/Chloé, minute manquante), statuts (absence de réponse ≠ refus, sans solution, partiel), conflits, assemblage des vues, tableau de bord, redirections sûres, codes de groupe, décisions d'envoi push | ✅ 90 tests |
-| Base de données | `npm run test:db` | migrations réelles sur PostgreSQL embarqué : RLS (isolation entre groupes, intrus, usurpation d'identité), invitations (hash, révocation, expiration, quota), chiens, disponibilités et partage, demandes, réponses, confirmations concurrentes (contrainte d'exclusion, bornes semi-ouvertes), annulation, reconfirmation, notifications privées et non falsifiables, stockage, règles d'administration, suppression de compte, départs de membres, relances push, purge, règles issues de la revue (`tests/db/review-fixes.test.ts`), code de groupe | ✅ 73 tests |
+| Unitaires | `npm run test:unit` | intervalles, créneaux, fuseau Europe/Paris et changements d'heure, disponibilités (habitudes, priorité des saisies ponctuelles, « À vérifier »), couverture (exemple Emma/Chloé, minute manquante), statuts (absence de réponse ≠ refus, sans solution, partiel), conflits, assemblage des vues, tableau de bord, redirections sûres, codes de groupe, décisions d'envoi push, fichier iCalendar (échappement, pliage des lignes, titres) | ✅ 107 tests |
+| Base de données | `npm run test:db` | migrations réelles sur PostgreSQL embarqué : RLS (isolation entre groupes, intrus, usurpation d'identité), invitations (hash, révocation, expiration, quota), chiens, disponibilités et partage, demandes, réponses, confirmations concurrentes (contrainte d'exclusion, bornes semi-ouvertes), annulation, reconfirmation, notifications privées et non falsifiables, stockage, règles d'administration, suppression de compte, départs de membres, relances push, purge, règles issues de la revue (`tests/db/review-fixes.test.ts`), code de groupe, abonnement calendrier (isolation, annulations, jeton renouvelé) | ✅ 79 tests |
 | Bout en bout | `npm run test:e2e` | parcours complet Julie/Emma/Chloé sur iPhone 13 émulé + intrus | ⏳ écrit, à exécuter avec `SUPABASE_SECRET_KEY` |
 | Qualité | `npm run typecheck`, `npm run lint`, `npm run build` | | ✅ |
 
@@ -44,6 +44,7 @@ Safari iOS puis PWA installée (Partager → « Sur l'écran d'accueil »).
 | 14 | Push : bouton « Tester » | notification reçue, même app fermée |
 | 15 | Push : un autre compte crée une demande / répond / confirme | notification reçue app fermée ; la toucher ouvre la demande |
 | 16 | Push : déconnexion puis action d'un autre membre | plus aucune notification sur cet appareil |
+| 17 | Profil → « Ajouter au Calendrier » (PWA et app) | iOS propose de s'abonner ; les gardes confirmées apparaissent ; une garde annulée disparaît après actualisation |
 
 ## 3. Vérifications post-déploiement
 

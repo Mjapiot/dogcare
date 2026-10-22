@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { headers } from "next/headers";
 import { ChevronRight, Plus, Users } from "lucide-react";
 import { getMyGroups, getUserEmail, requireAppContext } from "@/server/session";
-import { getMyDogs, getNotificationPreferences, signDogPhotos } from "@/server/data";
+import { getCalendarFeedToken, getMyDogs, getNotificationPreferences, signDogPhotos } from "@/server/data";
 import { Card, PageTitle, PillLink, SectionTitle } from "@/components/ui/kit";
 import { DogAvatar } from "@/components/domain/request-bits";
 import { InstallHint } from "@/components/pwa/install-hint";
@@ -10,13 +11,22 @@ import { ProfileForm } from "@/components/profile/profile-form";
 import { NotificationPrefs } from "@/components/profile/notification-prefs";
 import { AccountActions } from "@/components/profile/account-actions";
 import { PushSettings } from "@/components/profile/push-settings";
+import { CalendarFeed } from "@/components/profile/calendar-feed";
 import { getVapidPublicKey } from "@/server/push";
 
 export const metadata: Metadata = { title: "Profil" };
 
 export default async function ProfilePage() {
   const { userId, profile } = await requireAppContext();
-  const [email, groups, dogs, prefs] = await Promise.all([getUserEmail(), getMyGroups(), getMyDogs(userId), getNotificationPreferences()]);
+  const [email, groups, dogs, prefs, feedToken, h] = await Promise.all([
+    getUserEmail(),
+    getMyGroups(),
+    getMyDogs(userId),
+    getNotificationPreferences(),
+    getCalendarFeedToken(),
+    headers(),
+  ]);
+  const origin = `${h.get("x-forwarded-proto") ?? "https"}://${h.get("x-forwarded-host") ?? h.get("host")}`;
   const photos = await signDogPhotos(dogs);
   const activeDogs = dogs.filter((d) => !d.archived_at);
   const archivedDogs = dogs.filter((d) => d.archived_at);
@@ -90,6 +100,11 @@ export default async function ProfilePage() {
       <section className="flex flex-col gap-3">
         <SectionTitle>Mon compte</SectionTitle>
         <ProfileForm displayName={profile.display_name} />
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <SectionTitle>Mes gardes dans mon calendrier</SectionTitle>
+        <CalendarFeed origin={origin} initialToken={feedToken} />
       </section>
 
       <section className="flex flex-col gap-3">

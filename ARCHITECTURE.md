@@ -18,6 +18,13 @@ Toutes les requêtes à la base se font **en tant qu'utilisateur connecté** (cl
 la RLS s'applique partout. Seule exception : la distribution des notifications push (`src/server/push.ts`)
 utilise la clé secrète côté serveur pour lire les abonnements des destinataires.
 
+## Abonnement calendrier
+
+`/calendar/{jeton}.ics` (route publique, `src/app/calendar/[file]/route.ts`) : le Calendrier d'iOS l'interroge
+sans session. La route appelle avec la clé publique la fonction `calendar_feed_events(jeton)` (SECURITY DEFINER,
+rien pour un jeton inconnu) puis génère le fichier iCalendar (`src/lib/ics.ts`, `src/lib/calendar-feed.ts`).
+Le profil affiche un lien `webcal://` : dans l'app native, Capacitor le confie à iOS qui propose l'abonnement.
+
 ## Notifications push
 
 1. Une action (demande, réponse, confirmation…) crée des notifications en base (triggers/RPC).

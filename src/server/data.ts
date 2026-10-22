@@ -298,3 +298,11 @@ export async function getGroupJoinCode(groupId: string): Promise<string | null> 
   if (error) return null;
   return (data as string | null) ?? null;
 }
+
+/** Current user's calendar subscription token, or null if not enabled. */
+export async function getCalendarFeedToken(): Promise<string | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("get_calendar_feed_token", { p_create: false });
+  if (error) return null;
+  return (data as string | null) ?? null;
+}

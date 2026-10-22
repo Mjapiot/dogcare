@@ -88,6 +88,14 @@ Seul un responsable du chien confirme, uniquement parmi les volontaires, sur un 
 demande et dans la proposition du volontaire. Deux gardes actives d'une même demande ne peuvent jamais
 se chevaucher (contrainte en base). Plusieurs gardiens peuvent couvrir des parties différentes.
 
+### Abonnement calendrier
+
+Chaque membre peut s'abonner (Profil → « Mes gardes dans mon calendrier ») à un calendrier personnel
+`webcal://` : il contient uniquement les gardes **confirmées** — celles qu'il assure et celles qui couvrent
+ses chiens. Une garde à reconfirmer apparaît « À reconfirmer » (provisoire) ; une garde ou une demande
+annulée disparaît du calendrier à la prochaine actualisation. Le lien est secret, renouvelable et
+désactivable ; une réponse « Oui » non confirmée n'y figure jamais.
+
 ## Statuts calculés
 
 Dimension stockée : `lifecycle_status` (active / cancelled). Dimension calculée (`src/domain/status.ts`) :
