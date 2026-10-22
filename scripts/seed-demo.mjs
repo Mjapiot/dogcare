@@ -101,18 +101,19 @@ must(
 );
 must(await admin.from("group_dogs").insert([{ group_id: group.id, dog_id: pistache.id }, { group_id: group.id, dog_id: moka.id }]), "group dogs");
 
+// every row lists the same columns: a bulk insert sets missing ones to null
 const requests = must(
   await admin
     .from("care_requests")
     .insert([
       // Camille needs help: waits for the reviewer's answer
-      { group_id: group.id, dog_id: moka.id, created_by: camilleId, request_type: "care", necessity: "required", starts_at: at(2, 9), ends_at: at(2, 18), description: "Je suis en déplacement toute la journée." },
+      { group_id: group.id, dog_id: moka.id, created_by: camilleId, request_type: "care", necessity: "required", starts_at: at(2, 9), ends_at: at(2, 18), description: "Je suis en déplacement toute la journée.", splittable: true },
       // the reviewer's walk: Camille volunteered, to be confirmed
-      { group_id: group.id, dog_id: pistache.id, created_by: demoId, request_type: "visit", necessity: "nice_to_have", starts_at: at(4, 12), ends_at: at(4, 13) },
+      { group_id: group.id, dog_id: pistache.id, created_by: demoId, request_type: "visit", necessity: "nice_to_have", starts_at: at(4, 12), ends_at: at(4, 13), splittable: false },
       // weekend care, partially covered by Camille
       { group_id: group.id, dog_id: pistache.id, created_by: demoId, request_type: "care", necessity: "required", starts_at: at(6, 18), ends_at: at(8, 10), splittable: true },
       // information only
-      { group_id: group.id, dog_id: pistache.id, created_by: demoId, request_type: "alone_info", necessity: "info", starts_at: at(9, 9), ends_at: at(9, 17) },
+      { group_id: group.id, dog_id: pistache.id, created_by: demoId, request_type: "alone_info", necessity: "info", starts_at: at(9, 9), ends_at: at(9, 17), splittable: true },
     ])
     .select("id, starts_at")
     .order("starts_at"),
