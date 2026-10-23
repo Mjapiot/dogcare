@@ -306,3 +306,11 @@ export async function getCalendarFeedToken(): Promise<string | null> {
   if (error) return null;
   return (data as string | null) ?? null;
 }
+
+/** Members the current user has blocked. */
+export async function getMyBlockedIds(): Promise<string[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("user_blocks").select("blocked_id");
+  if (error) return [];
+  return (data ?? []).map((b) => b.blocked_id as string);
+}

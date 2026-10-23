@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { getMyGroups, requireAppContext } from "@/server/session";
-import { getGroupJoinCode, getGroupMembers, getInvitations } from "@/server/data";
+import { getGroupJoinCode, getGroupMembers, getInvitations, getMyBlockedIds } from "@/server/data";
 import { uuid } from "@/lib/validation";
 import { PageTitle } from "@/components/ui/kit";
 import { GroupManage } from "@/components/groups/group-manage";
@@ -18,10 +18,11 @@ export default async function GroupPage({ params }: PageProps<"/groups/[id]">) {
   const group = (await getMyGroups()).find((g) => g.id === id);
   if (!group) notFound();
   const isAdmin = group.role === "admin";
-  const [members, invitations, joinCode] = await Promise.all([
+  const [members, invitations, joinCode, blockedIds] = await Promise.all([
     getGroupMembers(id),
     isAdmin ? getInvitations(id) : Promise.resolve([]),
     isAdmin ? getGroupJoinCode(id) : Promise.resolve(null),
+    getMyBlockedIds(),
   ]);
 
   return (
@@ -32,6 +33,7 @@ export default async function GroupPage({ params }: PageProps<"/groups/[id]">) {
       <PageTitle title={group.name} subtitle={`${members.length} membre${members.length > 1 ? "s" : ""}`} />
       <GroupManage
         joinCode={joinCode}
+        blockedIds={blockedIds}
         groupId={id}
         groupName={group.name}
         me={userId}

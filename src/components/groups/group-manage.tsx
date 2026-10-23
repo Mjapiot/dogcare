@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Copy, KeyRound, Link2, LogOut, RefreshCw, Share2, Shield, X } from "lucide-react";
+import { Ban, Copy, KeyRound, Link2, LogOut, RefreshCw, Share2, Shield, X } from "lucide-react";
 import {
   createGroupJoinCode,
   createInvitation,
@@ -18,6 +18,7 @@ import { formatRelative } from "@/lib/format";
 import { shareLink } from "@/lib/native";
 import { Avatar, Card, Field, PillButton, Select, SectionTitle, TextInput } from "@/components/ui/kit";
 import { ConfirmationDialog } from "@/components/domain/confirmation-dialog";
+import { MemberSafetyActions } from "./member-safety-actions";
 
 type Member = { userId: string; name: string; role: "admin" | "member" };
 type Invitation = { id: string; expiresAt: string; uses: number; maxUses: number };
@@ -30,6 +31,7 @@ export function GroupManage({
   members,
   invitations,
   joinCode,
+  blockedIds = [],
 }: {
   groupId: string;
   groupName: string;
@@ -38,6 +40,7 @@ export function GroupManage({
   members: Member[];
   invitations: Invitation[];
   joinCode: string | null;
+  blockedIds?: string[];
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -167,6 +170,16 @@ export function GroupManage({
                 {m.role === "admin" && (
                   <span className="flex items-center gap-1 text-[13px] text-ink-3">
                     <Shield className="size-3.5" aria-hidden /> Administrateur
+                  </span>
+                )}
+                {blockedIds.includes(m.userId) && (
+                  <span className="flex items-center gap-1 text-[13px] font-medium text-[#9b1c14]">
+                    <Ban className="size-3.5" aria-hidden /> Bloqué par vous
+                  </span>
+                )}
+                {m.userId !== me && (
+                  <span className="-ml-3 mt-0.5 block">
+                    <MemberSafetyActions groupId={groupId} userId={m.userId} name={m.name} blocked={blockedIds.includes(m.userId)} />
                   </span>
                 )}
               </span>

@@ -10,6 +10,7 @@ import { DogAvatar } from "@/components/domain/request-bits";
 import { DogForm } from "@/components/dogs/dog-form";
 import { PhotoUploader } from "@/components/dogs/photo-uploader";
 import { DogManage } from "@/components/dogs/dog-manage";
+import { ReportButton } from "@/components/domain/report-button";
 
 export const metadata: Metadata = { title: "Chien" };
 
@@ -68,6 +69,9 @@ export default async function DogPage({ params }: PageProps<"/dogs/[id]">) {
           {dog.care_notes && <p className="whitespace-pre-line text-[15px] text-ink">{dog.care_notes}</p>}
           {dog.special_needs && <p className="whitespace-pre-line text-[15px] text-ink">{dog.special_needs}</p>}
         </Card>
+      )}
+      {!isCaretaker && visibleGroups[0] && (
+        <ReportButton groupId={visibleGroups[0].id} targetType="dog" targetId={dog.id} label="Signaler cette fiche" />
       )}
     </div>
   );

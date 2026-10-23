@@ -17,7 +17,8 @@ export type NotificationType =
   | "request_updated"
   | "request_cancelled"
   | "response_reset"
-  | "member_joined";
+  | "member_joined"
+  | "content_reported";
 
 export type ProfileRow = {
   id: string;

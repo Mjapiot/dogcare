@@ -38,9 +38,19 @@ export default function SupportPage() {
       <section>
         <h2>Notifications</h2>
         <p>
-          Activez-les dans Profil → « Notifications sur cet appareil ». Sur iPhone, depuis Safari, ajoutez d&apos;abord
+          Activez-les dans Profil → « Notifications ». Sur iPhone, depuis Safari, ajoutez d&apos;abord
           Dogcare à l&apos;écran d&apos;accueil. Si vous les avez refusées, réactivez-les dans les Réglages de
           l&apos;iPhone → Notifications → Dogcare.
+        </p>
+      </section>
+
+      <section>
+        <h2>Signaler un contenu ou bloquer un membre</h2>
+        <p>
+          Sur une demande ou la fiche d&apos;un chien, touchez « Signaler ». Dans la page du groupe, chaque membre a
+          « Signaler » et « Bloquer ». Un signalement prévient les administrateurs du groupe et l&apos;équipe Dogcare,
+          sans votre nom. Bloquer un membre masque ses demandes et les vôtres entre vous, et coupe les notifications.
+          Vous pouvez aussi écrire à <SupportEmail />.
         </p>
       </section>
 

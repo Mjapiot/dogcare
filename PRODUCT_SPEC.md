@@ -90,6 +90,15 @@ Seul un responsable du chien confirme, uniquement parmi les volontaires, sur un 
 demande et dans la proposition du volontaire. Deux gardes actives d'une même demande ne peuvent jamais
 se chevaucher (contrainte en base). Plusieurs gardiens peuvent couvrir des parties différentes.
 
+### Signalement et blocage
+
+Tout membre peut signaler une demande, la fiche d'un chien ou un membre de son groupe (motif facultatif) :
+le signalement est conservé pour l'équipe Dogcare et les administrateurs du groupe sont notifiés, sans le nom
+de l'auteur. Tout membre peut en bloquer un autre : aucun des deux ne voit plus les demandes de l'autre ni ne
+peut y répondre, et aucune notification ne circule entre eux. Une demande sur laquelle on a déjà une garde
+confirmée reste visible (jamais de changement silencieux). Limite connue : un membre bloqué compte toujours
+comme « sans réponse » pour les autres, ce qui peut retarder le statut « Sans solution ».
+
 ### Abonnement calendrier
 
 Chaque membre peut s'abonner (Profil → « Mes gardes dans mon calendrier ») à un calendrier personnel

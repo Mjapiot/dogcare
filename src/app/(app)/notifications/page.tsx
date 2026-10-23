@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { BellOff, CircleAlert, CircleCheck, Clock, Inbox, Pencil, UserCheck, UserPlus, XCircle, type LucideIcon } from "lucide-react";
+import { BellOff, CircleAlert, CircleCheck, Clock, Flag, Inbox, Pencil, UserCheck, UserPlus, XCircle, type LucideIcon } from "lucide-react";
 import { requireAppContext } from "@/server/session";
 import { getNotifications } from "@/server/data";
 import { formatRelative } from "@/lib/format";
@@ -21,6 +21,7 @@ const ICONS: Record<NotificationType, LucideIcon> = {
   request_cancelled: XCircle,
   response_reset: Clock,
   member_joined: UserPlus,
+  content_reported: Flag,
 };
 
 export default async function NotificationsPage() {

@@ -12,6 +12,7 @@ déjà appliquée : en créer une nouvelle (`YYYYMMDDHHMMSS_description.sql`).
 | `…120300_storage_realtime.sql` | bucket `dog-photos` + politiques, publication temps réel |
 | `20261016090000_web_push.sql` | état d'envoi push des notifications, RPC d'abonnement et de distribution |
 | `20261016120000_native_push.sql` | appareils iOS natifs (`platform = 'ios'`, jeton APNs), RPC `register_native_push` |
+| `20261023090000_reports_and_blocks.sql` | signalements (`content_reports`, `report_content`), blocages (`user_blocks`, `block_member`), visibilité des demandes et notifications entre membres bloqués |
 | `20261022090000_calendar_feed.sql` | abonnement calendrier (`calendar_feeds`), RPC `get_calendar_feed_token`, `reset_calendar_feed_token`, `calendar_feed_events` |
 | `20261021120000_group_join_codes.sql` | code de groupe permanent (`group_join_codes`), essais limités (`join_code_attempts`, 10 échecs / 15 min), RPC `get_group_join_code`, `reset_group_join_code`, `join_group_with_code` |
 | `20261021110000_review_fixes_delivery.sql` | relances push (5 essais en 30 min), purge (notifications > 6 mois, audit > 1 an), index de lecture et de clés étrangères |
@@ -38,6 +39,8 @@ déjà appliquée : en créer une nouvelle (`YYYYMMDDHHMMSS_description.sql`).
 | `notification_preferences` | préférences | absence de ligne = tout activé |
 | `push_subscriptions` | appareils abonnés aux notifications push | écriture uniquement via `register_push_subscription` / `register_native_push` (le client ne peut que lire et supprimer ses appareils) ; format d'adresse contrôlé en base ; le serveur n'appelle que des services connus (FCM, Apple, Mozilla, Windows) |
 | `group_join_codes` | code permanent d'un groupe (8 caractères sans ambiguïté) | aucun accès direct : lecture et changement réservés aux admins via RPC |
+| `content_reports` | signalements (demande, chien, membre) | aucun accès client : écrit par `report_content` (membre du groupe, cible du groupe, 20 / heure), lu par l'équipe Dogcare ; notifie les admins sans révéler l'auteur |
+| `user_blocks` | blocages entre membres | lecture et suppression de ses propres blocages ; création via `block_member` ; `private.request_visible` masque les demandes entre membres bloqués (sauf garde vivante), `can_respond` et `notify` en tiennent compte |
 | `calendar_feeds` | jeton secret de l'abonnement calendrier (un par membre) | aucun accès direct : `get_calendar_feed_token` / `reset_calendar_feed_token` pour son propre jeton ; `calendar_feed_events(jeton)` (anon) ne renvoie que les gardes confirmées du propriétaire du jeton |
 | `join_code_attempts` | essais de code échoués | limite les tentatives par compte ; purgés après 1 jour |
 | `audit_events` | journal des événements critiques | aucun accès client |

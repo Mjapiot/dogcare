@@ -14,6 +14,7 @@ import { ResponseButtons } from "@/components/domain/response-buttons";
 import { AssignmentActions } from "@/components/domain/assignment-actions";
 import { HelperList } from "@/components/domain/helper-list";
 import { OwnerActions } from "@/components/domain/owner-actions";
+import { ReportButton } from "@/components/domain/report-button";
 import { uuid } from "@/lib/validation";
 import { requestNow } from "@/server/clock";
 
@@ -160,6 +161,8 @@ export default async function RequestDetailPage({ params }: PageProps<"/requests
           showRelaunch={view.status.counts.pending > 0 && !view.status.isPast}
         />
       )}
+
+      {!view.iAmCaretaker && <ReportButton groupId={groupId} targetType="request" targetId={r.id} label="Signaler cette demande" />}
     </div>
   );
 }
