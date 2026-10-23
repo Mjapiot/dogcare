@@ -65,4 +65,5 @@ Safari iOS puis PWA installée (Partager → « Sur l'écran d'accueil »).
 | 4 | Profil → Activer les notifications → Tester | notification native reçue (nécessite les variables APNS_*) | ✅ 2026-10-21 (TestFlight) |
 | 5 | Lien d'invitation ouvert depuis Mail/Messages | s'ouvre dans l'app, pas dans Safari | ⏳ |
 | 6 | Mode avion au lancement | page « Vous êtes hors ligne » embarquée | ⏳ |
+| 7 | Connexion par lien e-mail dans l'app (app ouverte ou fermée) | Mail → « Ouvrir dans Dogcare » → connecté, sans rechargement en boucle | ✅ 2026-10-23 (TestFlight) |
 | 7 | Partager une invitation / relancer | feuille de partage iOS native | ⏳ |
