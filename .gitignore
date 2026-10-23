@@ -51,3 +51,4 @@ next-env.d.ts
 
 # App Store screenshots (generated)
 /app-store/screenshots/
+/app-store/video/
