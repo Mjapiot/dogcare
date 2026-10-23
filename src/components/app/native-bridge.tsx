@@ -30,8 +30,25 @@ function toInAppPath(raw: string | undefined | null): string | null {
   }
 }
 
-// getLaunchUrl keeps returning the same URL for the whole app session
-const handledLaunchUrls = new Set<string>();
+// iOS keeps returning the last opened URL from getLaunchUrl for the whole app
+// session, and opening a login link reloads the page: remember handled URLs
+// across reloads, or the link would be opened again and again.
+const HANDLED_KEY = "dogcare:handled-urls";
+const handledInMemory = new Set<string>();
+
+/** True the first time a URL is seen in this app session. */
+function markHandled(url: string): boolean {
+  try {
+    const list: string[] = JSON.parse(sessionStorage.getItem(HANDLED_KEY) ?? "[]");
+    if (list.includes(url)) return false;
+    sessionStorage.setItem(HANDLED_KEY, JSON.stringify([...list.slice(-19), url]));
+    return true;
+  } catch {
+    if (handledInMemory.has(url)) return false;
+    handledInMemory.add(url);
+    return true;
+  }
+}
 
 /**
  * Native glue for the iOS app (no-op on the web):
@@ -69,13 +86,16 @@ export function NativeBridge() {
         if (path.startsWith("/auth/")) window.location.assign(path);
         else router.push(path);
       };
-      keep(await App.addListener("appUrlOpen", ({ url }) => open(url)));
+      keep(
+        await App.addListener("appUrlOpen", ({ url }) => {
+          // a real "open" event always counts (the same invitation may be opened twice)
+          markHandled(url);
+          open(url);
+        }),
+      );
       // the app may have been launched by the link itself
       const launch = await App.getLaunchUrl().catch(() => undefined);
-      if (!disposed && launch?.url && !handledLaunchUrls.has(launch.url)) {
-        handledLaunchUrls.add(launch.url);
-        open(launch.url);
-      }
+      if (!disposed && launch?.url && markHandled(launch.url)) open(launch.url);
       keep(
         await PushNotifications.addListener("pushNotificationActionPerformed", (action) => {
           const data = action.notification.data as { url?: string } | undefined;
