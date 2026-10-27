@@ -62,6 +62,8 @@
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --nav-height: 64px;
+  /* the tab bar floats above the bottom edge */
+  --nav-gap: 12px;
 }
 
 @theme inline {
@@ -118,6 +120,22 @@
     overflow-x: hidden;
     overscroll-behavior-y: none;
   }
+  /*
+   * Ambient light: a warm glow top-left and a soft sage glow bottom-right,
+   * fixed behind the content (a pseudo-element, since iOS ignores
+   * background-attachment: fixed).
+   */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(120% 55% at 0% 0%, #f4ede0 0%, transparent 62%),
+      radial-gradient(110% 50% at 100% 100%, #dbe5d6 0%, transparent 60%),
+      var(--canvas);
+  }
   /* 16px minimum prevents iOS Safari from zooming on focus */
   input,
   select,
@@ -142,7 +160,21 @@
     padding-bottom: var(--safe-bottom);
   }
   .pb-nav {
-    padding-bottom: calc(var(--nav-height) + var(--safe-bottom) + 24px);
+    padding-bottom: calc(var(--nav-height) + var(--nav-gap) + var(--safe-bottom) + 24px);
+  }
+  /* Frosted surface: translucent ivory over the ambient background */
+  .glass {
+    background-color: rgb(251 250 247 / 0.72);
+    -webkit-backdrop-filter: saturate(160%) blur(20px);
+    backdrop-filter: saturate(160%) blur(20px);
+    box-shadow:
+      inset 0 0 0 1px rgb(255 255 255 / 0.65),
+      0 12px 32px -20px rgb(28 27 25 / 0.35);
+  }
+  .shadow-soft {
+    box-shadow:
+      0 1px 0 rgb(28 27 25 / 0.03),
+      0 10px 30px -22px rgb(28 27 25 / 0.4);
   }
   .tabular {
     font-variant-numeric: tabular-nums;

@@ -16,6 +16,7 @@ import { PassportSection } from "@/components/dogs/passport-section";
 import { EmergencyView, HabitsView, HealthView, IdentityView } from "@/components/dogs/passport-view";
 import { EmergencyEditor, HabitsEditor, HealthEditor, IdentityEditor } from "@/components/dogs/passport-editors";
 import { PassportShare } from "@/components/dogs/passport-share";
+import { Rise, Stagger } from "@/components/ui/motion";
 
 export const metadata: Metadata = { title: "Passeport" };
 
@@ -46,120 +47,134 @@ export default async function DogPage({ params }: PageProps<"/dogs/[id]">) {
   const editable = isCaretaker && !dog.archived_at;
 
   return (
-    <div className="flex flex-col gap-4 pt-2">
+    <Stagger className="flex flex-col gap-4 pt-2">
       <Link href="/profile" className="inline-flex min-h-11 items-center gap-1.5 self-start text-[15px] font-medium text-ink-2">
         <ArrowLeft className="size-4" aria-hidden /> Profil
       </Link>
 
-      <PassportHero
-        dog={dog}
-        today={today}
-        caption={
-          dog.archived_at
-            ? "Archivé — l'historique des gardes est conservé"
-            : `Responsable${caretakers.length > 1 ? "s" : ""} : ${caretakerNames}`
-        }
-        photo={
-          editable ? (
-            <PhotoUploader dogId={dog.id} name={dog.name} photoUrl={photos[dog.id] ?? null} variant="badge" />
-          ) : (
-            <DogAvatar name={dog.name} photoUrl={photos[dog.id]} size={104} className="ring-4" />
-          )
-        }
-      />
+      <Rise>
+        <PassportHero
+          dog={dog}
+          today={today}
+          caption={
+            dog.archived_at
+              ? "Archivé — l'historique des gardes est conservé"
+              : `Responsable${caretakers.length > 1 ? "s" : ""} : ${caretakerNames}`
+          }
+          photo={
+            editable ? (
+              <PhotoUploader dogId={dog.id} name={dog.name} photoUrl={photos[dog.id] ?? null} variant="badge" />
+            ) : (
+              <DogAvatar name={dog.name} photoUrl={photos[dog.id]} size={104} className="ring-4" />
+            )
+          }
+        />
+      </Rise>
 
-      {editable && <PassportShare dogId={dog.id} dogName={dog.name} origin={origin} links={links} />}
+      {editable && (
+        <Rise>
+          <PassportShare dogId={dog.id} dogName={dog.name} origin={origin} links={links} />
+        </Rise>
+      )}
 
-      <PassportSection
-        id="identity"
-        title="Identité"
-        icon={<IdCard />}
-        editor={
-          editable && (
-            <IdentityEditor
-              dogId={dog.id}
-              initial={{
-                name: dog.name,
-                breed: dog.breed ?? "",
-                birthDate: dog.birth_date ?? "",
-                sex: dog.sex ?? "",
-                sterilized: dog.sterilized === null ? "" : dog.sterilized ? "yes" : "no",
-                weight: dog.weight_kg === null ? "" : String(dog.weight_kg).replace(".", ","),
-                identification: dog.identification ?? "",
-                distinctiveMarks: dog.distinctive_marks ?? "",
-              }}
-            />
-          )
-        }
-      >
-        <IdentityView dog={dog} />
-      </PassportSection>
+      <Rise>
+        <PassportSection
+          id="identity"
+          title="Identité"
+          icon={<IdCard />}
+          editor={
+            editable && (
+              <IdentityEditor
+                dogId={dog.id}
+                initial={{
+                  name: dog.name,
+                  breed: dog.breed ?? "",
+                  birthDate: dog.birth_date ?? "",
+                  sex: dog.sex ?? "",
+                  sterilized: dog.sterilized === null ? "" : dog.sterilized ? "yes" : "no",
+                  weight: dog.weight_kg === null ? "" : String(dog.weight_kg).replace(".", ","),
+                  identification: dog.identification ?? "",
+                  distinctiveMarks: dog.distinctive_marks ?? "",
+                }}
+              />
+            )
+          }
+        >
+          <IdentityView dog={dog} />
+        </PassportSection>
+      </Rise>
 
-      <PassportSection
-        id="habits"
-        title="Habitudes"
-        icon={<Utensils />}
-        editor={
-          editable && (
-            <HabitsEditor
-              dogId={dog.id}
-              initial={{
-                meals: dog.meals ?? "",
-                walks: dog.walks ?? "",
-                sleep: dog.sleep ?? "",
-                behavior: dog.behavior ?? "",
-                careNotes: dog.care_notes ?? "",
-              }}
-            />
-          )
-        }
-      >
-        <HabitsView dog={dog} />
-      </PassportSection>
+      <Rise>
+        <PassportSection
+          id="habits"
+          title="Habitudes"
+          icon={<Utensils />}
+          editor={
+            editable && (
+              <HabitsEditor
+                dogId={dog.id}
+                initial={{
+                  meals: dog.meals ?? "",
+                  walks: dog.walks ?? "",
+                  sleep: dog.sleep ?? "",
+                  behavior: dog.behavior ?? "",
+                  careNotes: dog.care_notes ?? "",
+                }}
+              />
+            )
+          }
+        >
+          <HabitsView dog={dog} />
+        </PassportSection>
+      </Rise>
 
       {priv.canView ? (
         <>
-          <PassportSection
-            id="health"
-            title="Santé"
-            icon={<HeartPulse />}
-            note={PRIVATE_NOTE}
-            editor={
-              editable && (
-                <HealthEditor
-                  dogId={dog.id}
-                  initial={{
-                    allergies: priv.health?.allergies ?? "",
-                    treatments: priv.health?.treatments ?? "",
-                    vetName: priv.health?.vet_name ?? "",
-                    vetClinic: priv.health?.vet_clinic ?? "",
-                    vetPhone: priv.health?.vet_phone ?? "",
-                    vetAddress: priv.health?.vet_address ?? "",
-                    notes: priv.health?.notes ?? "",
-                  }}
-                />
-              )
-            }
-          >
-            <HealthView health={priv.health} />
-          </PassportSection>
+          <Rise>
+            <PassportSection
+              id="health"
+              title="Santé"
+              icon={<HeartPulse />}
+              note={PRIVATE_NOTE}
+              editor={
+                editable && (
+                  <HealthEditor
+                    dogId={dog.id}
+                    initial={{
+                      allergies: priv.health?.allergies ?? "",
+                      treatments: priv.health?.treatments ?? "",
+                      vetName: priv.health?.vet_name ?? "",
+                      vetClinic: priv.health?.vet_clinic ?? "",
+                      vetPhone: priv.health?.vet_phone ?? "",
+                      vetAddress: priv.health?.vet_address ?? "",
+                      notes: priv.health?.notes ?? "",
+                    }}
+                  />
+                )
+              }
+            >
+              <HealthView health={priv.health} />
+            </PassportSection>
+          </Rise>
 
-          <PassportSection
-            id="emergency"
-            title="Urgences"
-            icon={<Phone />}
-            note={PRIVATE_NOTE}
-            editor={
-              editable && (
-                <EmergencyEditor
-                  dogId={dog.id}
-                  initial={{ contacts: priv.emergency?.contacts ?? [], instructions: priv.emergency?.instructions ?? "" }}
-                />
-              )
-            }
-          >
-            <EmergencyView emergency={priv.emergency} />
-          </PassportSection>
+          <Rise>
+            <PassportSection
+              id="emergency"
+              title="Urgences"
+              icon={<Phone />}
+              note={PRIVATE_NOTE}
+              editor={
+                editable && (
+                  <EmergencyEditor
+                    dogId={dog.id}
+                    initial={{ contacts: priv.emergency?.contacts ?? [], instructions: priv.emergency?.instructions ?? "" }}
+                  />
+                )
+              }
+            >
+              <EmergencyView emergency={priv.emergency} />
+            </PassportSection>
+          </Rise>
         </>
       ) : (
         <div className="flex items-start gap-3 rounded-3xl bg-surface-2 px-5 py-4">
@@ -189,6 +204,6 @@ export default async function DogPage({ params }: PageProps<"/dogs/[id]">) {
       {!isCaretaker && visibleGroups[0] && (
         <ReportButton groupId={visibleGroups[0].id} targetType="dog" targetId={dog.id} label="Signaler cette fiche" />
       )}
-    </div>
+    </Stagger>
   );
 }

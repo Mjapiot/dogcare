@@ -74,7 +74,7 @@ export function RoundIconButton({
       type="button"
       aria-label={label}
       className={cn(
-        "relative inline-flex size-11 items-center justify-center rounded-full bg-surface-2 text-ink transition-colors hover:bg-[#e2dfd8]",
+        "shadow-soft relative inline-flex size-11 items-center justify-center rounded-full bg-surface/85 text-ink ring-1 ring-white/70 backdrop-blur-md transition-colors hover:bg-surface",
         className,
       )}
       {...props}
@@ -96,7 +96,7 @@ export function RoundIconLink({
     <Link
       aria-label={badge ? `${label} (${badge})` : label}
       className={cn(
-        "relative inline-flex size-11 items-center justify-center rounded-full bg-surface-2 text-ink transition-colors hover:bg-[#e2dfd8]",
+        "shadow-soft relative inline-flex size-11 items-center justify-center rounded-full bg-surface/85 text-ink ring-1 ring-white/70 backdrop-blur-md transition-colors hover:bg-surface",
         className,
       )}
       {...props}
@@ -119,7 +119,7 @@ function Badge({ count }: { count: number }) {
 }
 
 export function Card({ className, ...props }: React.ComponentProps<"div">) {
-  return <div className={cn("rounded-3xl bg-surface p-5", className)} {...props} />;
+  return <div className={cn("shadow-soft rounded-3xl bg-surface p-5 ring-1 ring-white/70", className)} {...props} />;
 }
 
 export function SectionTitle({ children, action, className }: { children: React.ReactNode; action?: React.ReactNode; className?: string }) {

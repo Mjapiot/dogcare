@@ -9,14 +9,14 @@ export function TopSwitch({ active }: { active: "today" | "calendar" }) {
       aria-current={isActive ? "page" : undefined}
       className={cn(
         "inline-flex min-h-11 items-center rounded-full px-6 text-[15px] font-medium transition-colors",
-        isActive ? "bg-ink text-surface" : "border border-ink/25 text-ink hover:bg-ink/5",
+        isActive ? "bg-ink text-surface shadow-sm" : "text-ink-2 hover:text-ink",
       )}
     >
       {label}
     </Link>
   );
   return (
-    <nav aria-label="Vue" className="flex gap-2">
+    <nav aria-label="Vue" className="glass inline-flex gap-1 rounded-full p-1">
       {item("/", "Aujourd'hui", active === "today")}
       {item("/calendar", "Calendrier", active === "calendar")}
     </nav>

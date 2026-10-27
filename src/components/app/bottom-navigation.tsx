@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { motion } from "motion/react";
 import { CalendarCheck2, CalendarDays, Inbox, UserRound, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -24,9 +25,10 @@ export function BottomNavigation({ toAnswer }: { toAnswer: number }) {
   return (
     <nav
       aria-label="Navigation principale"
-      className="fixed inset-x-0 bottom-0 z-30 border-t border-line/70 bg-surface/92 pb-safe backdrop-blur-md"
+      className="pointer-events-none fixed inset-x-0 z-30 px-4"
+      style={{ bottom: "calc(var(--safe-bottom) + var(--nav-gap))" }}
     >
-      <ul className="mx-auto flex h-[var(--nav-height)] max-w-xl items-stretch justify-around px-2">
+      <ul className="glass pointer-events-auto mx-auto flex h-[var(--nav-height)] max-w-md items-stretch justify-around rounded-full px-1.5">
         {TABS.map((tab) => {
           const active = tab.match(pathname);
           const badge = tab.href === "/requests" && toAnswer > 0 ? toAnswer : 0;
@@ -37,14 +39,26 @@ export function BottomNavigation({ toAnswer }: { toAnswer: number }) {
                 aria-current={active ? "page" : undefined}
                 aria-label={badge ? `${tab.label}, ${badge} à répondre` : tab.label}
                 className={cn(
-                  "relative flex flex-1 flex-col items-center justify-center gap-1 text-[11px] font-medium transition-colors",
+                  "relative flex flex-1 flex-col items-center justify-center gap-0.5 text-[11px] font-medium transition-colors",
                   active ? "text-ink" : "text-ink-3",
                 )}
               >
-                <span className={cn("relative flex h-8 w-14 items-center justify-center rounded-full transition-colors", active && "bg-surface-2")}>
-                  <tab.icon className="size-[22px]" strokeWidth={active ? 2.25 : 1.75} aria-hidden />
+                <span className="relative flex h-8 w-14 items-center justify-center">
+                  {/* the dark pill slides from one tab to the next */}
+                  {active && (
+                    <motion.span
+                      layoutId="nav-active"
+                      className="absolute inset-0 rounded-full bg-ink"
+                      transition={{ type: "spring", stiffness: 420, damping: 34 }}
+                    />
+                  )}
+                  <tab.icon
+                    className={cn("relative size-[20px] transition-colors", active && "text-surface")}
+                    strokeWidth={active ? 2.25 : 1.75}
+                    aria-hidden
+                  />
                   {badge > 0 && (
-                    <span className="absolute -top-1 right-1 min-w-5 rounded-full bg-[#b3261e] px-1.5 text-center text-[11px] font-semibold leading-5 text-white">
+                    <span className="absolute -top-1 right-0.5 min-w-5 rounded-full bg-[#b3261e] px-1.5 text-center text-[11px] font-semibold leading-5 text-white ring-2 ring-surface">
                       {badge > 99 ? "99+" : badge}
                     </span>
                   )}

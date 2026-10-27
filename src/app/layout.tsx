@@ -5,6 +5,7 @@ import { ServiceWorkerRegister } from "@/components/pwa/service-worker-register"
 import { NativeBridge } from "@/components/app/native-bridge";
 import { SupabaseConfigProvider } from "@/lib/supabase/client";
 import { getSupabaseEnv } from "@/lib/env";
+import { MotionProvider } from "@/components/ui/motion";
 import "./globals.css";
 
 const sans = Inter_Tight({
@@ -33,7 +34,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="fr" className={`${sans.variable} h-full`}>
       <body className="min-h-dvh">
-        <SupabaseConfigProvider value={getSupabaseEnv()}>{children}</SupabaseConfigProvider>
+        <SupabaseConfigProvider value={getSupabaseEnv()}>
+          <MotionProvider>{children}</MotionProvider>
+        </SupabaseConfigProvider>
         <Toaster />
         <ServiceWorkerRegister />
         <NativeBridge />

@@ -35,7 +35,21 @@ Très grands chiffres pour les dates (64–76 px, interlettrage −0.05em), titr
 
 ## Formes et espacements
 
-Rayons généreux : cartes 24–32 px, champs 16 px, boutons en pilule. Ombres quasi absentes.
+Rayons généreux : cartes 24–32 px, champs 16 px, boutons en pilule.
+
+## Ambiance (octobre 2026)
+
+Inspirée des maquettes santé « sauge » : lumière douce, surfaces givrées, grands chiffres.
+
+- **Fond** : `--canvas` éclairé par deux halos fixes (chaud en haut à gauche, sauge en bas à droite), `body::before`.
+- **`.glass`** : ivoire translucide + flou + liseré blanc + ombre longue. Barre d'onglets flottante, en-tête,
+  sélecteur de vue, tuiles vides, raccourcis.
+- **`.shadow-soft`** : ombre longue et légère des cartes (`Card` l'applique avec un liseré blanc).
+- **Pastilles d'icône** sauge (`bg-sage/12 text-sage`) dans les titres de cartes du passeport.
+- **Tuiles chiffrées** (âge, poids…) : givrées, grand chiffre 19–22 px, libellé 12–13 px.
+- **Mouvement** (`motion`, `components/ui/motion.tsx`) : apparition en cascade des blocs (`Stagger` / `Rise`),
+  pastille active de la barre d'onglets qui glisse (`layoutId`), curseur glissant du contrôle segmenté.
+  Tout respecte « Réduire les animations » (`MotionConfig reducedMotion="user"` + règle CSS globale).
 Marges latérales 16 px, espacement vertical 20–28 px entre sections.
 
 ## Composants
@@ -43,7 +57,9 @@ Marges latérales 16 px, espacement vertical 20–28 px entre sections.
 | Composant | Fichier |
 | --- | --- |
 | AppShell (en-tête + onglets) | `app/(app)/layout.tsx`, `components/app/*` |
-| BottomNavigation | `components/app/bottom-navigation.tsx` |
+| BottomNavigation (flottante, givrée) | `components/app/bottom-navigation.tsx` |
+| PassportHero, PassportSection, PassportShare | `components/dogs/passport-*.tsx` |
+| Stagger / Rise (animations d'apparition) | `components/ui/motion.tsx` |
 | CalendarHeader / CalendarGrid / CalendarDay | `components/calendar/calendar-view.tsx` |
 | AvailabilityMatrix / AvailabilitySelector | `components/availability/*` |
 | DogAvatar, CareRequestCard, CoverageIndicator, RequestStatusBadge | `components/domain/request-bits.tsx` |

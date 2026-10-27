@@ -25,12 +25,12 @@ export function AppHeader({
   const current = groups.find((g) => g.id === currentGroupId);
 
   return (
-    <header className="sticky top-0 z-30 bg-canvas/90 px-4 pt-safe backdrop-blur-md">
+    <header className="sticky top-0 z-30 bg-canvas/55 px-4 pt-safe backdrop-blur-xl backdrop-saturate-150">
       <div className="flex h-16 items-center justify-between gap-3">
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="flex min-h-11 min-w-0 items-center gap-1.5 rounded-full bg-surface px-4 text-[15px] font-semibold text-ink"
+          className="glass flex min-h-11 min-w-0 items-center gap-1.5 rounded-full px-4 text-[15px] font-semibold text-ink"
           aria-label={`Groupe actuel : ${current?.name ?? ""}. Changer de groupe`}
         >
           <span className="truncate">{current?.name ?? "Groupe"}</span>
