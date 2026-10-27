@@ -93,13 +93,18 @@ export default async function RequestDetailPage({ params }: PageProps<"/requests
         </section>
       )}
 
-      {view.dog && (view.dog.care_notes || view.dog.special_needs) && (
+      {view.dog && (
         <section className="rounded-[24px] bg-surface p-4">
           <h2 className="flex items-center gap-2 text-[15px] font-semibold text-ink">
             <Info className="size-4" aria-hidden /> À savoir sur {view.dog.name}
           </h2>
           {view.dog.care_notes && <p className="mt-1 whitespace-pre-line text-[15px] text-ink-2">{view.dog.care_notes}</p>}
-          {view.dog.special_needs && <p className="mt-2 whitespace-pre-line text-[15px] text-ink-2">{view.dog.special_needs}</p>}
+          <Link
+            href={`/dogs/${view.dog.id}`}
+            className="mt-2 inline-flex min-h-11 items-center gap-1 text-[15px] font-medium text-ink underline underline-offset-2"
+          >
+            Voir son passeport
+          </Link>
         </section>
       )}
 

@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { createDog, updateDog } from "@/server/actions/dogs";
+import { createDog } from "@/server/actions/dogs";
 import { Field, PillButton, TextArea, TextInput } from "@/components/ui/kit";
 import { cn } from "@/lib/utils";
 
@@ -12,17 +12,15 @@ export type DogFormValues = {
   breed: string;
   birthDate: string;
   careNotes: string;
-  specialNeeds: string;
 };
 
+/** New dog: the essentials only; the full passport is filled in on the dog's page. */
 export function DogForm({
-  dogId,
   initial,
   groups,
   defaultGroupIds,
   afterCreate,
 }: {
-  dogId?: string;
   initial: DogFormValues;
   groups?: Array<{ id: string; name: string }>;
   defaultGroupIds?: string[];
@@ -42,17 +40,10 @@ export function DogForm({
         e.preventDefault();
         setError(null);
         startTransition(async () => {
-          if (dogId) {
-            const r = await updateDog(dogId, v);
-            if (!r.ok) return setError(r.error);
-            toast.success("Fiche mise à jour");
-            router.refresh();
-          } else {
-            const r = await createDog({ ...v, groupIds });
-            if (!r.ok) return setError(r.error);
-            toast.success(`${v.name} a été ajouté`);
-            router.replace(afterCreate ?? `/dogs/${r.data.dogId}`);
-          }
+          const r = await createDog({ ...v, groupIds });
+          if (!r.ok) return setError(r.error);
+          toast.success(`${v.name} a été ajouté`);
+          router.replace(afterCreate ?? `/dogs/${r.data.dogId}`);
         });
       }}
     >
@@ -70,11 +61,9 @@ export function DogForm({
       <Field label="Infos pratiques de garde" htmlFor="dog-notes" hint="Promenades, entente avec les autres chiens, repas, consignes…">
         <TextArea id="dog-notes" maxLength={2000} value={v.careNotes} onChange={(e) => set("careNotes", e.target.value)} />
       </Field>
-      <Field label="Besoins particuliers (facultatif)" htmlFor="dog-needs" hint="Uniquement ce qui est utile pour la garde. Rien n'est obligatoire.">
-        <TextArea id="dog-needs" maxLength={1000} value={v.specialNeeds} onChange={(e) => set("specialNeeds", e.target.value)} />
-      </Field>
+      <p className="text-[13px] text-ink-3">Santé, vétérinaire, contacts d&apos;urgence : à compléter ensuite dans son passeport.</p>
 
-      {!dogId && groups && groups.length > 0 && (
+      {groups && groups.length > 0 && (
         <fieldset className="flex flex-col gap-2">
           <legend className="mb-1 text-sm font-medium text-ink-2">Visible dans</legend>
           <div className="flex flex-wrap gap-2">
@@ -102,7 +91,7 @@ export function DogForm({
         </p>
       )}
       <PillButton type="submit" size="lg" loading={pending} disabled={!v.name.trim()}>
-        {dogId ? "Enregistrer" : "Ajouter ce chien"}
+        Ajouter ce chien
       </PillButton>
     </form>
   );

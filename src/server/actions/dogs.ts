@@ -3,7 +3,15 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import { dogSchema, uuid } from "@/lib/validation";
+import {
+  dogEmergencySchema,
+  dogHabitsSchema,
+  dogHealthSchema,
+  dogIdentitySchema,
+  dogSchema,
+  shareLinkSchema,
+  uuid,
+} from "@/lib/validation";
 import { requireUserId } from "@/server/session";
 import { toUserMessage } from "@/server/errors";
 import type { ActionResult } from "@/lib/types";
@@ -25,35 +33,120 @@ export async function createDog(
     p_breed: parsed.data.breed || null,
     p_birth_date: parsed.data.birthDate || null,
     p_care_notes: parsed.data.careNotes || null,
-    p_special_needs: parsed.data.specialNeeds || null,
+    p_special_needs: null,
   });
   if (error) return { ok: false, error: toUserMessage(error) };
   revalidatePath("/", "layout");
   return { ok: true, data: { dogId: data as string } };
 }
 
-export async function updateDog(dogId: string, input: z.input<typeof dogSchema>): Promise<ActionResult> {
-  const parsed = dogSchema.safeParse(input);
-  if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message };
+const noFutureBirthDate = (birthDate: string) =>
+  birthDate && birthDate > new Date().toISOString().slice(0, 10) ? "La date de naissance ne peut pas être dans le futur." : null;
+
+/** Updates columns of `dogs` (identity or habits); RLS lets only caretakers do it. */
+async function updateDogColumns(dogId: string, values: Record<string, string | number | boolean | null>): Promise<ActionResult> {
   if (!uuid.safeParse(dogId).success) return { ok: false, error: "Chien introuvable." };
-  if (parsed.data.birthDate && parsed.data.birthDate > new Date().toISOString().slice(0, 10)) {
-    return { ok: false, error: "La date de naissance ne peut pas être dans le futur." };
-  }
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("dogs")
-    .update({
-      name: parsed.data.name,
-      breed: parsed.data.breed || null,
-      birth_date: parsed.data.birthDate || null,
-      care_notes: parsed.data.careNotes || null,
-      special_needs: parsed.data.specialNeeds || null,
-    })
-    .eq("id", dogId)
-    .select("id");
+  const { data, error } = await supabase.from("dogs").update(values).eq("id", dogId).select("id");
   if (error) return { ok: false, error: toUserMessage(error) };
   if (!data?.length) return { ok: false, error: "Seul un responsable du chien peut le modifier." };
   revalidatePath("/", "layout");
+  return { ok: true, data: undefined };
+}
+
+export async function updateDogIdentity(dogId: string, input: z.input<typeof dogIdentitySchema>): Promise<ActionResult> {
+  const parsed = dogIdentitySchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message };
+  const v = parsed.data;
+  const futureError = noFutureBirthDate(v.birthDate);
+  if (futureError) return { ok: false, error: futureError };
+  return updateDogColumns(dogId, {
+    name: v.name,
+    breed: v.breed || null,
+    birth_date: v.birthDate || null,
+    sex: v.sex || null,
+    sterilized: v.sterilized === "" ? null : v.sterilized === "yes",
+    weight_kg: v.weight ? Number(v.weight.replace(",", ".")) : null,
+    identification: v.identification || null,
+    distinctive_marks: v.distinctiveMarks || null,
+  });
+}
+
+export async function updateDogHabits(dogId: string, input: z.input<typeof dogHabitsSchema>): Promise<ActionResult> {
+  const parsed = dogHabitsSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message };
+  const v = parsed.data;
+  return updateDogColumns(dogId, {
+    meals: v.meals || null,
+    walks: v.walks || null,
+    sleep: v.sleep || null,
+    behavior: v.behavior || null,
+    care_notes: v.careNotes || null,
+  });
+}
+
+export async function saveDogHealth(dogId: string, input: z.input<typeof dogHealthSchema>): Promise<ActionResult> {
+  const parsed = dogHealthSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message };
+  if (!uuid.safeParse(dogId).success) return { ok: false, error: "Chien introuvable." };
+  const v = parsed.data;
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("save_dog_health", {
+    p_dog_id: dogId,
+    p_allergies: v.allergies,
+    p_treatments: v.treatments,
+    p_vet_name: v.vetName,
+    p_vet_clinic: v.vetClinic,
+    p_vet_phone: v.vetPhone,
+    p_vet_address: v.vetAddress,
+    p_notes: v.notes,
+  });
+  if (error) return { ok: false, error: toUserMessage(error) };
+  revalidatePath(`/dogs/${dogId}`);
+  return { ok: true, data: undefined };
+}
+
+export async function saveDogEmergency(dogId: string, input: z.input<typeof dogEmergencySchema>): Promise<ActionResult> {
+  const parsed = dogEmergencySchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message };
+  if (!uuid.safeParse(dogId).success) return { ok: false, error: "Chien introuvable." };
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("save_dog_emergency", {
+    p_dog_id: dogId,
+    // relation is omitted when empty, as the database expects
+    p_contacts: parsed.data.contacts.map((c) => (c.relation ? c : { name: c.name, phone: c.phone })),
+    p_instructions: parsed.data.instructions,
+  });
+  if (error) return { ok: false, error: toUserMessage(error) };
+  revalidatePath(`/dogs/${dogId}`);
+  return { ok: true, data: undefined };
+}
+
+/** Creates a temporary passport link; the token is returned once and never stored in clear. */
+export async function createPassportLink(
+  dogId: string,
+  input: z.input<typeof shareLinkSchema>,
+): Promise<ActionResult<{ token: string }>> {
+  const parsed = shareLinkSchema.safeParse(input);
+  if (!parsed.success || !uuid.safeParse(dogId).success) return { ok: false, error: "Paramètres invalides." };
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("create_dog_share_link", {
+    p_dog_id: dogId,
+    p_expires_in_hours: parsed.data.hours,
+    p_include_health: parsed.data.health,
+    p_include_emergency: parsed.data.emergency,
+  });
+  if (error) return { ok: false, error: toUserMessage(error) };
+  revalidatePath(`/dogs/${dogId}`);
+  return { ok: true, data: { token: data as string } };
+}
+
+export async function revokePassportLink(dogId: string, linkId: string): Promise<ActionResult> {
+  if (!uuid.safeParse(dogId).success || !uuid.safeParse(linkId).success) return { ok: false, error: "Paramètres invalides." };
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("revoke_dog_share_link", { p_link_id: linkId });
+  if (error) return { ok: false, error: toUserMessage(error) };
+  revalidatePath(`/dogs/${dogId}`);
   return { ok: true, data: undefined };
 }
 

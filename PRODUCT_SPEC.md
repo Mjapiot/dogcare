@@ -31,6 +31,24 @@ Une disponibilité n'est jamais une acceptation ; un « Oui » n'est jamais une 
   Archivable sans perdre l'historique. Aucune information de santé obligatoire.
 - Ajouter un chien est facultatif : on peut simplement aider.
 
+### Passeport du chien
+
+La fiche du chien est son passeport, en quatre rubriques (tout est facultatif sauf le nom) :
+
+| Rubrique | Contenu | Qui la voit dans l'app |
+| --- | --- | --- |
+| Identité | nom, photo, naissance (âge calculé), race, sexe, stérilisé, poids, n° d'identification, signes particuliers | membres des groupes du chien |
+| Habitudes | repas, promenades, sommeil, comportement, autres consignes | membres des groupes du chien |
+| Santé | allergies, traitements, vétérinaire (nom, cabinet, téléphone, adresse), notes de santé | responsables + gardien d'une garde confirmée, de 7 jours avant jusqu'à la fin |
+| Urgences | jusqu'à 5 contacts (nom, lien, téléphone) et consignes | idem Santé |
+
+- Seuls les responsables modifient le passeport, rubrique par rubrique.
+- Les anciens « Besoins particuliers » sont devenus les notes de la rubrique Santé.
+- **Partage temporaire** : un responsable crée un lien secret (24 h, 7 jours ou 30 jours), lisible sans
+  compte, en choisissant d'y inclure ou non Santé et Urgences (Identité et Habitudes toujours). Le lien
+  est révocable à tout moment ; le nombre d'ouvertures est affiché ; 10 liens actifs au plus par chien.
+  La page publique ne montre ni e-mail, ni groupe, ni planning, et n'est pas indexée.
+
 ## Disponibilités
 
 - Créneaux par défaut (configurables dans `src/domain/config.ts`) : Matin 6h–12h, Après-midi 12h–18h,

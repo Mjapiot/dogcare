@@ -22,7 +22,64 @@ export const dogSchema = z.object({
   breed: z.string().trim().max(60, "60 caractères maximum.").optional().default(""),
   birthDate: z.union([localDate, z.literal("")]).optional().default(""),
   careNotes: z.string().trim().max(2000, "2000 caractères maximum.").optional().default(""),
-  specialNeeds: z.string().trim().max(1000, "1000 caractères maximum.").optional().default(""),
+});
+
+const optionalText = (max: number) => z.string().trim().max(max, `${max} caractères maximum.`).optional().default("");
+const phone = z
+  .string()
+  .trim()
+  .regex(/^[0-9+() .-]{4,30}$/, "Numéro de téléphone invalide.");
+
+export const dogIdentitySchema = z.object({
+  name: dogSchema.shape.name,
+  breed: dogSchema.shape.breed,
+  birthDate: dogSchema.shape.birthDate,
+  sex: z.enum(["female", "male", ""]).optional().default(""),
+  sterilized: z.enum(["yes", "no", ""]).optional().default(""),
+  weight: z
+    .string()
+    .trim()
+    .regex(/^(\d{1,3}([.,]\d)?)?$/, "Poids invalide (par exemple 12,5).")
+    .refine((w) => w === "" || (Number(w.replace(",", ".")) > 0 && Number(w.replace(",", ".")) < 150), "Poids invalide.")
+    .optional()
+    .default(""),
+  identification: optionalText(30),
+  distinctiveMarks: optionalText(300),
+});
+
+export const dogHabitsSchema = z.object({
+  meals: optionalText(500),
+  walks: optionalText(500),
+  sleep: optionalText(500),
+  behavior: optionalText(1000),
+  careNotes: optionalText(2000),
+});
+
+export const dogHealthSchema = z.object({
+  allergies: optionalText(500),
+  treatments: optionalText(1000),
+  vetName: optionalText(80),
+  vetClinic: optionalText(80),
+  vetPhone: z.union([phone, z.literal("")]).optional().default(""),
+  vetAddress: optionalText(200),
+  notes: optionalText(1000),
+});
+
+export const emergencyContactSchema = z.object({
+  name: z.string().trim().min(1, "Indiquez le nom du contact.").max(60, "60 caractères maximum."),
+  relation: z.string().trim().max(40, "40 caractères maximum.").optional().default(""),
+  phone,
+});
+
+export const dogEmergencySchema = z.object({
+  contacts: z.array(emergencyContactSchema).max(5, "5 contacts maximum."),
+  instructions: optionalText(1000),
+});
+
+export const shareLinkSchema = z.object({
+  hours: z.union([z.literal(24), z.literal(168), z.literal(720)]),
+  health: z.boolean(),
+  emergency: z.boolean(),
 });
 
 export const slotSchema = z.enum(SLOT_KEYS);

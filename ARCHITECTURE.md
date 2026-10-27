@@ -25,6 +25,14 @@ sans session. La route appelle avec la clé publique la fonction `calendar_feed_
 rien pour un jeton inconnu) puis génère le fichier iCalendar (`src/lib/ics.ts`, `src/lib/calendar-feed.ts`).
 Le profil affiche un lien `webcal://` : dans l'app native, Capacitor le confie à iOS qui propose l'abonnement.
 
+## Passeport partagé
+
+`/p/{jeton}` (page publique, `src/app/p/[token]/page.tsx`) : appelle avec la clé publique `shared_passport(jeton)`
+(SECURITY DEFINER, `null` pour un lien inconnu, expiré, révoqué ou un chien archivé ; compte les ouvertures) et
+signe la photo du chien grâce à une politique de stockage `anon` limitée à la photo actuelle d'un chien ayant un
+lien actif. Rubriques en lecture : `src/components/dogs/passport-view.tsx` (partagées avec la fiche du chien),
+édition par rubrique : `passport-section.tsx` + `passport-editors.tsx`, partage : `passport-share.tsx`.
+
 ## Notifications push
 
 1. Une action (demande, réponse, confirmation…) crée des notifications en base (triggers/RPC).

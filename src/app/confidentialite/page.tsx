@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function PrivacyPage() {
   return (
-    <LegalPage title="Politique de confidentialité" updated="21 octobre 2026">
+    <LegalPage title="Politique de confidentialité" updated="28 octobre 2026">
       <section>
         <p>
           Dogcare aide des groupes d&apos;amis à organiser la garde de leurs chiens. Nous ne collectons que ce qui est
@@ -26,8 +26,10 @@ export default function PrivacyPage() {
           <li><strong>Compte</strong> : adresse e-mail (pour vous envoyer votre lien de connexion) et prénom affiché.</li>
           <li><strong>Groupes</strong> : groupes dont vous êtes membre et votre rôle.</li>
           <li>
-            <strong>Chiens</strong> : nom, race, date de naissance, photo et consignes de garde que vous choisissez de
-            renseigner. Les informations de santé sont facultatives.
+            <strong>Chiens</strong> : le passeport que vous choisissez de renseigner (identité, photo, habitudes, santé
+            et vétérinaire, contacts d&apos;urgence). Tout est facultatif. La santé et les contacts d&apos;urgence ne
+            sont visibles que par les responsables du chien et la personne qui le garde ; un lien de partage
+            temporaire, créé par un responsable, les montre seulement s&apos;il a choisi de les inclure.
           </li>
           <li>
             <strong>Organisation des gardes</strong> : vos disponibilités (sans motif), vos demandes, vos réponses et

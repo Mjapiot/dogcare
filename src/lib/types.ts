@@ -56,9 +56,28 @@ export type DogRow = {
   birth_date: string | null;
   photo_path: string | null;
   care_notes: string | null;
-  special_needs: string | null;
+  sex: "female" | "male" | null;
+  sterilized: boolean | null;
+  weight_kg: number | string | null;
+  identification: string | null;
+  distinctive_marks: string | null;
+  meals: string | null;
+  walks: string | null;
+  sleep: string | null;
+  behavior: string | null;
   created_by: string | null;
   archived_at: string | null;
+};
+
+export type DogShareLinkRow = {
+  id: string;
+  include_health: boolean;
+  include_emergency: boolean;
+  expires_at: string;
+  revoked_at: string | null;
+  view_count: number;
+  last_viewed_at: string | null;
+  created_at: string;
 };
 
 export type DogCaretakerRow = { dog_id: string; user_id: string; role: "owner" | "caretaker" };

@@ -58,6 +58,7 @@ const SUPABASE_EMULATION = /* sql */ `
   );
   alter table storage.objects enable row level security;
   grant select, insert, update, delete on storage.objects to authenticated;
+  grant select on storage.objects to anon;
   create function storage.foldername(name text) returns text[] language plpgsql immutable as $$
   declare _parts text[];
   begin

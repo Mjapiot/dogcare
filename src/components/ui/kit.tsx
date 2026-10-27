@@ -200,8 +200,17 @@ export function Segmented<T extends string>({
   label: string;
   className?: string;
 }) {
+  const index = options.findIndex((o) => o.value === value);
   return (
-    <div role="radiogroup" aria-label={label} className={cn("flex gap-1 rounded-full bg-surface-2 p-1", className)}>
+    <div role="radiogroup" aria-label={label} className={cn("relative flex rounded-full bg-surface-2 p-1", className)}>
+      {/* iOS-like thumb sliding under the selected option (options share the width equally) */}
+      {index >= 0 && (
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-y-1 left-1 rounded-full bg-ink shadow-sm motion-safe:transition-transform motion-safe:duration-300 motion-safe:ease-[cubic-bezier(0.32,0.72,0,1)]"
+          style={{ width: `calc((100% - 0.5rem) / ${options.length})`, transform: `translateX(${index * 100}%)` }}
+        />
+      )}
       {options.map((o) => (
         <button
           key={o.value}
@@ -210,8 +219,8 @@ export function Segmented<T extends string>({
           aria-checked={value === o.value}
           onClick={() => onChange(o.value)}
           className={cn(
-            "min-h-11 flex-1 rounded-full px-3 text-sm font-medium transition-colors",
-            value === o.value ? "bg-ink text-surface" : "text-ink-2 hover:text-ink",
+            "relative z-10 min-h-11 flex-1 basis-0 rounded-full px-3 text-sm font-medium transition-colors duration-300",
+            value === o.value ? "text-surface" : "text-ink-2 hover:text-ink",
           )}
         >
           {o.label}

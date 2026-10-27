@@ -28,7 +28,18 @@ async function resize(file: File): Promise<Blob> {
   return jpeg;
 }
 
-export function PhotoUploader({ dogId, name, photoUrl }: { dogId: string; name: string; photoUrl: string | null }) {
+export function PhotoUploader({
+  dogId,
+  name,
+  photoUrl,
+  variant = "row",
+}: {
+  dogId: string;
+  name: string;
+  photoUrl: string | null;
+  /** "badge": large photo with a small camera button on its corner (passport header). */
+  variant?: "row" | "badge";
+}) {
   const router = useRouter();
   const supabase = useBrowserClient();
   const input = useRef<HTMLInputElement>(null);
@@ -61,6 +72,45 @@ export function PhotoUploader({ dogId, name, photoUrl }: { dogId: string; name: 
     }
   };
 
+  const fileInput = (
+    <input
+      ref={input}
+      type="file"
+      accept="image/*"
+      className="sr-only"
+      tabIndex={-1}
+      aria-hidden
+      onChange={(e) => {
+        const f = e.target.files?.[0];
+        e.target.value = "";
+        if (f) void onFile(f);
+      }}
+    />
+  );
+
+  if (variant === "badge") {
+    return (
+      <div className="relative shrink-0">
+        <DogAvatar name={name} photoUrl={photoUrl} size={104} className="ring-4" />
+        {busy && (
+          <span className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40">
+            <Loader2 className="size-6 animate-spin text-white" aria-label="Envoi en cours" />
+          </span>
+        )}
+        <button
+          type="button"
+          onClick={() => input.current?.click()}
+          disabled={busy}
+          aria-label={photoUrl ? "Changer la photo" : "Ajouter une photo"}
+          className="absolute -right-1 -bottom-1 inline-flex size-11 items-center justify-center rounded-full bg-ink text-surface shadow-md ring-4 ring-surface transition-transform active:scale-95"
+        >
+          <Camera className="size-4" aria-hidden />
+        </button>
+        {fileInput}
+      </div>
+    );
+  }
+
   return (
     <div className="flex items-center gap-4">
       <div className="relative">
@@ -79,19 +129,7 @@ export function PhotoUploader({ dogId, name, photoUrl }: { dogId: string; name: 
       >
         <Camera className="size-4" aria-hidden /> {photoUrl ? "Changer la photo" : "Ajouter une photo"}
       </button>
-      <input
-        ref={input}
-        type="file"
-        accept="image/*"
-        className="sr-only"
-        tabIndex={-1}
-        aria-hidden
-        onChange={(e) => {
-          const f = e.target.files?.[0];
-          e.target.value = "";
-          if (f) void onFile(f);
-        }}
-      />
+      {fileInput}
     </div>
   );
 }

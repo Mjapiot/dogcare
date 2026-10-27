@@ -21,7 +21,7 @@ export default async function NewDogPage({ searchParams }: PageProps<"/dogs/new"
         subtitle={welcome ? "Facultatif : vous pouvez aussi simplement aider les autres." : undefined}
       />
       <DogForm
-        initial={{ name: "", breed: "", birthDate: "", careNotes: "", specialNeeds: "" }}
+        initial={{ name: "", breed: "", birthDate: "", careNotes: "" }}
         groups={groups.map((g) => ({ id: g.id, name: g.name }))}
         defaultGroupIds={[group.id]}
         afterCreate={welcome ? "/onboarding/habits?dog=1" : undefined}

@@ -3,6 +3,7 @@ import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { addDays, toLocalDate, type LocalDate, zonedInstant } from "@/domain/time";
 import type { GroupSnapshot, MemberInfo } from "@/domain/views";
+import type { PassportEmergency, PassportHealth } from "@/domain/passport";
 import type {
   AvailabilityEntryRow,
   AvailabilityRuleRow,
@@ -10,6 +11,7 @@ import type {
   CareRequestRow,
   DogCaretakerRow,
   DogRow,
+  DogShareLinkRow,
   GroupMemberRow,
   InvitationRow,
   NotificationPreferencesRow,
@@ -21,7 +23,8 @@ const REQUEST_COLUMNS =
   "id, group_id, dog_id, created_by, request_type, necessity, starts_at, ends_at, description, splittable, lifecycle_status, cancelled_at, cancellation_reason, revision, created_at, updated_at";
 const ASSIGNMENT_COLUMNS =
   "id, request_id, assigned_user_id, starts_at, ends_at, status, confirmed_by, confirmed_at, cancelled_at, cancellation_reason, previous_starts_at, previous_ends_at";
-const DOG_COLUMNS = "id, name, breed, birth_date, photo_path, care_notes, special_needs, created_by, archived_at";
+const DOG_COLUMNS =
+  "id, name, breed, birth_date, photo_path, care_notes, sex, sterilized, weight_kg, identification, distinctive_marks, meals, walks, sleep, behavior, created_by, archived_at";
 
 function must<T>(result: { data: T | null; error: unknown }): T {
   if (result.error) throw result.error;
@@ -263,6 +266,48 @@ export async function getInvitations(groupId: string): Promise<InvitationRow[]> 
       .from("group_invitations")
       .select("id, group_id, created_by, expires_at, revoked_at, max_uses, use_count, created_at")
       .eq("group_id", groupId)
+      .order("created_at", { ascending: false })
+      .limit(20),
+  );
+}
+
+/**
+ * Health and emergency sections of a dog's passport, with whether the current
+ * user may see them (caretakers and live sitters; RLS returns nothing otherwise).
+ */
+export async function getDogPassportPrivate(dogId: string): Promise<{
+  canView: boolean;
+  health: PassportHealth | null;
+  emergency: PassportEmergency | null;
+}> {
+  const supabase = await createClient();
+  const [access, health, emergency] = await Promise.all([
+    supabase.rpc("can_view_dog_private", { p_dog_id: dogId }),
+    supabase
+      .from("dog_health")
+      .select("allergies, treatments, vet_name, vet_clinic, vet_phone, vet_address, notes")
+      .eq("dog_id", dogId)
+      .maybeSingle(),
+    supabase.from("dog_emergency").select("contacts, instructions").eq("dog_id", dogId).maybeSingle(),
+  ]);
+  if (access.error) throw access.error;
+  if (health.error) throw health.error;
+  if (emergency.error) throw emergency.error;
+  return {
+    canView: access.data === true,
+    health: (health.data as PassportHealth | null) ?? null,
+    emergency: (emergency.data as PassportEmergency | null) ?? null,
+  };
+}
+
+/** Caretakers only (RLS): the dog's recent share links, newest first. */
+export async function getDogShareLinks(dogId: string): Promise<DogShareLinkRow[]> {
+  const supabase = await createClient();
+  return must<DogShareLinkRow[]>(
+    await supabase
+      .from("dog_share_links")
+      .select("id, include_health, include_emergency, expires_at, revoked_at, view_count, last_viewed_at, created_at")
+      .eq("dog_id", dogId)
       .order("created_at", { ascending: false })
       .limit(20),
   );
