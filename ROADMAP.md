@@ -20,7 +20,7 @@
 - [x] Version 1.0 (build 202610221858) soumise à la vérification App Store — 2026-10-22
 - [x] Signalement et blocage (demandé par Apple, règle 1.2) — 2026-10-23
 - [x] Réponse à Apple (vidéo sur iPhone + informations) et nouvelle soumission — 2026-10-23
-- [ ] Approbation Apple et publication automatique
+- [x] Approuvée par Apple et publiée sur l'App Store (version 1.0) — 2026-10-27 : https://apps.apple.com/fr/app/dogcare-garde-entre-amis/id6823693947
 - [x] Notification native (APNs) reçue sur iPhone via TestFlight — 2026-10-21
 - [x] Abonnement calendrier (gardes confirmées dans le Calendrier de l'iPhone, mises à jour automatiques) — abonnement vérifié sur iPhone le 2026-10-22
 - [x] Code de groupe permanent, compte de démonstration, pages confidentialité et assistance
