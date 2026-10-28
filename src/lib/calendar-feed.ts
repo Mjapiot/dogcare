@@ -1,5 +1,6 @@
 import { REQUEST_TYPE_LABELS, type RequestType } from "@/domain/status";
 import type { IcsEvent } from "@/lib/ics";
+import { deName } from "@/lib/format";
 
 /** One row of public.calendar_feed_events. */
 export type FeedRow = {
@@ -34,8 +35,8 @@ export function feedRowToEvent(row: FeedRow, origin: string): IcsEvent {
   const url = `${origin}/requests/${row.request_id}`;
   const lead =
     row.role === "sitter"
-      ? `Vous vous occupez de ${row.dog_name}${row.other_name ? ` pour ${row.other_name}` : ""}.`
-      : `${row.other_name} s'occupe de ${row.dog_name}.`;
+      ? `Vous vous occupez ${deName(row.dog_name)}${row.other_name ? ` pour ${row.other_name}` : ""}.`
+      : `${row.other_name} s'occupe ${deName(row.dog_name)}.`;
   const description = [
     lead,
     pending ? "Les horaires ont changé : la garde doit être reconfirmée dans Dogcare." : null,

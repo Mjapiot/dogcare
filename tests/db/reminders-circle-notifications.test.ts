@@ -188,3 +188,21 @@ describe("circle notifications", () => {
     expect(await titles(guest, "circle_update")).toEqual(["Votre accès à Aston se termine demain soir"]);
   });
 });
+
+describe("French elision in database messages", () => {
+  it("writes d'Aston, d'Hector, de Moka", async () => {
+    const r = await rows<{ a: string; h: string; m: string }>(
+      db,
+      "select private.de_name('Aston') as a, private.de_name('Hector') as h, private.de_name('Moka') as m",
+    );
+    expect(r[0]).toEqual({ a: "d'Aston", h: "d'Hector", m: "de Moka" });
+  });
+
+  it("a cancelled garde is announced with the elision", async () => {
+    const s = await scenario();
+    const requestId = await request(s, at(tomorrow, "09:00"), at(tomorrow, "10:00"));
+    const assignmentId = await confirm(s, requestId);
+    await asUser(db, s.owner, (tx) => tx.query("select public.cancel_assignment($1, null)", [assignmentId]));
+    expect(await titles(s.helper, "assignment_cancelled")).toEqual(["Votre garde d'Aston est annulée"]);
+  });
+});

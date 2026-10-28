@@ -9,7 +9,7 @@ import { PERIOD_AVAILABILITY_LABELS, type PeriodAvailability } from "@/domain/av
 import { CIRCLE_KIND_LABELS } from "@/domain/circle";
 import { intersect, overlaps, type Interval } from "@/domain/intervals";
 import { toLocalDate, toLocalTime, zonedInstant } from "@/domain/time";
-import { formatPeriod } from "@/lib/format";
+import { deName, formatPeriod } from "@/lib/format";
 import { hapticSuccess } from "@/lib/native";
 import { cn } from "@/lib/utils";
 import { Avatar, Field, PillButton, TextInput } from "@/components/ui/kit";
@@ -166,7 +166,7 @@ export function HelperList({
       <ConfirmationDialog
         open={removing !== null}
         onOpenChange={(o) => !o && setRemoving(null)}
-        title={`Retirer la garde de ${removing?.name ?? ""} ?`}
+        title={removing ? `Retirer la garde ${deName(removing.name)} ?` : "Retirer la garde ?"}
         description="La personne sera prévenue et le créneau redeviendra à organiser."
         confirmLabel="Retirer la garde"
         destructive

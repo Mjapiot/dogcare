@@ -134,7 +134,7 @@ describe("photos and notifications", () => {
     await add(s.helper, s.assignmentId, "pick_up");
     expect((await careNotes(s.owner)).map((n) => n.title)).toEqual([
       `Helper${seq - 1} a pris en charge Aston`,
-      "Nouvelle photo de Aston",
+      "Nouvelle photo d'Aston",
       "Aston a été récupéré",
     ]);
     expect(await careNotes(s.member)).toEqual([]);

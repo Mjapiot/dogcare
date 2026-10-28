@@ -1,5 +1,6 @@
 import { PawPrint } from "lucide-react";
 import { dogAge, formatSex, formatWeight, type PassportDog } from "@/domain/passport";
+import { deName } from "@/lib/format";
 import type { LocalDate } from "@/domain/time";
 
 /**
@@ -28,7 +29,7 @@ export function PassportHero({
 
   return (
     <section
-      aria-label={`Passeport de ${dog.name}`}
+      aria-label={`Passeport ${deName(dog.name)}`}
       className="relative overflow-hidden rounded-[32px] bg-gradient-to-br from-beige via-[#e9e7dc] to-[#d9e3d5] p-5 shadow-[0_1px_0_rgba(28,27,25,0.04),0_16px_40px_-24px_rgba(79,111,82,0.55)]"
     >
       {/* soft light blobs and a paw watermark, purely decorative */}

@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ChevronRight, Footprints, Home, Moon, PawPrint, Timer } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { formatDuration, formatPeriod, formatTime } from "@/lib/format";
+import { deName, formatDuration, formatPeriod, formatTime } from "@/lib/format";
 import { REQUEST_TYPE_LABELS, type RequestType, type StatusTone } from "@/domain/status";
 import type { CoverageResult } from "@/domain/coverage";
 import type { RequestView } from "@/domain/views";
@@ -58,7 +58,7 @@ export function DogAvatar({
     return (
       <Image
         src={photoUrl}
-        alt={`Photo de ${name}`}
+        alt={`Photo ${deName(name)}`}
         width={size}
         height={size}
         unoptimized

@@ -215,7 +215,7 @@ describe("leaving the circle or changing dates", () => {
     const live = await rows(db, "select id from care_assignments where request_id = $1 and status <> 'cancelled'", [requestId]);
     expect(live).toEqual([]);
     const guestTitles = (await notifications(s.guest)).map((n) => n.title);
-    expect(guestTitles).toContain("Votre garde de Aston est annulée");
+    expect(guestTitles).toContain("Votre garde d'Aston est annulée");
     expect(guestTitles.at(-1)).toBe("Votre accès au passeport d'Aston est terminé");
     expect(await asUser(db, s.guest, (tx) => rows(tx, "select id from care_requests"))).toEqual([]);
   });
