@@ -72,7 +72,8 @@ test("circle invitee: asked on a request, answers, is confirmed, removal cancels
     await page.goto(requestUrl);
     await page.getByRole("button", { name: "Confirmer" }).first().click();
     await page.getByRole("button", { name: /Confirmer Lea/ }).click();
-    await expect(page.getByText("Couvert").first()).toBeVisible();
+    // the page refreshes after the confirmation: slower when several tests run against production
+    await expect(page.getByText("Couvert").first()).toBeVisible({ timeout: 15_000 });
 
     // she sees her garde
     await sitterPage.goto(`/circle/requests/${requestId}`);
