@@ -30,6 +30,22 @@
 - [ ] Vérification manuelle sur iPhone (voir TEST_PLAN.md)
 - [ ] SMTP personnalisé pour lever la limite d'e-mails de Supabase
 
+## Sprint en cours : « Le pet-sitter dans la boucle » (validé le 2026-10-28)
+
+Objectif : j'invite ma pet-sitter, elle accepte la garde, reçoit un rappel, remplit le carnet, je vois les photos.
+Chaque lot fait l'objet d'une spec validée avant d'être codé.
+
+1. [ ] Correctifs rapides
+   - [ ] `/circle/join/*` dans les liens universels (aujourd'hui l'invitation au cercle s'ouvre dans Safari)
+   - [ ] Advisors Supabase (sécurité, performance) après les migrations passeport et cercle
+2. [ ] Invités et proches hors groupe : répondre aux demandes et être confirmés sur les gardes du chien
+3. [ ] Carnet de garde (repas, promenade, médicament, dépôt/récupération, photo ou commentaire) tenu par le gardien confirmé
+4. [ ] Notifications du cercle (accès donné, fin d'accès, invitation acceptée) et rappel la veille d'une garde
+5. [ ] Refonte de l'écran « Demandes »
+
+Hors code, côté porteur du projet : étiquettes de confidentialité App Store (contacts d'urgence, vétérinaire),
+tests manuels iPhone restants, SMTP personnalisé.
+
 ## Version 2
 
 Vision : « Toute la vie de votre animal, partagée avec les bonnes personnes ». Ordre validé :
