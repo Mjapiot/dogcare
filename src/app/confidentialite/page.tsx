@@ -29,7 +29,9 @@ export default function PrivacyPage() {
             <strong>Chiens</strong> : le passeport que vous choisissez de renseigner (identité, photo, habitudes, santé
             et vétérinaire, contacts d&apos;urgence). Tout est facultatif. La santé et les contacts d&apos;urgence ne
             sont visibles que par les responsables du chien et la personne qui le garde ; un lien de partage
-            temporaire, créé par un responsable, les montre seulement s&apos;il a choisi de les inclure.
+            temporaire, créé par un responsable, les montre seulement s&apos;il a choisi de les inclure. Si un
+            responsable vous invite dans le cercle d&apos;un chien, il voit votre prénom et votre rôle ; vous voyez
+            uniquement le passeport de ce chien.
           </li>
           <li>
             <strong>Organisation des gardes</strong> : vos disponibilités (sans motif), vos demandes, vos réponses et

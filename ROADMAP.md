@@ -35,7 +35,9 @@
 Vision : « Toute la vie de votre animal, partagée avec les bonnes personnes ». Ordre validé :
 
 1. [x] Passeport numérique : 4 rubriques, santé/urgences protégées, lien de partage temporaire (implémenté et testé, en attente de mise en production)
-2. [ ] Cercle de confiance par chien (rôles, autorisations par rubrique, accès temporaires), le groupe restant l'entourage
+2. [x] Cercle de confiance par chien : 5 rôles, accès santé/urgences par personne, invités datés et proches hors groupe (implémenté et testé, en attente de mise en production)
+   - [ ] Invités : répondre aux demandes et être confirmés sur les gardes du chien
+   - [ ] Notifications liées au cercle
 3. [ ] Carnet de garde (repas, promenade, médicament, dépôt/récupération, photo ou commentaire)
 4. [ ] Moteur de planning sous contraintes (nuits max, lieux, incompatibilités) avec proposition à valider
 5. [ ] Routines (désactivées par défaut)

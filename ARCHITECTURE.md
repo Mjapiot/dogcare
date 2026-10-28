@@ -33,6 +33,13 @@ signe la photo du chien grâce à une politique de stockage `anon` limitée à l
 lien actif. Rubriques en lecture : `src/components/dogs/passport-view.tsx` (partagées avec la fiche du chien),
 édition par rubrique : `passport-section.tsx` + `passport-editors.tsx`, partage : `passport-share.tsx`.
 
+## Cercle de confiance
+
+Carte « Cercle de confiance » (responsables) : `components/dogs/circle-card.tsx`, actions `server/actions/circle.ts`,
+règles d'affichage et fenêtres d'invité `domain/circle.ts`. Une personne invitée hors des groupes n'a pas de groupe :
+`requireAppContext` la redirige vers `/circle` (« Chiens confiés »), `/circle/[dogId]` affiche le passeport en
+lecture seule, `/circle/join/[token]` accepte l'invitation (l'onboarding saute alors les étapes de groupe).
+
 ## Notifications push
 
 1. Une action (demande, réponse, confirmation…) crée des notifications en base (triggers/RPC).

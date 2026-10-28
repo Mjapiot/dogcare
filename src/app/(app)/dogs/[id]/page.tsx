@@ -4,8 +4,16 @@ import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { ArrowLeft, HeartPulse, IdCard, Lock, Phone, Utensils } from "lucide-react";
 import { getMyGroups, requireAppContext } from "@/server/session";
-import { getDog, getDogPassportPrivate, getDogShareLinks, getGroupMembers, signDogPhotos } from "@/server/data";
+import {
+  getDog,
+  getDogCircle,
+  getDogPassportPrivate,
+  getDogShareLinks,
+  getPendingCircleInvitations,
+  signDogPhotos,
+} from "@/server/data";
 import { uuid } from "@/lib/validation";
+import { deName } from "@/lib/format";
 import { todayLocal } from "@/domain/time";
 import { DogAvatar } from "@/components/domain/request-bits";
 import { PhotoUploader } from "@/components/dogs/photo-uploader";
@@ -16,11 +24,12 @@ import { PassportSection } from "@/components/dogs/passport-section";
 import { EmergencyView, HabitsView, HealthView, IdentityView } from "@/components/dogs/passport-view";
 import { EmergencyEditor, HabitsEditor, HealthEditor, IdentityEditor } from "@/components/dogs/passport-editors";
 import { PassportShare } from "@/components/dogs/passport-share";
+import { CircleCard } from "@/components/dogs/circle-card";
 import { Rise, Stagger } from "@/components/ui/motion";
 
 export const metadata: Metadata = { title: "Passeport" };
 
-const PRIVATE_NOTE = "Visible par les responsables du chien et par la personne qui le garde (dès 7 jours avant la garde).";
+const PRIVATE_NOTE = "Visible selon les réglages du cercle de confiance.";
 
 export default async function DogPage({ params }: PageProps<"/dogs/[id]">) {
   const { id } = await params;
@@ -30,20 +39,22 @@ export default async function DogPage({ params }: PageProps<"/dogs/[id]">) {
   if (!data) notFound();
   const { dog, caretakers, groupIds } = data;
   const isCaretaker = caretakers.some((c) => c.user_id === userId);
-  const [photos, myGroups, priv, links, h] = await Promise.all([
+  const [photos, myGroups, priv, links, circle, invitations, h] = await Promise.all([
     signDogPhotos([dog]),
     getMyGroups(),
     getDogPassportPrivate(dog.id),
     isCaretaker ? getDogShareLinks(dog.id) : Promise.resolve([]),
+    getDogCircle(dog.id),
+    isCaretaker ? getPendingCircleInvitations(dog.id) : Promise.resolve([]),
     headers(),
   ]);
   const origin = `${h.get("x-forwarded-proto") ?? "https"}://${h.get("x-forwarded-host") ?? h.get("host")}`;
   const visibleGroups = myGroups.filter((g) => groupIds.includes(g.id));
-  const membersByGroup = await Promise.all(visibleGroups.map((g) => getGroupMembers(g.id)));
-  const people = new Map<string, string>();
-  for (const list of membersByGroup) for (const m of list) people.set(m.user_id, m.display_name || "Membre");
   const today = todayLocal();
-  const caretakerNames = caretakers.map((c) => people.get(c.user_id) ?? "Membre").join(", ");
+  const caretakerNames = circle
+    .filter((m) => m.kind === "owner" || m.kind === "co_owner")
+    .map((m) => m.display_name)
+    .join(", ");
   const editable = isCaretaker && !dog.archived_at;
 
   return (
@@ -128,62 +139,72 @@ export default async function DogPage({ params }: PageProps<"/dogs/[id]">) {
         </PassportSection>
       </Rise>
 
-      {priv.canView ? (
+      {priv.access.health || priv.access.emergency ? (
         <>
-          <Rise>
-            <PassportSection
-              id="health"
-              title="Santé"
-              icon={<HeartPulse />}
-              note={PRIVATE_NOTE}
-              editor={
-                editable && (
-                  <HealthEditor
-                    dogId={dog.id}
-                    initial={{
-                      allergies: priv.health?.allergies ?? "",
-                      treatments: priv.health?.treatments ?? "",
-                      vetName: priv.health?.vet_name ?? "",
-                      vetClinic: priv.health?.vet_clinic ?? "",
-                      vetPhone: priv.health?.vet_phone ?? "",
-                      vetAddress: priv.health?.vet_address ?? "",
-                      notes: priv.health?.notes ?? "",
-                    }}
-                  />
-                )
-              }
-            >
-              <HealthView health={priv.health} />
-            </PassportSection>
-          </Rise>
+          {priv.access.health && (
+            <Rise>
+              <PassportSection
+                id="health"
+                title="Santé"
+                icon={<HeartPulse />}
+                note={PRIVATE_NOTE}
+                editor={
+                  editable && (
+                    <HealthEditor
+                      dogId={dog.id}
+                      initial={{
+                        allergies: priv.health?.allergies ?? "",
+                        treatments: priv.health?.treatments ?? "",
+                        vetName: priv.health?.vet_name ?? "",
+                        vetClinic: priv.health?.vet_clinic ?? "",
+                        vetPhone: priv.health?.vet_phone ?? "",
+                        vetAddress: priv.health?.vet_address ?? "",
+                        notes: priv.health?.notes ?? "",
+                      }}
+                    />
+                  )
+                }
+              >
+                <HealthView health={priv.health} />
+              </PassportSection>
+            </Rise>
+          )}
 
-          <Rise>
-            <PassportSection
-              id="emergency"
-              title="Urgences"
-              icon={<Phone />}
-              note={PRIVATE_NOTE}
-              editor={
-                editable && (
-                  <EmergencyEditor
-                    dogId={dog.id}
-                    initial={{ contacts: priv.emergency?.contacts ?? [], instructions: priv.emergency?.instructions ?? "" }}
-                  />
-                )
-              }
-            >
-              <EmergencyView emergency={priv.emergency} />
-            </PassportSection>
-          </Rise>
+          {priv.access.emergency && (
+            <Rise>
+              <PassportSection
+                id="emergency"
+                title="Urgences"
+                icon={<Phone />}
+                note={PRIVATE_NOTE}
+                editor={
+                  editable && (
+                    <EmergencyEditor
+                      dogId={dog.id}
+                      initial={{ contacts: priv.emergency?.contacts ?? [], instructions: priv.emergency?.instructions ?? "" }}
+                    />
+                  )
+                }
+              >
+                <EmergencyView emergency={priv.emergency} />
+              </PassportSection>
+            </Rise>
+          )}
         </>
       ) : (
         <div className="flex items-start gap-3 rounded-3xl bg-surface-2 px-5 py-4">
           <Lock className="mt-0.5 size-5 shrink-0 text-ink-2" aria-hidden />
           <p className="text-[14px] text-ink-2">
-            <span className="font-semibold text-ink">Santé et urgences</span> : visibles par les responsables de{" "}
-            {dog.name} et par la personne qui le garde, dès 7 jours avant la garde.
+            <span className="font-semibold text-ink">Santé et urgences</span> : vous les verrez pendant vos gardes{" "}
+            {deName(dog.name)}, ou si ses responsables vous les ouvrent dans son cercle de confiance.
           </p>
         </div>
+      )}
+
+      {editable && (
+        <Rise>
+          <CircleCard dogId={dog.id} dogName={dog.name} origin={origin} me={userId} members={circle} invitations={invitations} />
+        </Rise>
       )}
 
       {isCaretaker && (
@@ -191,13 +212,8 @@ export default async function DogPage({ params }: PageProps<"/dogs/[id]">) {
           <DogManage
             dogId={dog.id}
             archived={Boolean(dog.archived_at)}
-            me={userId}
             groups={myGroups.map((g) => ({ id: g.id, name: g.name }))}
             sharedGroupIds={groupIds}
-            caretakers={caretakers.map((c) => ({ userId: c.user_id, role: c.role, name: people.get(c.user_id) ?? "Membre" }))}
-            candidates={[...people.entries()]
-              .filter(([uid]) => !caretakers.some((c) => c.user_id === uid))
-              .map(([uid, name]) => ({ userId: uid, name }))}
           />
         </div>
       )}

@@ -39,7 +39,7 @@ La fiche du chien est son passeport, en quatre rubriques (tout est facultatif sa
 | --- | --- | --- |
 | Identité | nom, photo, naissance (âge calculé), race, sexe, stérilisé, poids, n° d'identification, signes particuliers | membres des groupes du chien |
 | Habitudes | repas, promenades, sommeil, comportement, autres consignes | membres des groupes du chien |
-| Santé | allergies, traitements, vétérinaire (nom, cabinet, téléphone, adresse), notes de santé | responsables + gardien d'une garde confirmée, de 7 jours avant jusqu'à la fin |
+| Santé | allergies, traitements, vétérinaire (nom, cabinet, téléphone, adresse), notes de santé | selon le cercle de confiance (par défaut : responsables + gardien d'une garde confirmée, de 7 jours avant jusqu'à la fin) |
 | Urgences | jusqu'à 5 contacts (nom, lien, téléphone) et consignes | idem Santé |
 
 - Seuls les responsables modifient le passeport, rubrique par rubrique.
@@ -48,6 +48,27 @@ La fiche du chien est son passeport, en quatre rubriques (tout est facultatif sa
   compte, en choisissant d'y inclure ou non Santé et Urgences (Identité et Habitudes toujours). Le lien
   est révocable à tout moment ; le nombre d'ouvertures est affiché ; 10 liens actifs au plus par chien.
   La page publique ne montre ni e-mail, ni groupe, ni planning, et n'est pas indexée.
+
+### Cercle de confiance
+
+Chaque chien a un cercle : qui voit quoi. Rôles (accès Santé / Urgences réglables par personne :
+toujours, pendant ses gardes, jamais) :
+
+| Rôle | Qui | Santé / Urgences par défaut | Modifier, publier, confirmer, gérer le cercle |
+| --- | --- | --- | --- |
+| Propriétaire | créateur de la fiche | toujours | oui ; ne peut pas être retiré par un copropriétaire |
+| Copropriétaire | responsable ajouté (membre d'un groupe du chien) | toujours | oui |
+| Proche | membre d'un groupe ou personne invitée directement | toujours | non |
+| Entourage | tout membre d'un groupe du chien, sans réglage | pendant ses gardes (J-7 → fin) | non |
+| Invité | personne invitée directement, entre deux dates (≤ 1 an) | au choix (oui / non) | non |
+
+- On invite un proche ou un invité par un **lien à usage unique** (7 jours, révocable, empreinte seule
+  stockée). La personne crée son compte avec le lien e-mail habituel, sans rejoindre de groupe.
+- Une personne invitée hors des groupes voit **uniquement le passeport** (pas les groupes, demandes ni
+  planning), dans « Chiens confiés » (`/circle`) ; à la fin de ses dates, l'accès s'arrête seul.
+- Un réglage « Entourage » ne donne rien à quelqu'un qui a quitté le groupe ; un proche garde l'accès
+  jusqu'à ce qu'un responsable le retire.
+- Les invités ne répondent pas encore aux demandes de garde (lot suivant).
 
 ## Disponibilités
 

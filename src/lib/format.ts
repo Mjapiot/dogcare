@@ -71,3 +71,8 @@ export function initials(name: string): string {
   if (!parts.length) return "?";
   return (parts[0][0] + (parts[1]?.[0] ?? "")).toUpperCase();
 }
+
+/** "de Moka" / "d'Aston" (elision before a vowel or a mute h). */
+export function deName(name: string): string {
+  return /^[aeiouyhàâäéèêëîïôöùûü]/i.test(name.trim()) ? `d'${name}` : `de ${name}`;
+}

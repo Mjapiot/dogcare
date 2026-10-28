@@ -12,6 +12,8 @@ import type {
   DogCaretakerRow,
   DogRow,
   DogShareLinkRow,
+  CircleInvitationRow,
+  CircleMemberRow,
   GroupMemberRow,
   InvitationRow,
   NotificationPreferencesRow,
@@ -276,13 +278,13 @@ export async function getInvitations(groupId: string): Promise<InvitationRow[]> 
  * user may see them (caretakers and live sitters; RLS returns nothing otherwise).
  */
 export async function getDogPassportPrivate(dogId: string): Promise<{
-  canView: boolean;
+  access: { health: boolean; emergency: boolean };
   health: PassportHealth | null;
   emergency: PassportEmergency | null;
 }> {
   const supabase = await createClient();
   const [access, health, emergency] = await Promise.all([
-    supabase.rpc("can_view_dog_private", { p_dog_id: dogId }),
+    supabase.rpc("dog_section_access", { p_dog_id: dogId }),
     supabase
       .from("dog_health")
       .select("allergies, treatments, vet_name, vet_clinic, vet_phone, vet_address, notes")
@@ -294,10 +296,39 @@ export async function getDogPassportPrivate(dogId: string): Promise<{
   if (health.error) throw health.error;
   if (emergency.error) throw emergency.error;
   return {
-    canView: access.data === true,
+    access: (access.data as { health: boolean; emergency: boolean } | null) ?? { health: false, emergency: false },
     health: (health.data as PassportHealth | null) ?? null,
     emergency: (emergency.data as PassportEmergency | null) ?? null,
   };
+}
+
+/** The dog's circle: everyone for caretakers, only the caretakers for other viewers. */
+export async function getDogCircle(dogId: string): Promise<CircleMemberRow[]> {
+  const supabase = await createClient();
+  return must<CircleMemberRow[]>(await supabase.rpc("dog_circle_list", { p_dog_id: dogId }));
+}
+
+/** Caretakers only (RLS): circle invitations still waiting to be accepted. */
+export async function getPendingCircleInvitations(dogId: string): Promise<CircleInvitationRow[]> {
+  const supabase = await createClient();
+  return must<CircleInvitationRow[]>(
+    await supabase
+      .from("dog_circle_invitations")
+      .select("id, role, health_access, emergency_access, starts_at, ends_at, expires_at, created_at")
+      .eq("dog_id", dogId)
+      .is("used_at", null)
+      .is("revoked_at", null)
+      .gt("expires_at", new Date().toISOString())
+      .order("created_at", { ascending: false }),
+  );
+}
+
+export type CircleDog = { dog_id: string; name: string; photo_path: string | null; role: "close" | "guest"; starts_at: string | null; ends_at: string | null };
+
+/** Dogs opened to the current user by a circle invitation (not as caretaker or group member). */
+export async function getMyCircleDogs(): Promise<CircleDog[]> {
+  const supabase = await createClient();
+  return must<CircleDog[]>(await supabase.rpc("my_circle_dogs"));
 }
 
 /** Caretakers only (RLS): the dog's recent share links, newest first. */
@@ -314,7 +345,7 @@ export async function getDogShareLinks(dogId: string): Promise<DogShareLinkRow[]
 }
 
 /** Short-lived signed URLs for dog photos (private bucket). */
-export async function signDogPhotos(dogs: DogRow[]): Promise<Record<string, string>> {
+export async function signDogPhotos(dogs: Array<Pick<DogRow, "id" | "photo_path">>): Promise<Record<string, string>> {
   const paths = dogs.map((d) => d.photo_path).filter((p): p is string => Boolean(p));
   if (!paths.length) return {};
   const supabase = await createClient();

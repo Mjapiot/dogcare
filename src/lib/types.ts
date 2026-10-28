@@ -2,6 +2,7 @@
  * Row types mirroring the SQL schema (supabase/migrations). Kept by hand for
  * now; regenerate with `supabase gen types` once the CLI is linked.
  */
+import type { CircleKind, SectionAccess } from "@/domain/circle";
 import type { SlotKey } from "@/domain/config";
 import type { DeclaredStatus } from "@/domain/availability";
 import type { LifecycleStatus, NecessityLevel, RequestType, ResponseStatus } from "@/domain/status";
@@ -67,6 +68,29 @@ export type DogRow = {
   behavior: string | null;
   created_by: string | null;
   archived_at: string | null;
+};
+
+/** One person of a dog's circle of trust (see public.dog_circle_list). */
+export type CircleMemberRow = {
+  user_id: string;
+  display_name: string;
+  kind: CircleKind;
+  health_access: SectionAccess;
+  emergency_access: SectionAccess;
+  starts_at: string | null;
+  ends_at: string | null;
+  in_group: boolean;
+};
+
+export type CircleInvitationRow = {
+  id: string;
+  role: "close" | "guest";
+  health_access: "always" | "never";
+  emergency_access: "always" | "never";
+  starts_at: string | null;
+  ends_at: string | null;
+  expires_at: string;
+  created_at: string;
 };
 
 export type DogShareLinkRow = {

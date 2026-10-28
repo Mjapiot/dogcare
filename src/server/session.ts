@@ -3,6 +3,7 @@ import { cache } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getMyCircleDogs } from "@/server/data";
 import type { GroupMemberRow, GroupRow, ProfileRow } from "@/lib/types";
 
 export const CURRENT_GROUP_COOKIE = "dc_group";
@@ -72,6 +73,7 @@ export async function requireAppContext() {
   const profile = await getProfile();
   if (!profile || !profile.display_name.trim()) redirect("/onboarding");
   const group = await getCurrentGroup();
-  if (!group) redirect("/onboarding/group");
+  // a person only invited to a dog's circle has no group: their space is /circle
+  if (!group) redirect((await getMyCircleDogs()).length ? "/circle" : "/onboarding/group");
   return { userId, profile, group };
 }

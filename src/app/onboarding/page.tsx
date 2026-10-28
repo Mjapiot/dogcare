@@ -20,7 +20,8 @@ export default async function OnboardingPage({ searchParams }: PageProps<"/onboa
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col px-5 pt-safe pb-safe">
       <div className="flex flex-1 flex-col justify-center gap-8 py-10">
-        {groups.length === 0 && <OnboardingProgress steps={ONBOARDING_STEPS.create} current={1} />}
+        {/* someone joining a dog's circle does not go through the group steps */}
+        {groups.length === 0 && !next?.startsWith("/circle/") && <OnboardingProgress steps={ONBOARDING_STEPS.create} current={1} />}
         <div>
           <h1 className=" text-[40px] font-semibold leading-[1] tracking-[-0.04em] text-ink">Comment vous appelle-t-on ?</h1>
           <p className="mt-3 text-[17px] text-ink-2">Votre prénom sera visible par les membres de vos groupes.</p>

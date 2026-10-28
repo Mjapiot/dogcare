@@ -13,6 +13,7 @@ import { Switch } from "@/components/ui/switch";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ConfirmationDialog } from "@/components/domain/confirmation-dialog";
 import { cn } from "@/lib/utils";
+import { deName } from "@/lib/format";
 
 const DATE = new Intl.DateTimeFormat("fr-FR", { timeZone: "Europe/Paris", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
 
@@ -40,7 +41,7 @@ export function PassportShare({ dogId, dogName, origin, links }: { dogId: string
       const url = `${origin}/p/${r.data.token}`;
       setCreated(url);
       router.refresh();
-      const result = await shareLink({ title: `Passeport de ${dogName}`, text: `Le passeport de ${dogName} sur Dogcare :`, url });
+      const result = await shareLink({ title: `Passeport ${deName(dogName)}`, text: `Le passeport ${deName(dogName)} sur Dogcare :`, url });
       if (result === "copied") toast.success("Lien copié");
     });
 
@@ -104,11 +105,15 @@ export function PassportShare({ dogId, dogName, origin, links }: { dogId: string
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent side="bottom" className="rounded-t-[28px] border-0 pb-safe">
           <SheetHeader>
-            <SheetTitle className="text-xl font-semibold">Partager le passeport de {dogName}</SheetTitle>
+            <SheetTitle className="text-xl font-semibold">Partager le passeport {deName(dogName)}</SheetTitle>
             <SheetDescription>Identité et habitudes sont toujours incluses. Vous pouvez révoquer le lien à tout moment.</SheetDescription>
           </SheetHeader>
           {created ? (
-            <CreatedLink url={created} dogName={dogName} onDone={() => setOpen(false)} />
+            <CreatedLink
+              url={created}
+              note={`Toute personne qui a ce lien peut voir le passeport ${deName(dogName)} jusqu'à son expiration.`}
+              onDone={() => setOpen(false)}
+            />
           ) : (
             <div className="flex flex-col gap-4 px-4 pb-6">
               <div className="flex flex-col gap-1.5">
@@ -199,7 +204,7 @@ function ToggleRow({
 }
 
 /** The link, with a copy button that turns into a check mark once copied. */
-function CreatedLink({ url, dogName, onDone }: { url: string; dogName: string; onDone: () => void }) {
+export function CreatedLink({ url, note, onDone }: { url: string; note: string; onDone: () => void }) {
   const [copied, setCopied] = useState(false);
   return (
     <div className="flex flex-col gap-4 px-4 pb-6">
@@ -229,7 +234,7 @@ function CreatedLink({ url, dogName, onDone }: { url: string; dogName: string; o
         </button>
       </div>
       <p className="text-[13px] text-ink-3" aria-live="polite">
-        {copied ? "Lien copié." : `Toute personne qui a ce lien peut voir le passeport de ${dogName} jusqu'à son expiration.`}
+        {copied ? "Lien copié." : note}
       </p>
       <PillButton variant="soft" onClick={onDone}>
         Terminé

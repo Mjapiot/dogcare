@@ -3,7 +3,7 @@ import Link from "next/link";
 import { headers } from "next/headers";
 import { ChevronRight, Plus, Users } from "lucide-react";
 import { getMyGroups, getUserEmail, requireAppContext } from "@/server/session";
-import { getCalendarFeedToken, getMyDogs, getNotificationPreferences, signDogPhotos } from "@/server/data";
+import { getCalendarFeedToken, getMyCircleDogs, getMyDogs, getNotificationPreferences, signDogPhotos } from "@/server/data";
 import { Card, PillLink, SectionTitle } from "@/components/ui/kit";
 import { DogAvatar } from "@/components/domain/request-bits";
 import { InstallHint } from "@/components/pwa/install-hint";
@@ -13,21 +13,23 @@ import { AccountActions } from "@/components/profile/account-actions";
 import { PushSettings } from "@/components/profile/push-settings";
 import { CalendarFeed } from "@/components/profile/calendar-feed";
 import { getVapidPublicKey } from "@/server/push";
+import { CIRCLE_KIND_LABELS } from "@/domain/circle";
 
 export const metadata: Metadata = { title: "Profil" };
 
 export default async function ProfilePage() {
   const { userId, profile } = await requireAppContext();
-  const [email, groups, dogs, prefs, feedToken, h] = await Promise.all([
+  const [email, groups, dogs, circleDogs, prefs, feedToken, h] = await Promise.all([
     getUserEmail(),
     getMyGroups(),
     getMyDogs(userId),
+    getMyCircleDogs(),
     getNotificationPreferences(),
     getCalendarFeedToken(),
     headers(),
   ]);
   const origin = `${h.get("x-forwarded-proto") ?? "https"}://${h.get("x-forwarded-host") ?? h.get("host")}`;
-  const photos = await signDogPhotos(dogs);
+  const photos = await signDogPhotos([...dogs, ...circleDogs.map((d) => ({ id: d.dog_id, photo_path: d.photo_path }))]);
   const activeDogs = dogs.filter((d) => !d.archived_at);
   const archivedDogs = dogs.filter((d) => d.archived_at);
 
@@ -74,6 +76,26 @@ export default async function ProfilePage() {
           </details>
         )}
       </section>
+
+      {circleDogs.length > 0 && (
+        <section className="flex flex-col gap-3">
+          <SectionTitle>Chiens qui me sont confiés</SectionTitle>
+          <ul className="flex flex-col gap-2">
+            {circleDogs.map((d) => (
+              <li key={d.dog_id}>
+                <Link href={`/dogs/${d.dog_id}`} className="flex items-center gap-3 rounded-2xl bg-surface p-3">
+                  <DogAvatar name={d.name} photoUrl={photos[d.dog_id]} size={48} />
+                  <span className="flex-1">
+                    <span className="block text-[16px] font-semibold text-ink">{d.name}</span>
+                    <span className="block text-[13px] text-ink-3">{CIRCLE_KIND_LABELS[d.role]}</span>
+                  </span>
+                  <ChevronRight className="size-5 text-ink-3" aria-hidden />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <section className="flex flex-col gap-3">
         <SectionTitle action={<PillLink href="/onboarding/group" size="sm" variant="soft"><Plus className="size-4" aria-hidden /> Créer / rejoindre</PillLink>}>

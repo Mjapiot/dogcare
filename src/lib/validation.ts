@@ -76,6 +76,25 @@ export const dogEmergencySchema = z.object({
   instructions: optionalText(1000),
 });
 
+const sectionAccess = z.enum(["always", "during_care", "never"]);
+const isoInstant = z.iso.datetime({ offset: true, message: "Date invalide." });
+
+export const circleMemberSchema = z.object({
+  role: z.enum(["close", "entourage", "guest"]),
+  health: sectionAccess,
+  emergency: sectionAccess,
+  startsAt: isoInstant.nullable(),
+  endsAt: isoInstant.nullable(),
+});
+
+export const circleInviteSchema = z.object({
+  role: z.enum(["close", "guest"]),
+  health: z.enum(["always", "never"]),
+  emergency: z.enum(["always", "never"]),
+  startsAt: isoInstant.nullable(),
+  endsAt: isoInstant.nullable(),
+});
+
 export const shareLinkSchema = z.object({
   hours: z.union([z.literal(24), z.literal(168), z.literal(720)]),
   health: z.boolean(),
