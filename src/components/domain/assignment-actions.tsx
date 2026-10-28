@@ -6,12 +6,14 @@ import { toast } from "sonner";
 import { AlertTriangle, Check, X } from "lucide-react";
 import { answerReconfirmation, cancelAssignment } from "@/server/actions/requests";
 import { formatPeriod } from "@/lib/format";
-import type { RequestView } from "@/domain/views";
+import type { CareAssignmentRow } from "@/lib/types";
 import { PillButton } from "@/components/ui/kit";
 import { ConfirmationDialog } from "./confirmation-dialog";
 
+type MyAssignment = Pick<CareAssignmentRow, "id" | "starts_at" | "ends_at" | "status" | "previous_starts_at" | "previous_ends_at">;
+
 /** Actions of a helper on the assignments entrusted to them. */
-export function AssignmentActions({ view }: { view: RequestView }) {
+export function AssignmentActions({ assignments }: { assignments: MyAssignment[] }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [cancelId, setCancelId] = useState<string | null>(null);
@@ -26,7 +28,7 @@ export function AssignmentActions({ view }: { view: RequestView }) {
 
   return (
     <div className="flex flex-col gap-3">
-      {view.myAssignments.map((a) => (
+      {assignments.map((a) => (
         <div key={a.id} className="flex flex-col gap-2 rounded-2xl bg-surface-2 p-3">
           {a.status === "pending_reconfirmation" ? (
             <>

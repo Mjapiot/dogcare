@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, HeartHandshake, Info, Users } from "lucide-react";
-import { requireAppContext } from "@/server/session";
+import { getMyGroups, requireAppContext } from "@/server/session";
 import { getGroupSnapshot, getRequestGroupId, signDogPhotos } from "@/server/data";
 import { buildRequestViews } from "@/domain/views";
 import { NECESSITY_LABELS, REQUEST_TYPE_LABELS } from "@/domain/status";
@@ -27,6 +27,8 @@ export default async function RequestDetailPage({ params }: PageProps<"/requests
   // a request may belong to another of my groups (e.g. opened from a notification)
   const groupId = await getRequestGroupId(id);
   if (!groupId) notFound();
+  // asked as a person of the dog's circle, outside this group
+  if (!(await getMyGroups()).some((g) => g.id === groupId)) redirect(`/circle/requests/${id}`);
   const snapshot = await getGroupSnapshot(groupId, userId, { requestIds: [id] });
   const view = buildRequestViews(snapshot, requestNow())[0];
   if (!view) notFound();
@@ -111,7 +113,7 @@ export default async function RequestDetailPage({ params }: PageProps<"/requests
       {!cancelled && view.myAssignments.length > 0 && (
         <section className="flex flex-col gap-2">
           <h2 className="px-1 text-[17px] font-semibold text-ink">Ma garde</h2>
-          <AssignmentActions view={view} />
+          <AssignmentActions assignments={view.myAssignments} />
         </section>
       )}
 
@@ -148,6 +150,7 @@ export default async function RequestDetailPage({ params }: PageProps<"/requests
             proposed: h.proposed,
             note: h.note,
             availability: h.availability,
+            circleRole: h.circleRole,
             assignments: h.assignments.map((a) => ({
               id: a.id,
               start: Date.parse(a.starts_at),

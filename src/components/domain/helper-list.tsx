@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Check, CircleHelp, Clock, Minus, UserCheck, X } from "lucide-react";
 import { cancelAssignment, confirmAssignment } from "@/server/actions/requests";
 import { PERIOD_AVAILABILITY_LABELS, type PeriodAvailability } from "@/domain/availability";
+import { CIRCLE_KIND_LABELS } from "@/domain/circle";
 import { intersect, overlaps, type Interval } from "@/domain/intervals";
 import { toLocalDate, toLocalTime, zonedInstant } from "@/domain/time";
 import { formatPeriod } from "@/lib/format";
@@ -23,6 +24,8 @@ type Helper = {
   note: string | null;
   availability: PeriodAvailability | "hidden";
   assignments: Array<{ id: string; start: number; end: number; status: "confirmed" | "pending_reconfirmation" | "cancelled" }>;
+  /** Circle person asked outside the group. */
+  circleRole?: "close" | "guest" | null;
 };
 
 function defaultRange(offer: Interval, gaps: Interval[]): Interval {
@@ -64,7 +67,7 @@ export function HelperList({
   return (
     <section className="flex flex-col gap-3" aria-labelledby="helpers-title">
       <h2 id="helpers-title" className="px-1 text-[17px] font-semibold text-ink">
-        Réponses des membres
+        Réponses
       </h2>
       {gaps.length > 0 && gaps.length < 4 && canConfirm && (
         <p className="px-1 text-[14px] text-ink-3">Reste à couvrir : {gaps.map((g) => formatPeriod(g.start, g.end)).join(" ; ")}</p>
@@ -79,7 +82,14 @@ export function HelperList({
               <div className="flex items-center gap-3">
                 <Avatar name={h.name} />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-[15px] font-semibold text-ink">{h.name}</p>
+                  <p className="truncate text-[15px] font-semibold text-ink">
+                    {h.name}
+                    {h.circleRole && (
+                      <span className="ml-1.5 rounded-full bg-sage/15 px-2 py-0.5 align-middle text-[12px] font-medium text-ink-2">
+                        {CIRCLE_KIND_LABELS[h.circleRole]}
+                      </span>
+                    )}
+                  </p>
                   <p className="flex items-center gap-1.5 text-[13px] text-ink-2">
                     <ResponseIcon h={h} />
                     {live.length > 0

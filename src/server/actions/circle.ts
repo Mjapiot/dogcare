@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { circleInviteSchema, circleMemberSchema, uuid } from "@/lib/validation";
 import { requireUserId } from "@/server/session";
 import { toUserMessage } from "@/server/errors";
+import { schedulePushDispatch } from "@/server/push";
 import type { ActionResult } from "@/lib/types";
 
 /** Role and health/emergency access of a member of the dog's groups or of the circle. */
@@ -29,7 +30,9 @@ export async function setCircleMember(
     p_ends_at: v.role === "guest" ? v.endsAt : null,
   });
   if (error) return { ok: false, error: toUserMessage(error) };
-  revalidatePath(`/dogs/${dogId}`);
+  // shorter guest dates may cancel gardes (with notifications)
+  schedulePushDispatch();
+  revalidatePath("/", "layout");
   return { ok: true, data: undefined };
 }
 
@@ -39,7 +42,8 @@ export async function removeCircleMember(dogId: string, userId: string): Promise
   const supabase = await createClient();
   const { error } = await supabase.rpc("remove_circle_member", { p_dog_id: dogId, p_user_id: userId });
   if (error) return { ok: false, error: toUserMessage(error) };
-  revalidatePath(`/dogs/${dogId}`);
+  schedulePushDispatch();
+  revalidatePath("/", "layout");
   return { ok: true, data: undefined };
 }
 
@@ -62,7 +66,9 @@ export async function createCircleInvitation(
     p_ends_at: v.role === "guest" ? v.endsAt : null,
   });
   if (error) return { ok: false, error: toUserMessage(error) };
-  revalidatePath(`/dogs/${dogId}`);
+  // shorter guest dates may cancel gardes (with notifications)
+  schedulePushDispatch();
+  revalidatePath("/", "layout");
   return { ok: true, data: { token: data as string } };
 }
 
@@ -83,4 +89,16 @@ export async function acceptCircleInvitation(token: string): Promise<ActionResul
   if (error) return { ok: false, error: toUserMessage(error) };
   revalidatePath("/", "layout");
   return { ok: true, data: { dogId: data as string } };
+}
+
+/** The current user leaves a dog's circle (their gardes on it are cancelled, owners told). */
+export async function leaveDogCircle(dogId: string): Promise<ActionResult> {
+  if (!uuid.safeParse(dogId).success) return { ok: false, error: "Chien introuvable." };
+  await requireUserId();
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("leave_dog_circle", { p_dog_id: dogId });
+  if (error) return { ok: false, error: toUserMessage(error) };
+  schedulePushDispatch();
+  revalidatePath("/", "layout");
+  return { ok: true, data: undefined };
 }

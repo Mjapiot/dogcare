@@ -16,8 +16,11 @@ import type {
   CircleMemberRow,
   GroupMemberRow,
   InvitationRow,
+  InvitedRequestRow,
+  InviteeCandidateRow,
   NotificationPreferencesRow,
   NotificationRow,
+  RequestInviteeRow,
   RequestResponseRow,
 } from "@/lib/types";
 
@@ -127,7 +130,7 @@ export async function getGroupSnapshot(
   }
 
   const memberIds = members.map((m) => m.user_id);
-  const [responses, assignments, entries, rules] = await Promise.all([
+  const [responses, assignments, entries, rules, invitees] = await Promise.all([
     fetchAllByIds<RequestResponseRow>(ids, (chunk, from, to) =>
       supabase
         .from("request_responses")
@@ -156,6 +159,7 @@ export async function getGroupSnapshot(
     fetchAllByIds<AvailabilityRuleRow>(memberIds, (chunk, from, to) =>
       supabase.from("availability_rules").select("id, user_id, weekday, slot, status").in("user_id", chunk).order("id").range(from, to),
     ),
+    getRequestInvitees(ids),
   ]);
 
   return {
@@ -168,7 +172,32 @@ export async function getGroupSnapshot(
     assignments,
     availabilityEntries: entries,
     availabilityRules: rules,
+    invitees,
   };
+}
+
+/** Circle people asked on these requests (names included), as a member of their group sees them. */
+async function getRequestInvitees(requestIds: readonly string[]): Promise<RequestInviteeRow[]> {
+  if (requestIds.length === 0) return [];
+  const supabase = await createClient();
+  const out: RequestInviteeRow[] = [];
+  for (let i = 0; i < requestIds.length; i += ID_CHUNK) {
+    const chunk = requestIds.slice(i, i + ID_CHUNK);
+    out.push(...must<RequestInviteeRow[]>(await supabase.rpc("request_invitees_of", { p_request_ids: chunk })));
+  }
+  return out;
+}
+
+/** Close people and guests of my dogs in this group, who may be asked on a request. */
+export async function getInviteeCandidates(groupId: string): Promise<InviteeCandidateRow[]> {
+  const supabase = await createClient();
+  return must<InviteeCandidateRow[]>(await supabase.rpc("request_invitee_candidates", { p_group_id: groupId }));
+}
+
+/** Requests I am asked on as a person of a dog's circle (those ahead, or one by id). */
+export async function getMyInvitedRequests(requestId?: string): Promise<InvitedRequestRow[]> {
+  const supabase = await createClient();
+  return must<InvitedRequestRow[]>(await supabase.rpc("my_invited_requests", requestId ? { p_request_id: requestId } : {}));
 }
 
 /** Active requests of the group that are not over yet (most imminent first). */

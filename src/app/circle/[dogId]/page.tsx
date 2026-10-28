@@ -12,6 +12,7 @@ import { PassportHero } from "@/components/dogs/passport-hero";
 import { PassportSection } from "@/components/dogs/passport-section";
 import { EmergencyView, HabitsView, HealthView, IdentityView } from "@/components/dogs/passport-view";
 import { Rise, Stagger } from "@/components/ui/motion";
+import { LeaveCircleButton } from "@/components/dogs/leave-circle-button";
 
 export const metadata: Metadata = { title: "Passeport" };
 
@@ -79,6 +80,11 @@ export default async function CircleDogPage({ params }: PageProps<"/circle/[dogI
             </div>
           </Rise>
         )}
+        <Rise>
+          <div className="flex justify-center">
+            <LeaveCircleButton dogId={dog.id} dogName={dog.name} />
+          </div>
+        </Rise>
       </Stagger>
     </main>
   );

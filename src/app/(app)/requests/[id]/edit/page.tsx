@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { requireAppContext } from "@/server/session";
-import { getGroupSnapshot, getRequestGroupId } from "@/server/data";
+import { getGroupSnapshot, getInviteeCandidates, getRequestGroupId } from "@/server/data";
 import { toLocalDate, toLocalTime } from "@/domain/time";
 import { uuid } from "@/lib/validation";
 import { PageTitle } from "@/components/ui/kit";
@@ -22,6 +22,7 @@ export default async function EditRequestPage({ params }: PageProps<"/requests/[
   if (!isCaretaker || r.lifecycle_status === "cancelled") redirect(`/requests/${id}`);
   const dog = snapshot.dogs.find((d) => d.id === r.dog_id);
   const hasAssignments = snapshot.assignments.some((a) => a.status !== "cancelled");
+  const candidates = await getInviteeCandidates(groupId);
 
   return (
     <div className="flex flex-col gap-6 pt-2">
@@ -31,6 +32,8 @@ export default async function EditRequestPage({ params }: PageProps<"/requests/[
         requestId={id}
         hasAssignments={hasAssignments}
         dogs={dog ? [{ id: dog.id, name: dog.name }] : []}
+        candidates={candidates}
+        initialInvitees={(snapshot.invitees ?? []).map((i) => i.user_id)}
         initial={{
           dogId: r.dog_id,
           requestType: r.request_type,

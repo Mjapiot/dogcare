@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { PawPrint } from "lucide-react";
 import { requireAppContext } from "@/server/session";
-import { getGroupDogs, signDogPhotos } from "@/server/data";
+import { getGroupDogs, getInviteeCandidates, signDogPhotos } from "@/server/data";
 import { todayLocal } from "@/domain/time";
 import { EmptyState, PageTitle, PillLink } from "@/components/ui/kit";
 import { CareRequestForm } from "@/components/domain/care-request-form";
@@ -13,7 +13,7 @@ export default async function NewRequestPage({ searchParams }: PageProps<"/reque
   const params = await searchParams;
   const { dogs, caretakers } = await getGroupDogs(group.id);
   const myDogs = dogs.filter((d) => !d.archived_at && caretakers.some((c) => c.dog_id === d.id && c.user_id === userId));
-  const photos = await signDogPhotos(myDogs);
+  const [photos, candidates] = await Promise.all([signDogPhotos(myDogs), getInviteeCandidates(group.id)]);
   const today = todayLocal();
   const date = typeof params.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(params.date) && params.date >= today ? params.date : today;
 
@@ -31,6 +31,7 @@ export default async function NewRequestPage({ searchParams }: PageProps<"/reque
         <CareRequestForm
           groupId={group.id}
           dogs={myDogs.map((d) => ({ id: d.id, name: d.name, photoUrl: photos[d.id] ?? null }))}
+          candidates={candidates}
           initial={{
             dogId: myDogs.length === 1 ? myDogs[0].id : "",
             requestType: "care",

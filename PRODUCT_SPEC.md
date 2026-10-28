@@ -64,11 +64,20 @@ toujours, pendant ses gardes, jamais) :
 
 - On invite un proche ou un invité par un **lien à usage unique** (7 jours, révocable, empreinte seule
   stockée). La personne crée son compte avec le lien e-mail habituel, sans rejoindre de groupe.
-- Une personne invitée hors des groupes voit **uniquement le passeport** (pas les groupes, demandes ni
-  planning), dans « Chiens confiés » (`/circle`) ; à la fin de ses dates, l'accès s'arrête seul.
+- Une personne invitée hors des groupes voit le passeport et **les demandes sur lesquelles on la sollicite**
+  (pas les groupes, leurs membres ni le planning), dans « Chiens confiés » (`/circle`) ; à la fin de ses dates,
+  l'accès s'arrête seul.
 - Un réglage « Entourage » ne donne rien à quelqu'un qui a quitté le groupe ; un proche garde l'accès
   jusqu'à ce qu'un responsable le retire.
-- Les invités ne répondent pas encore aux demandes de garde (lot suivant).
+- **Demander aussi à** : en créant ou modifiant une demande, un responsable choisit, personne par personne,
+  les proches et invités du cercle du chien (hors du groupe) à solliciter. Activé par défaut quand les dates de
+  l'invité couvrent toute la période ; grisé sinon. Ils sont prévenus comme les membres.
+- Une personne sollicitée répond Oui / Non (partiellement si la demande est partageable), compte parmi les
+  éligibles et peut être confirmée, dans ses dates d'invité. Elle ne voit ni les noms ni les réponses des
+  autres, seulement si la demande est déjà couverte. Elle peut signaler la demande et **quitter le cercle** du chien.
+- Retrait du cercle, départ ou dates raccourcies : ses gardes qui sortent de ses dates sont annulées, elle et les
+  responsables sont prévenus. On ne peut pas cesser de solliciter quelqu'un qui a une garde confiée sur la
+  demande (il faut d'abord l'annuler). Une demande déplacée hors de ses dates ne la sollicite plus.
 
 ## Disponibilités
 
@@ -161,7 +170,7 @@ Dimension stockée : `lifecycle_status` (active / cancelled). Dimension calculé
 | `potential_helpers` | des non-répondants se sont déclarés disponibles |
 | `awaiting_responses` | sinon |
 
-Éligibles = membres du groupe moins les responsables du chien. **L'absence de réponse n'est jamais un refus** :
+Éligibles = membres du groupe et personnes du cercle sollicitées sur la demande, moins les responsables du chien. **L'absence de réponse n'est jamais un refus** :
 on n'affiche jamais « sans solution » tant que quelqu'un n'a pas répondu.
 
 ## Couleurs (toujours avec icône + libellé)

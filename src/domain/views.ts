@@ -28,6 +28,7 @@ import type {
   DogCaretakerRow,
   DogRow,
   GroupMemberRow,
+  RequestInviteeRow,
   RequestResponseRow,
 } from "@/lib/types";
 
@@ -43,6 +44,8 @@ export type GroupSnapshot = {
   assignments: CareAssignmentRow[];
   availabilityEntries: AvailabilityEntryRow[];
   availabilityRules: AvailabilityRuleRow[];
+  /** Circle people asked on requests, outside the group. */
+  invitees?: RequestInviteeRow[];
 };
 
 export type HelperLine = {
@@ -54,6 +57,8 @@ export type HelperLine = {
   availability: PeriodAvailability | "hidden";
   /** Live (non-cancelled) assignments of this member on the request. */
   assignments: CareAssignmentRow[];
+  /** Set for circle people asked outside the group. */
+  circleRole: RequestInviteeRow["role"] | null;
 };
 
 export type RequestView = {
@@ -73,10 +78,11 @@ export type RequestView = {
   helpers: HelperLine[];
 };
 
-function nameOf(members: MemberInfo[], userId: string | null): string {
+function nameOf(members: MemberInfo[], userId: string | null, invitees: readonly RequestInviteeRow[] = []): string {
   if (!userId) return "Ancien membre";
   const m = members.find((x) => x.user_id === userId);
-  return m?.display_name?.trim() || "Un membre";
+  const i = m ? undefined : invitees.find((x) => x.user_id === userId);
+  return (m?.display_name ?? i?.display_name)?.trim() || "Un membre";
 }
 
 export function buildRequestViews(snapshot: GroupSnapshot, now: number): RequestView[] {
@@ -89,7 +95,12 @@ export function buildRequestViews(snapshot: GroupSnapshot, now: number): Request
   return requests.map((request) => {
     const period = toInterval(request.starts_at, request.ends_at);
     const dogCaretakers = caretakers.filter((c) => c.dog_id === request.dog_id).map((c) => c.user_id);
-    const eligible = members.map((m) => m.user_id).filter((id) => !dogCaretakers.includes(id));
+    // members of the group, plus the circle people asked on this request
+    const invitees = (snapshot.invitees ?? []).filter((i) => i.request_id === request.id);
+    const memberIds = members.map((m) => m.user_id);
+    const eligible = [...memberIds, ...invitees.map((i) => i.user_id).filter((id) => !memberIds.includes(id))].filter(
+      (id) => !dogCaretakers.includes(id),
+    );
     const reqResponses = responses.filter((r) => r.request_id === request.id);
     const liveAssignments = assignments.filter((a) => a.request_id === request.id && a.status !== "cancelled");
     const confirmed = liveAssignments.filter((a) => a.status === "confirmed").map((a) => toInterval(a.starts_at, a.ends_at));
@@ -130,12 +141,13 @@ export function buildRequestViews(snapshot: GroupSnapshot, now: number): Request
       const r = reqResponses.find((x) => x.user_id === userId) ?? null;
       return {
         userId,
-        name: nameOf(members, userId),
+        name: nameOf(members, userId, invitees),
         response: r?.response_status ?? null,
         proposed: r?.proposed_starts_at && r.proposed_ends_at ? toInterval(r.proposed_starts_at, r.proposed_ends_at) : null,
         note: r?.note ?? null,
         availability: availability.get(userId) ?? "hidden",
         assignments: liveAssignments.filter((a) => a.assigned_user_id === userId),
+        circleRole: memberIds.includes(userId) ? null : (invitees.find((i) => i.user_id === userId)?.role ?? null),
       };
     });
     helpers.sort((a, b) => helperRank(a) - helperRank(b) || a.name.localeCompare(b.name, "fr"));
@@ -153,7 +165,7 @@ export function buildRequestViews(snapshot: GroupSnapshot, now: number): Request
       status,
       label: statusLabel(status.status, request.necessity),
       assignments: liveAssignments
-        .map((a) => ({ ...a, name: nameOf(members, a.assigned_user_id) }))
+        .map((a) => ({ ...a, name: nameOf(members, a.assigned_user_id, invitees) }))
         .sort((a, b) => a.starts_at.localeCompare(b.starts_at)),
       helpers,
     };

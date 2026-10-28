@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CheckCheck, Inbox, PawPrint, Plus } from "lucide-react";
+import { CheckCheck, ChevronRight, HeartHandshake, Inbox, PawPrint, Plus } from "lucide-react";
 import { requireAppContext } from "@/server/session";
-import { getUpcomingSnapshot } from "@/server/data";
+import { getMyInvitedRequests, getUpcomingSnapshot } from "@/server/data";
+import { buildInvitedView } from "@/domain/invited";
 import { buildRequestViews, needsMyAnswer, type RequestView } from "@/domain/views";
 import { cn } from "@/lib/utils";
 import { formatPeriod } from "@/lib/format";
@@ -28,7 +29,9 @@ export default async function RequestsPage({ searchParams }: PageProps<"/request
   const params = await searchParams;
   const tab: TabKey = TABS.some((t) => t.key === params.tab) ? (params.tab as TabKey) : "todo";
 
-  const snapshot = await getUpcomingSnapshot(group.id, userId);
+  const [snapshot, invited] = await Promise.all([getUpcomingSnapshot(group.id, userId), getMyInvitedRequests()]);
+  // requests of dogs whose circle I am in, outside my groups
+  const circleToAnswer = invited.map((r) => buildInvitedView(r, requestNow())).filter((v) => v.needsMyAnswer).length;
   const views = buildRequestViews(snapshot, requestNow())
     .filter((v) => v.request.lifecycle_status === "active")
     .sort((a, b) => a.period.start - b.period.start);
@@ -45,6 +48,18 @@ export default async function RequestsPage({ searchParams }: PageProps<"/request
   return (
     <div className="flex flex-col gap-5 pt-2">
       <PageTitle title="Demandes" subtitle="Répondez en un geste. Un « oui » est une proposition, pas un engagement." />
+
+      {invited.length > 0 && (
+        <Link href="/circle" className="flex min-h-14 items-center gap-3 rounded-2xl bg-surface px-4 py-3">
+          <HeartHandshake className="size-5 shrink-0 text-sage" aria-hidden />
+          <span className="flex-1 text-[15px] text-ink">
+            {circleToAnswer > 0
+              ? `${circleToAnswer} demande${circleToAnswer > 1 ? "s" : ""} de chiens qui vous sont confiés attend${circleToAnswer > 1 ? "ent" : ""} votre réponse`
+              : "Demandes des chiens qui vous sont confiés"}
+          </span>
+          <ChevronRight className="size-5 text-ink-3" aria-hidden />
+        </Link>
+      )}
 
       <nav aria-label="Catégories" className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4">
         {TABS.map((t) => (
@@ -110,7 +125,7 @@ export default async function RequestsPage({ searchParams }: PageProps<"/request
                 {v.request.description && <span className="line-clamp-2 text-[14px] text-ink-2">« {v.request.description} »</span>}
               </Link>
               {tab === "guards" ? (
-                <AssignmentActions view={v} />
+                <AssignmentActions assignments={v.myAssignments} />
               ) : (
                 <ResponseButtons
                   requestId={v.request.id}

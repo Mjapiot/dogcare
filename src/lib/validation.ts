@@ -132,6 +132,8 @@ export const careRequestSchema = z
     endTime: localTime,
     description: z.string().trim().max(1000, "1000 caractères maximum.").optional().default(""),
     splittable: z.boolean().default(true),
+    /** Circle people asked too ("Demander aussi à"); undefined leaves them unchanged. */
+    inviteeIds: z.array(uuid).max(20, "20 personnes au plus.").optional(),
   })
   .refine((v) => v.requestType !== "alone_info" || v.necessity === "info", {
     message: "« Chien seul » est une simple information.",

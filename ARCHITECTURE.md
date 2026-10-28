@@ -40,6 +40,15 @@ règles d'affichage et fenêtres d'invité `domain/circle.ts`. Une personne invi
 `requireAppContext` la redirige vers `/circle` (« Chiens confiés »), `/circle/[dogId]` affiche le passeport en
 lecture seule, `/circle/join/[token]` accepte l'invitation (l'onboarding saute alors les étapes de groupe).
 
+Personnes du cercle sur les demandes : le formulaire de demande propose « Demander aussi à »
+(`request_invitee_candidates`, règle de dates `circleCovers` dans `domain/circle.ts`, enregistrement par
+`set_request_invitees` dans les actions de `server/actions/requests.ts`). Côté groupe, `getGroupSnapshot` charge les
+invités (`request_invitees_of`) et `domain/views.ts` les compte comme éligibles (badge Proche / Invité dans les
+réponses). Côté invité, `/circle` liste ses demandes et `/circle/requests/[id]` en montre une
+(`my_invited_requests`, vue pure `domain/invited.ts`) : sa réponse, ses gardes, la couverture sans noms. Une
+demande ouverte depuis `/requests/[id]` par quelqu'un hors de son groupe redirige vers `/circle/requests/[id]` ; une
+personne sans groupe arrive sur `/circle` (y compris depuis une notification).
+
 ## Notifications push
 
 1. Une action (demande, réponse, confirmation…) crée des notifications en base (triggers/RPC).

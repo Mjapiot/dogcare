@@ -93,6 +93,52 @@ export type CircleInvitationRow = {
   created_at: string;
 };
 
+/** A circle person asked on a request (see public.request_invitees_of). */
+export type RequestInviteeRow = { request_id: string; user_id: string; display_name: string; role: "close" | "guest" };
+
+/** A circle person a caretaker may ask on a request of a group (see public.request_invitee_candidates). */
+export type InviteeCandidateRow = {
+  dog_id: string;
+  user_id: string;
+  display_name: string;
+  role: "close" | "guest";
+  starts_at: string | null;
+  ends_at: string | null;
+};
+
+/** A request seen by an invitee (see public.my_invited_requests). */
+export type InvitedRequestRow = {
+  id: string;
+  group_id: string;
+  dog_id: string;
+  dog_name: string;
+  dog_photo_path: string | null;
+  owner_names: string[];
+  request_type: RequestType;
+  necessity: NecessityLevel;
+  starts_at: string;
+  ends_at: string;
+  description: string | null;
+  splittable: boolean;
+  lifecycle_status: LifecycleStatus;
+  cancellation_reason: string | null;
+  my_response: {
+    response_status: ResponseStatus;
+    proposed_starts_at: string | null;
+    proposed_ends_at: string | null;
+    note: string | null;
+  } | null;
+  my_assignments: Array<{
+    id: string;
+    starts_at: string;
+    ends_at: string;
+    status: AssignmentStatus;
+    previous_starts_at: string | null;
+    previous_ends_at: string | null;
+  }>;
+  confirmed_slots: Array<{ starts_at: string; ends_at: string }>;
+};
+
 export type DogShareLinkRow = {
   id: string;
   include_health: boolean;

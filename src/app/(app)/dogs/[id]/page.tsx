@@ -9,6 +9,7 @@ import {
   getDogCircle,
   getDogPassportPrivate,
   getDogShareLinks,
+  getMyCircleDogs,
   getPendingCircleInvitations,
   signDogPhotos,
 } from "@/server/data";
@@ -25,6 +26,7 @@ import { EmergencyView, HabitsView, HealthView, IdentityView } from "@/component
 import { EmergencyEditor, HabitsEditor, HealthEditor, IdentityEditor } from "@/components/dogs/passport-editors";
 import { PassportShare } from "@/components/dogs/passport-share";
 import { CircleCard } from "@/components/dogs/circle-card";
+import { LeaveCircleButton } from "@/components/dogs/leave-circle-button";
 import { Rise, Stagger } from "@/components/ui/motion";
 
 export const metadata: Metadata = { title: "Passeport" };
@@ -39,7 +41,7 @@ export default async function DogPage({ params }: PageProps<"/dogs/[id]">) {
   if (!data) notFound();
   const { dog, caretakers, groupIds } = data;
   const isCaretaker = caretakers.some((c) => c.user_id === userId);
-  const [photos, myGroups, priv, links, circle, invitations, h] = await Promise.all([
+  const [photos, myGroups, priv, links, circle, invitations, h, circleDogs] = await Promise.all([
     signDogPhotos([dog]),
     getMyGroups(),
     getDogPassportPrivate(dog.id),
@@ -47,6 +49,7 @@ export default async function DogPage({ params }: PageProps<"/dogs/[id]">) {
     getDogCircle(dog.id),
     isCaretaker ? getPendingCircleInvitations(dog.id) : Promise.resolve([]),
     headers(),
+    isCaretaker ? Promise.resolve([]) : getMyCircleDogs(),
   ]);
   const origin = `${h.get("x-forwarded-proto") ?? "https"}://${h.get("x-forwarded-host") ?? h.get("host")}`;
   const visibleGroups = myGroups.filter((g) => groupIds.includes(g.id));
@@ -220,6 +223,7 @@ export default async function DogPage({ params }: PageProps<"/dogs/[id]">) {
       {!isCaretaker && visibleGroups[0] && (
         <ReportButton groupId={visibleGroups[0].id} targetType="dog" targetId={dog.id} label="Signaler cette fiche" />
       )}
+      {circleDogs.some((d) => d.dog_id === dog.id) && <LeaveCircleButton dogId={dog.id} dogName={dog.name} />}
     </Stagger>
   );
 }

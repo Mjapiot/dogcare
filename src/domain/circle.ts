@@ -57,3 +57,18 @@ export function guestState(window: { starts_at: string | null; ends_at: string |
   if (window.starts_at && new Date(window.starts_at).getTime() > t) return "upcoming";
   return "active";
 }
+
+/**
+ * Whether a close person or guest can be asked over a period: a close person
+ * always, a guest only if their dates cover it entirely (same rule as
+ * private.circle_covers in the database).
+ */
+export function circleCovers(
+  person: { role: "close" | "guest"; starts_at: string | null; ends_at: string | null },
+  period: { start: number; end: number },
+): boolean {
+  if (person.role === "close") return true;
+  if (!person.ends_at) return false;
+  const startsOk = !person.starts_at || new Date(person.starts_at).getTime() <= period.start;
+  return startsOk && new Date(person.ends_at).getTime() >= period.end;
+}

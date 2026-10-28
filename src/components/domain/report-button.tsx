@@ -12,11 +12,13 @@ export function ReportButton({
   targetType,
   targetId,
   label,
+  description = "Le signalement est transmis aux administrateurs du groupe et à l'équipe Dogcare, sans votre nom. Pour ne plus voir les demandes d'un membre, vous pouvez aussi le bloquer depuis la page du groupe.",
 }: {
   groupId: string;
   targetType: "request" | "dog" | "member";
   targetId: string;
   label: string;
+  description?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -34,7 +36,7 @@ export function ReportButton({
         open={open}
         onOpenChange={setOpen}
         title={label}
-        description="Le signalement est transmis aux administrateurs du groupe et à l'équipe Dogcare, sans votre nom. Pour ne plus voir les demandes d'un membre, vous pouvez aussi le bloquer depuis la page du groupe."
+        description={description}
         withReason
         reasonLabel="Que se passe-t-il ? (facultatif)"
         confirmLabel="Envoyer le signalement"

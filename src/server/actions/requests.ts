@@ -23,9 +23,17 @@ function validatePeriod(start: number, end: number): string | null {
   return null;
 }
 
+/** Sets the circle people asked on a request; returns an error message or null. */
+async function saveInvitees(requestId: string, inviteeIds: string[] | undefined): Promise<string | null> {
+  if (inviteeIds === undefined) return null;
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("set_request_invitees", { p_request_id: requestId, p_user_ids: inviteeIds });
+  return error ? toUserMessage(error) : null;
+}
+
 export async function createCareRequest(
   input: z.input<typeof careRequestSchema>,
-): Promise<ActionResult<{ requestId: string }>> {
+): Promise<ActionResult<{ requestId: string; inviteError: string | null }>> {
   const parsed = careRequestSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message };
   const v = parsed.data;
@@ -54,9 +62,12 @@ export async function createCareRequest(
     if (error.code === "23503") return { ok: false, error: "Ce chien n'est pas visible dans ce groupe." };
     return { ok: false, error: toUserMessage(error) };
   }
+  const requestId = (data as { id: string }).id;
+  // the request exists even if asking circle people fails: never ask to publish it twice
+  const inviteError = v.inviteeIds?.length ? await saveInvitees(requestId, v.inviteeIds) : null;
   schedulePushDispatch();
   revalidatePath("/", "layout");
-  return { ok: true, data: { requestId: (data as { id: string }).id } };
+  return { ok: true, data: { requestId, inviteError } };
 }
 
 export async function updateCareRequest(
@@ -86,8 +97,10 @@ export async function updateCareRequest(
     .select("id");
   if (error) return { ok: false, error: toUserMessage(error) };
   if (!data?.length) return { ok: false, error: "Seul un responsable du chien peut modifier cette demande." };
+  const inviteError = await saveInvitees(requestId, v.inviteeIds);
   schedulePushDispatch();
   revalidatePath("/", "layout");
+  if (inviteError) return { ok: false, error: `Demande modifiée, mais : ${inviteError}` };
   return { ok: true, data: undefined };
 }
 
