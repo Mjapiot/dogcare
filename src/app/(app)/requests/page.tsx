@@ -1,149 +1,131 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { CheckCheck, ChevronRight, HeartHandshake, Inbox, PawPrint, Plus } from "lucide-react";
+import { CheckCheck, ChevronDown, Inbox, PawPrint, Plus } from "lucide-react";
 import { requireAppContext } from "@/server/session";
-import { getMyInvitedRequests, getUpcomingSnapshot } from "@/server/data";
+import { getMyInvitedRequests, getUpcomingSnapshot, signDogPhotos } from "@/server/data";
+import { buildRequestViews } from "@/domain/views";
 import { buildInvitedView } from "@/domain/invited";
-import { buildRequestViews, needsMyAnswer, type RequestView } from "@/domain/views";
-import { cn } from "@/lib/utils";
-import { formatPeriod } from "@/lib/format";
-import { EmptyState, PageTitle, PillLink } from "@/components/ui/kit";
-import { RequestRow, RequestStatusBadge } from "@/components/domain/request-bits";
-import { ResponseButtons } from "@/components/domain/response-buttons";
-import { AssignmentActions } from "@/components/domain/assignment-actions";
+import { HORIZON_LABELS, fromGroupView, fromInvitedView, groupByHorizon, splitScreenItems } from "@/domain/requests-screen";
 import { requestNow } from "@/server/clock";
+import { EmptyState, PageTitle, PillLink } from "@/components/ui/kit";
+import { Rise, Stagger } from "@/components/ui/motion";
+import { ScreenTabs } from "@/components/requests/screen-tabs";
+import { AnimatedList } from "@/components/requests/animated-list";
+import { RequestCard } from "@/components/requests/request-card";
+import { OwnerRequestCard } from "@/components/requests/owner-request-card";
 
 export const metadata: Metadata = { title: "Demandes" };
 
-const TABS = [
-  { key: "todo", label: "À répondre" },
-  { key: "yes", label: "Mes oui" },
-  { key: "no", label: "Mes non" },
-  { key: "guards", label: "Mes gardes" },
-  { key: "mine", label: "Mes demandes" },
-] as const;
-type TabKey = (typeof TABS)[number]["key"];
+type TabKey = "todo" | "guards" | "mine";
 
 export default async function RequestsPage({ searchParams }: PageProps<"/requests">) {
   const { userId, group } = await requireAppContext();
   const params = await searchParams;
-  const tab: TabKey = TABS.some((t) => t.key === params.tab) ? (params.tab as TabKey) : "todo";
+  const tab: TabKey = params.tab === "guards" || params.tab === "mine" ? params.tab : "todo";
+  const now = requestNow();
 
+  // my groups' requests (current group) and those of the circles I am in
   const [snapshot, invited] = await Promise.all([getUpcomingSnapshot(group.id, userId), getMyInvitedRequests()]);
-  // requests of dogs whose circle I am in, outside my groups
-  const circleToAnswer = invited.map((r) => buildInvitedView(r, requestNow())).filter((v) => v.needsMyAnswer).length;
-  const views = buildRequestViews(snapshot, requestNow())
-    .filter((v) => v.request.lifecycle_status === "active")
-    .sort((a, b) => a.period.start - b.period.start);
+  const views = buildRequestViews(snapshot, now).filter((v) => v.request.lifecycle_status === "active");
+  const items = [
+    ...views.map((v) => fromGroupView(v, now)),
+    ...invited.map((r) => fromInvitedView(buildInvitedView(r, now))),
+  ];
+  const lists = splitScreenItems(items, now);
+  const mine = views.filter((v) => v.iAmCaretaker).sort((a, b) => a.period.start - b.period.start);
+  const photos = await signDogPhotos([
+    ...snapshot.dogs,
+    ...invited.map((r) => ({ id: r.dog_id, photo_path: r.dog_photo_path })),
+  ]);
 
-  const lists: Record<TabKey, RequestView[]> = {
-    todo: views.filter(needsMyAnswer),
-    yes: views.filter((v) => v.myResponse?.response_status === "yes" && v.myAssignments.length === 0),
-    no: views.filter((v) => v.myResponse?.response_status === "no"),
-    guards: views.filter((v) => v.myAssignments.length > 0),
-    mine: views.filter((v) => v.iAmCaretaker),
-  };
-  const list = lists[tab];
+  const card = (item: (typeof items)[number], mode: "answer" | "guard") => ({
+    key: item.key,
+    node: <RequestCard item={item} photoUrl={photos[item.dogId] ?? null} mode={mode} now={now} />,
+  });
 
   return (
-    <div className="flex flex-col gap-5 pt-2">
-      <PageTitle title="Demandes" subtitle="Répondez en un geste. Un « oui » est une proposition, pas un engagement." />
-
-      {invited.length > 0 && (
-        <Link href="/circle" className="flex min-h-14 items-center gap-3 rounded-2xl bg-surface px-4 py-3">
-          <HeartHandshake className="size-5 shrink-0 text-sage" aria-hidden />
-          <span className="flex-1 text-[15px] text-ink">
-            {circleToAnswer > 0
-              ? `${circleToAnswer} demande${circleToAnswer > 1 ? "s" : ""} de chiens qui vous sont confiés attend${circleToAnswer > 1 ? "ent" : ""} votre réponse`
-              : "Demandes des chiens qui vous sont confiés"}
-          </span>
-          <ChevronRight className="size-5 text-ink-3" aria-hidden />
-        </Link>
-      )}
-
-      <nav aria-label="Catégories" className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4">
-        {TABS.map((t) => (
-          <Link
-            key={t.key}
-            href={t.key === "todo" ? "/requests" : `/requests?tab=${t.key}`}
-            aria-current={tab === t.key ? "page" : undefined}
-            className={cn(
-              "inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full px-4 text-[14px] font-medium",
-              tab === t.key ? "bg-ink text-surface" : "bg-surface text-ink-2",
-            )}
-          >
-            {t.label}
-            {lists[t.key].length > 0 && (
-              <span className={cn("rounded-full px-1.5 text-[12px] tabular", tab === t.key ? "bg-white/20" : "bg-surface-2")}>
-                {lists[t.key].length}
-              </span>
-            )}
-          </Link>
-        ))}
-      </nav>
-
-      {list.length === 0 ? (
-        <EmptyState
-          icon={tab === "todo" ? CheckCheck : tab === "guards" ? PawPrint : Inbox}
-          title={
-            tab === "todo"
-              ? "Vous êtes à jour"
-              : tab === "guards"
-                ? "Aucune garde ne vous est confiée"
-                : tab === "mine"
-                  ? "Aucune demande en cours pour vos chiens"
-                  : "Rien ici pour le moment"
-          }
-          description={tab === "todo" ? "Aucune demande n'attend votre réponse." : undefined}
+    <Stagger className="flex flex-col gap-5 pt-2">
+      <Rise>
+        <PageTitle
+          title="Demandes"
+          subtitle="Un « oui » est une proposition : la garde n'est confiée qu'une fois confirmée."
           action={
-            tab === "mine" ? (
-              <PillLink href="/requests/new">
-                <Plus className="size-4" aria-hidden /> Ajouter un besoin
-              </PillLink>
-            ) : undefined
+            <PillLink href="/requests/new" size="sm" variant="soft">
+              <Plus className="size-4" aria-hidden /> Besoin
+            </PillLink>
           }
         />
-      ) : tab === "mine" ? (
-        <ul className="flex flex-col gap-2">
-          {list.map((v) => (
-            <li key={v.request.id}>
-              <RequestRow view={v} href={`/requests/${v.request.id}`} />
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <ul className="flex flex-col gap-3">
-          {list.map((v) => (
-            <li key={v.request.id} className="flex flex-col gap-3 rounded-[24px] bg-surface p-4">
-              <Link href={`/requests/${v.request.id}`} className="flex flex-col gap-1">
-                <span className="flex items-center justify-between gap-2">
-                  <span className="text-[19px] font-semibold tracking-tight text-ink">{v.dog?.name}</span>
-                  <RequestStatusBadge view={v} />
-                </span>
-                <span className="text-[14px] text-ink-2">{formatPeriod(v.period.start, v.period.end)}</span>
-                <span className="text-[13px] text-ink-3">Pour {v.ownerNames.join(", ") || "un membre"}</span>
-                {v.request.description && <span className="line-clamp-2 text-[14px] text-ink-2">« {v.request.description} »</span>}
-              </Link>
-              {tab === "guards" ? (
-                <AssignmentActions assignments={v.myAssignments} />
-              ) : (
-                <ResponseButtons
-                  requestId={v.request.id}
-                  current={v.myResponse?.response_status ?? null}
-                  period={v.period}
-                  splittable={v.request.splittable}
-                  proposed={
-                    v.myResponse?.proposed_starts_at && v.myResponse.proposed_ends_at
-                      ? { start: Date.parse(v.myResponse.proposed_starts_at), end: Date.parse(v.myResponse.proposed_ends_at) }
-                      : null
-                  }
-                  size="sm"
-                />
-              )}
-            </li>
-          ))}
-        </ul>
+      </Rise>
+
+      <Rise>
+        <ScreenTabs
+          active={tab}
+          tabs={[
+            { key: "todo", label: "À répondre", href: "/requests", count: lists.todo.length },
+            { key: "guards", label: "Mes gardes", href: "/requests?tab=guards", count: lists.guards.length },
+            // counters only where something is expected from me (and it fits a phone)
+            { key: "mine", label: "Mes demandes", href: "/requests?tab=mine", count: 0 },
+          ]}
+        />
+      </Rise>
+
+      {tab === "todo" && (
+        <Rise className="flex flex-col gap-5">
+          {lists.todo.length === 0 ? (
+            <EmptyState icon={CheckCheck} title="Vous êtes à jour" description="Aucune demande n'attend votre réponse." />
+          ) : (
+            groupByHorizon(lists.todo, now).map((g) => (
+              <section key={g.horizon} className="flex flex-col gap-2.5" aria-label={HORIZON_LABELS[g.horizon]}>
+                <h2 className="px-1 text-[13px] font-semibold tracking-wide text-ink-3 uppercase">{HORIZON_LABELS[g.horizon]}</h2>
+                <AnimatedList className="flex flex-col gap-3" items={g.items.map((i) => card(i, "answer"))} />
+              </section>
+            ))
+          )}
+
+          {lists.answered.length > 0 && (
+            <details className="group rounded-[24px] bg-surface/60 ring-1 ring-white/70">
+              <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-4 text-[15px] font-semibold text-ink [&::-webkit-details-marker]:hidden">
+                Déjà répondu ({lists.answered.length})
+                <ChevronDown className="size-5 text-ink-3 transition-transform group-open:rotate-180" aria-hidden />
+              </summary>
+              <div className="px-3 pb-3">
+                <p className="px-1 pb-3 text-[13px] text-ink-3">Vous pouvez encore changer d&apos;avis tant que personne n&apos;est confirmé.</p>
+                <AnimatedList className="flex flex-col gap-3" items={lists.answered.map((i) => card(i, "answer"))} />
+              </div>
+            </details>
+          )}
+        </Rise>
       )}
-    </div>
+
+      {tab === "guards" && (
+        <Rise>
+          {lists.guards.length === 0 ? (
+            <EmptyState icon={PawPrint} title="Aucune garde ne vous est confiée" description="Quand un propriétaire confirmera votre aide, elle apparaîtra ici." />
+          ) : (
+            <AnimatedList className="flex flex-col gap-3" items={lists.guards.map((i) => card(i, "guard"))} />
+          )}
+        </Rise>
+      )}
+
+      {tab === "mine" && (
+        <Rise>
+          {mine.length === 0 ? (
+            <EmptyState
+              icon={Inbox}
+              title="Aucune demande en cours pour vos chiens"
+              action={
+                <PillLink href="/requests/new">
+                  <Plus className="size-4" aria-hidden /> Ajouter un besoin
+                </PillLink>
+              }
+            />
+          ) : (
+            <AnimatedList
+              className="flex flex-col gap-3"
+              items={mine.map((v) => ({ key: v.request.id, node: <OwnerRequestCard view={v} photoUrl={v.dog ? (photos[v.dog.id] ?? null) : null} /> }))}
+            />
+          )}
+        </Rise>
+      )}
+    </Stagger>
   );
 }

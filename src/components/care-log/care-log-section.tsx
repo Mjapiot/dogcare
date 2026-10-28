@@ -47,7 +47,7 @@ export async function CareLogSection({
   ].filter((r): r is { label: string; text: string } => Boolean(r.text?.trim()));
 
   return (
-    <section className="flex flex-col gap-3" aria-labelledby="care-log-title">
+    <section id="carnet" className="flex scroll-mt-20 flex-col gap-3" aria-labelledby="care-log-title">
       <h2 id="care-log-title" className="flex items-center gap-2 px-1 text-[17px] font-semibold text-ink">
         <NotebookPen className="size-5" aria-hidden /> Carnet de garde
       </h2>

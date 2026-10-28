@@ -1,6 +1,7 @@
 import { getMyGroups, requireAppContext } from "@/server/session";
-import { getUnreadCount, getUpcomingSnapshot } from "@/server/data";
+import { getMyInvitedRequests, getUnreadCount, getUpcomingSnapshot } from "@/server/data";
 import { buildRequestViews, needsMyAnswer } from "@/domain/views";
+import { buildInvitedView } from "@/domain/invited";
 import { requestNow } from "@/server/clock";
 import { AppHeader } from "@/components/app/app-header";
 import { BottomNavigation } from "@/components/app/bottom-navigation";
@@ -8,13 +9,17 @@ import { LiveUpdates } from "@/components/app/live-updates";
 
 export default async function AppLayout({ children }: LayoutProps<"/">) {
   const { userId, group } = await requireAppContext();
-  const [groups, unread, upcoming] = await Promise.all([
+  const [groups, unread, upcoming, invited] = await Promise.all([
     getMyGroups(),
     getUnreadCount(),
     getUpcomingSnapshot(group.id, userId),
+    getMyInvitedRequests(),
   ]);
-  // same rule as the dashboard and the "À répondre" list
-  const toAnswer = buildRequestViews(upcoming, requestNow()).filter(needsMyAnswer).length;
+  // same rule as the "À répondre" list: my group's requests and those of the circles I am in
+  const now = requestNow();
+  const toAnswer =
+    buildRequestViews(upcoming, now).filter(needsMyAnswer).length +
+    invited.filter((r) => buildInvitedView(r, now).needsMyAnswer).length;
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-xl flex-col">

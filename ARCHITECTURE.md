@@ -49,6 +49,14 @@ réponses). Côté invité, `/circle` liste ses demandes et `/circle/requests/[i
 demande ouverte depuis `/requests/[id]` par quelqu'un hors de son groupe redirige vers `/circle/requests/[id]` ; une
 personne sans groupe arrive sur `/circle` (y compris depuis une notification).
 
+## Écran « Demandes »
+
+`app/(app)/requests/page.tsx` réunit les demandes du groupe courant (`buildRequestViews`) et celles des cercles
+(`my_invited_requests`, `buildInvitedView`) en éléments communs (`domain/requests-screen.ts` : `fromGroupView`,
+`fromInvitedView`, `splitScreenItems`, `groupByHorizon`). Composants : `components/requests/` (onglets-liens à
+pouce glissant, cartes, liste animée avec `motion`). La pastille de la barre d'onglets suit la même règle
+(`app/(app)/layout.tsx`).
+
 ## Carnet de garde
 
 `components/care-log/care-log-section.tsx` (serveur) charge le carnet d'une demande (`getCareLog`, photos signées

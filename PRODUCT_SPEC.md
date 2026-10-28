@@ -132,6 +132,14 @@ Nécessité : information / souhaitable / indispensable (« Chien seul » est to
 Champs : chien, groupe (groupe courant), type, début, fin, nécessité, précisions, partage possible entre
 plusieurs personnes. Durée maximale : 31 jours.
 
+### Écran « Demandes »
+
+Trois onglets : **À répondre** (regroupées par échéance : aujourd'hui, demain, cette semaine, plus tard ; une
+section repliable « Déjà répondu » permet de changer d'avis), **Mes gardes** (reconfirmations d'abord, puis la
+garde en cours avec un accès au carnet, puis les suivantes) et **Mes demandes** (statut, barre de couverture,
+« 2 oui · 1 non · 3 sans réponse », « Relancer » s'il manque des réponses). Les demandes des cercles où l'on est
+sollicité y figurent avec un badge « Cercle d'Aston » et comptent dans la pastille de l'onglet.
+
 ### Modification et annulation (jamais silencieuses)
 
 - Annulation de la demande : les gardes confirmées sont annulées, gardiens et volontaires prévenus.

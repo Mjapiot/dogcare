@@ -41,7 +41,7 @@ Chaque lot fait l'objet d'une spec validée avant d'être codé.
 2. [x] Invités et proches hors groupe : répondre aux demandes et être confirmés sur les gardes du chien (en production le 2026-10-28, testé de bout en bout)
 3. [x] Carnet de garde (repas, promenade, médicament, dépôt/récupération, photo ou commentaire) tenu par le gardien confirmé (en production le 2026-10-28, testé de bout en bout)
 4. [ ] Notifications du cercle (accès donné, fin d'accès, invitation acceptée) et rappel la veille d'une garde — notifications du cercle en production le 2026-10-28 ; rappels déployés, actifs dès que `CRON_SECRET` sera ajouté sur Vercel
-5. [ ] Refonte de l'écran « Demandes »
+5. [ ] Refonte de l'écran « Demandes » (implémentée et testée en local, à déployer)
 
 Hors code, côté porteur du projet : étiquettes de confidentialité App Store (contacts d'urgence, vétérinaire),
 tests manuels iPhone restants, SMTP personnalisé.

@@ -70,6 +70,10 @@ Marges latérales 16 px, espacement vertical 20–28 px entre sections.
 | NotificationCenter | `app/(app)/notifications/page.tsx` |
 | EmptyState, LoadingSkeleton, ErrorState, PillButton, Field… | `components/ui/kit.tsx`, `app/(app)/error.tsx` |
 
+Écran « Demandes » : cartes `rounded-[28px]` avec `shadow-soft` et anneau blanc, photo du chien, statut en pastille
+(icône + libellé), onglets-liens à pouce glissant (`ScreenTabs`), listes animées (`AnimatedList` : entrée, sortie
+et resserrement). Compteurs seulement sur les onglets qui attendent une action.
+
 ## Principes UX
 
 - Zones tactiles ≥ 44 px ; actions principales en bas ou dans l'en-tête (« + » toujours visible).
