@@ -16,6 +16,7 @@ export function GET() {
             components: [
               { "/": "/invite/*", comment: "Group invitations" },
               { "/": "/requests/*", comment: "Care requests" },
+              { "/": "/circle/join/*", comment: "Circle of trust invitations" },
               { "/": "/auth/confirm", comment: "Login links" },
             ],
           },

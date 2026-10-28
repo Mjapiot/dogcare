@@ -53,7 +53,11 @@ Safari iOS puis PWA installée (Partager → « Sur l'écran d'accueil »).
 2. `https://dogcare-gamma.vercel.app/manifest.webmanifest` et `/pwa-icon/192` répondent.
 3. Connexion par code en production, création d'un groupe, invitation d'un second compte.
 4. Parcours E2E contre la production (`E2E_BASE_URL`).
-5. Supabase → Advisors (Security, Performance) : aucune alerte critique.
+5. Supabase → Advisors (Security, Performance) : aucune alerte critique. Attendus et voulus : 5 tables avec RLS sans politique
+   (`audit_events`, `group_join_codes`, `join_code_attempts`, `calendar_feeds`, `content_reports`, accessibles seulement
+   par fonctions) et 2 fonctions `SECURITY DEFINER` appelables sans compte (`calendar_feed_events`, `shared_passport`, protégées
+   par jeton). Contrôles équivalents rejoués sur les migrations le 2026-10-28 : RLS partout, `search_path` fixé, politiques
+   `(select auth.uid())`, aucune politique permissive en double, clés étrangères indexées.
 
 ## 4. App iPhone native
 
@@ -63,7 +67,7 @@ Safari iOS puis PWA installée (Partager → « Sur l'écran d'accueil »).
 | 2 | Lancement dans le simulateur | écran de connexion de production, encoche et barre d'état respectées | ✅ |
 | 3 | Installation sur iPhone (TestFlight) | l'app s'installe et s'ouvre | ✅ |
 | 4 | Profil → Activer les notifications → Tester | notification native reçue (nécessite les variables APNS_*) | ✅ 2026-10-21 (TestFlight) |
-| 5 | Lien d'invitation ouvert depuis Mail/Messages | s'ouvre dans l'app, pas dans Safari | ⏳ |
+| 5 | Lien d'invitation (groupe `/invite/…` ou cercle `/circle/join/…`) ouvert depuis Mail/Messages | s'ouvre dans l'app, pas dans Safari | ⏳ |
 | 6 | Mode avion au lancement | page « Vous êtes hors ligne » embarquée | ⏳ |
 | 7 | Connexion par lien e-mail dans l'app (app ouverte ou fermée) | Mail → « Ouvrir dans Dogcare » → connecté, sans rechargement en boucle | ✅ 2026-10-23 (TestFlight) |
 | 7 | Partager une invitation / relancer | feuille de partage iOS native | ⏳ |

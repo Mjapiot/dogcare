@@ -35,9 +35,9 @@
 Objectif : j'invite ma pet-sitter, elle accepte la garde, reçoit un rappel, remplit le carnet, je vois les photos.
 Chaque lot fait l'objet d'une spec validée avant d'être codé.
 
-1. [ ] Correctifs rapides
-   - [ ] `/circle/join/*` dans les liens universels (aujourd'hui l'invitation au cercle s'ouvre dans Safari)
-   - [ ] Advisors Supabase (sécurité, performance) après les migrations passeport et cercle
+1. [x] Correctifs rapides
+   - [x] `/circle/join/*` dans les liens universels (aujourd'hui l'invitation au cercle s'ouvre dans Safari)
+   - [x] Advisors Supabase (sécurité, performance) après les migrations passeport et cercle
 2. [ ] Invités et proches hors groupe : répondre aux demandes et être confirmés sur les gardes du chien
 3. [ ] Carnet de garde (repas, promenade, médicament, dépôt/récupération, photo ou commentaire) tenu par le gardien confirmé
 4. [ ] Notifications du cercle (accès donné, fin d'accès, invitation acceptée) et rappel la veille d'une garde
