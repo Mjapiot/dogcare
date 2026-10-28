@@ -83,6 +83,7 @@ test("care log: helper writes during the garde, owner reads, others do not", asy
     await expect(julie.getByText(/Aston chez Emma/)).toBeVisible();
     await julie.goto("/notifications");
     await expect(julie.getByText("Emma a pris en charge Aston")).toBeVisible();
+    await expect(julie.getByText("Nouvelle photo d'Aston")).toBeVisible();
 
     // Chloé, in the group, sees the request but not its log
     const chloe = await signIn(contexts[2], admin, other.email, `/requests/${requestId}`);
