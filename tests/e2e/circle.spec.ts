@@ -7,6 +7,8 @@ import { expect, test } from "@playwright/test";
 import { adminClient, cleanup, createTestUser, signIn } from "./helpers";
 
 test("circle: invite a guest, guest sees the passport only, removal", async ({ browser }) => {
+  // two sign-ups against a deployed app: slower than the default budget
+  test.setTimeout(180_000);
   const admin = adminClient();
   const owner = await createTestUser(admin, "Julie");
   const sitter = await createTestUser(admin, "Lea");
@@ -52,11 +54,10 @@ test("circle: invite a guest, guest sees the passport only, removal", async ({ b
     expect(url).toMatch(/\/circle\/join\/[A-Za-z0-9_-]{43}$/);
 
     // the pet-sitter signs up through the link
+    // (test users already have a first name, so no name step; and never the group steps)
     const sitterPage = await signIn(sitterCtx, admin, sitter.email, new URL(url!).pathname);
-    await sitterPage.waitForURL(/onboarding/);
-    await expect(sitterPage.getByText(/Étape 1/)).toHaveCount(0);
-    await sitterPage.getByLabel("Prénom ou surnom").fill("Léa");
-    await sitterPage.getByRole("button", { name: "Continuer" }).click();
+    await sitterPage.waitForURL(/\/circle\/join\//);
+    await expect(sitterPage.getByRole("heading", { name: "d'Aston" })).toBeVisible();
     await sitterPage.getByRole("button", { name: "Accepter l'invitation" }).click();
     await sitterPage.waitForURL(new RegExp(`/circle/${dogId}$`));
     await expect(sitterPage.getByRole("heading", { name: "Aston" })).toBeVisible();
@@ -69,7 +70,7 @@ test("circle: invite a guest, guest sees the passport only, removal", async ({ b
 
     // the owner sees her and removes her
     await page.reload();
-    await page.getByRole("button", { name: /Léa, Invité/ }).click();
+    await page.getByRole("button", { name: /Lea, Invité/ }).click();
     await page.getByRole("button", { name: "Retirer du cercle" }).click();
     await page.getByRole("button", { name: "Retirer", exact: true }).click();
     await expect(page.getByText("Retiré du cercle")).toBeVisible();
