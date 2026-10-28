@@ -6,7 +6,7 @@
  * Chloé offers help → Julie confirms Chloé. Plus: an outsider sees nothing.
  */
 import { expect, test } from "@playwright/test";
-import { adminClient, cleanup, createTestUser, signIn } from "./helpers";
+import { adminClient, cleanup, createTestUser, gotoStable, signIn } from "./helpers";
 
 test.describe.configure({ mode: "serial" });
 
@@ -89,7 +89,7 @@ test("full care coordination flow", async ({ browser }) => {
     await expect(emma.getByText(/Le propriétaire est prévenu/)).toBeVisible();
 
     // 7. Julie confirms Emma
-    await julie.goto(requestUrl);
+    await gotoStable(julie, requestUrl);
     await expect(julie.getByText("Volontaire à confirmer").first()).toBeVisible();
     await julie.getByRole("button", { name: "Confirmer" }).first().click();
     await julie.getByRole("button", { name: /Confirmer Emma/ }).click();
@@ -104,7 +104,7 @@ test("full care coordination flow", async ({ browser }) => {
     await expect(emma.getByText(/le propriétaire est prévenu/)).toBeVisible();
 
     // 10. Uncovered again, Julie is notified
-    await julie.goto(requestUrl);
+    await gotoStable(julie, requestUrl);
     await expect(julie.getByText("Couvert", { exact: true })).toHaveCount(0);
     await julie.goto("/notifications");
     await expect(julie.getByText("Emma ne peut plus garder Oscar")).toBeVisible();
@@ -113,7 +113,7 @@ test("full care coordination flow", async ({ browser }) => {
     const chloe = await chloeCtx.newPage();
     await chloe.goto(requestUrl);
     await chloe.getByRole("button", { name: "Oui, je peux" }).click();
-    await julie.goto(requestUrl);
+    await gotoStable(julie, requestUrl);
     await julie.getByRole("button", { name: "Confirmer" }).first().click();
     await julie.getByRole("button", { name: /Confirmer Chloé/ }).click();
     await expect(julie.getByText("Couvert").first()).toBeVisible();
@@ -122,7 +122,8 @@ test("full care coordination flow", async ({ browser }) => {
     const max = await signIn(maxCtx, admin, users.max.email, requestUrl);
     await expect(max).not.toHaveURL(requestUrl);
   } finally {
-    await Promise.all(contexts.map((c) => c.close()));
+    // after a timeout the contexts may already be closed: never skip the cleanup
+    await Promise.allSettled(contexts.map((ctx) => ctx.close()));
     await cleanup(admin, Object.values(users).map((u) => u.id), groupIds);
   }
 });

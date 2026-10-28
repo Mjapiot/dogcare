@@ -1,6 +1,20 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { BrowserContext, Page } from "@playwright/test";
 
+/**
+ * page.goto that tolerates the app's own refresh: live updates (Realtime)
+ * may navigate the page to the same URL at the same moment.
+ */
+export async function gotoStable(page: Page, url: string) {
+  try {
+    await page.goto(url);
+  } catch (error) {
+    if (!(error instanceof Error) || !/interrupted by another navigation/.test(error.message)) throw error;
+    await page.waitForLoadState("load");
+    if (!page.url().endsWith(url)) await page.goto(url);
+  }
+}
+
 export function adminClient(): SupabaseClient {
   const url = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SECRET_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY;

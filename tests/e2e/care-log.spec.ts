@@ -24,18 +24,25 @@ test("care log: helper writes during the garde, owner reads, others do not", asy
 
   try {
     // setup through the admin API: a group, a dog, a garde happening now confirmed for Emma
-    const { data: group } = await admin.from("groups").insert({ name: "E2E carnet", created_by: owner.id }).select("id").single();
+    const must = <T>(r: { data: T; error: { message: string } | null }, step: string): T => {
+      if (r.error) throw new Error(`${step}: ${r.error.message}`);
+      return r.data;
+    };
+    const group = must(await admin.from("groups").insert({ name: "E2E carnet", created_by: owner.id }).select("id").single(), "group");
     const groupId = group!.id as string;
     groupIds.push(groupId);
-    await admin.from("group_members").insert([
-      { group_id: groupId, user_id: owner.id, role: "admin" },
-      { group_id: groupId, user_id: helper.id },
-      { group_id: groupId, user_id: other.id },
-    ]);
-    const { data: dog } = await admin.from("dogs").insert({ name: "Aston", created_by: owner.id, meals: "Croquettes à 19h" }).select("id").single();
+    must(
+      await admin.from("group_members").insert([
+        { group_id: groupId, user_id: owner.id, role: "admin" },
+        { group_id: groupId, user_id: helper.id, role: "member" },
+        { group_id: groupId, user_id: other.id, role: "member" },
+      ]),
+      "members",
+    );
+    const dog = must(await admin.from("dogs").insert({ name: "Aston", created_by: owner.id, meals: "Croquettes à 19h" }).select("id").single(), "dog");
     dogId = dog!.id as string;
-    await admin.from("dog_caretakers").insert({ dog_id: dogId, user_id: owner.id, role: "owner" });
-    await admin.from("group_dogs").insert({ group_id: groupId, dog_id: dogId });
+    must(await admin.from("dog_caretakers").insert({ dog_id: dogId, user_id: owner.id, role: "owner" }), "caretaker");
+    must(await admin.from("group_dogs").insert({ group_id: groupId, dog_id: dogId }), "group dog");
     const startsAt = new Date(Date.now() - 3_600_000).toISOString();
     const endsAt = new Date(Date.now() + 3 * 3_600_000).toISOString();
     const { data: request, error: requestError } = await admin
@@ -45,7 +52,7 @@ test("care log: helper writes during the garde, owner reads, others do not", asy
       .single();
     if (requestError) throw requestError;
     const requestId = request!.id as string;
-    await admin.from("request_responses").insert({ request_id: requestId, user_id: helper.id, response_status: "yes" });
+    must(await admin.from("request_responses").insert({ request_id: requestId, user_id: helper.id, response_status: "yes" }), "response");
     const { error: assignmentError } = await admin
       .from("care_assignments")
       .insert({ request_id: requestId, assigned_user_id: helper.id, starts_at: startsAt, ends_at: endsAt, confirmed_by: owner.id });
@@ -84,7 +91,8 @@ test("care log: helper writes during the garde, owner reads, others do not", asy
     await expect(chloe.getByRole("heading", { name: "Carnet de garde" })).toHaveCount(0);
     await expect(chloe.getByText("Sieste au soleil")).toHaveCount(0);
   } finally {
-    await Promise.all(contexts.map((c) => c.close()));
+    // after a timeout the contexts may already be closed: never skip the cleanup
+    await Promise.allSettled(contexts.map((ctx) => ctx.close()));
     if (dogId) {
       const { data: photos } = await admin.from("care_log_entries").select("photo_path").eq("dog_id", dogId).not("photo_path", "is", null);
       const paths = (photos ?? []).map((p) => p.photo_path as string);

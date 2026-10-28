@@ -72,8 +72,8 @@ test("passport: fill in, share without an account, revoke", async ({ browser }) 
     await visitor.reload();
     await expect(visitor.getByText("Ce lien n'est plus valide")).toBeVisible();
   } finally {
-    await ownerCtx.close();
-    await visitorCtx.close();
+    // after a timeout the contexts may already be closed: never skip the cleanup
+    await Promise.allSettled([ownerCtx.close(), visitorCtx.close()]);
     await cleanup(admin, [owner.id], groupIds);
   }
 });

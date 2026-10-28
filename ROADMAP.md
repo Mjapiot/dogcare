@@ -39,7 +39,7 @@ Chaque lot fait l'objet d'une spec validée avant d'être codé.
    - [x] `/circle/join/*` dans les liens universels (aujourd'hui l'invitation au cercle s'ouvre dans Safari)
    - [x] Advisors Supabase (sécurité, performance) après les migrations passeport et cercle
 2. [x] Invités et proches hors groupe : répondre aux demandes et être confirmés sur les gardes du chien (en production le 2026-10-28, testé de bout en bout)
-3. [ ] Carnet de garde (repas, promenade, médicament, dépôt/récupération, photo ou commentaire) tenu par le gardien confirmé (implémenté et testé en local, à déployer)
+3. [x] Carnet de garde (repas, promenade, médicament, dépôt/récupération, photo ou commentaire) tenu par le gardien confirmé (en production le 2026-10-28, testé de bout en bout)
 4. [ ] Notifications du cercle (accès donné, fin d'accès, invitation acceptée) et rappel la veille d'une garde
 5. [ ] Refonte de l'écran « Demandes »
 
@@ -54,7 +54,7 @@ Vision : « Toute la vie de votre animal, partagée avec les bonnes personnes »
 2. [x] Cercle de confiance par chien : 5 rôles, accès santé/urgences par personne, invités datés et proches hors groupe (en production le 2026-10-28, parcours invité testé de bout en bout)
    - [x] Invités : répondre aux demandes et être confirmés sur les gardes du chien (en production le 2026-10-28)
    - [ ] Notifications liées au cercle
-3. [ ] Carnet de garde (repas, promenade, médicament, dépôt/récupération, photo ou commentaire)
+3. [x] Carnet de garde (repas, promenade, médicament, dépôt/récupération, photo ou commentaire) — en production le 2026-10-28
 4. [ ] Moteur de planning sous contraintes (nuits max, lieux, incompatibilités) avec proposition à valider
 5. [ ] Routines (désactivées par défaut)
 - Passeport sans groupe (entrée « passeport d'abord » dans l'onboarding)

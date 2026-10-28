@@ -77,8 +77,8 @@ test("circle: invite a guest, guest sees the passport only, removal", async ({ b
     await sitterPage.goto(`/circle/${dogId}`);
     await expect(sitterPage.getByRole("heading", { name: "Aston" })).toHaveCount(0);
   } finally {
-    await ownerCtx.close();
-    await sitterCtx.close();
+    // after a timeout the contexts may already be closed: never skip the cleanup
+    await Promise.allSettled([ownerCtx.close(), sitterCtx.close()]);
     await cleanup(admin, [owner.id, sitter.id], groupIds);
   }
 });
