@@ -171,7 +171,20 @@ export async function dispatchPendingPush(): Promise<{ sent: number }> {
   // light housekeeping: old notifications and audit events
   const { error: purgeError } = await admin.rpc("purge_old_records");
   if (purgeError) console.error("[dogcare] purge_old_records", purgeError.code);
+  await purgeCareLogPhotos(admin);
   return { sent };
+}
+
+/** Care log photos: 90 days after the garde, and files no entry references (the text stays). */
+async function purgeCareLogPhotos(admin: SupabaseClient) {
+  const { data, error } = await admin.rpc("care_log_photos_to_purge", { p_limit: 100 });
+  if (error) return void console.error("[dogcare] care_log_photos_to_purge", error.code);
+  const paths = ((data ?? []) as Array<{ path: string }>).map((r) => r.path);
+  if (paths.length === 0) return;
+  const { error: removeError } = await admin.storage.from("care-logs").remove(paths);
+  if (removeError) return void console.error("[dogcare] care-logs remove", removeError.message);
+  const { error: forgetError } = await admin.rpc("forget_care_log_photos", { p_paths: paths });
+  if (forgetError) console.error("[dogcare] forget_care_log_photos", forgetError.code);
 }
 
 /** Schedules delivery after the current response (does not slow the user down). */

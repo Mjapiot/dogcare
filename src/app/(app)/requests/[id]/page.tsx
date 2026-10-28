@@ -15,6 +15,7 @@ import { AssignmentActions } from "@/components/domain/assignment-actions";
 import { HelperList } from "@/components/domain/helper-list";
 import { OwnerActions } from "@/components/domain/owner-actions";
 import { ReportButton } from "@/components/domain/report-button";
+import { CareLogSection } from "@/components/care-log/care-log-section";
 import { uuid } from "@/lib/validation";
 import { requestNow } from "@/server/clock";
 
@@ -116,6 +117,16 @@ export default async function RequestDetailPage({ params }: PageProps<"/requests
           <AssignmentActions assignments={view.myAssignments} />
         </section>
       )}
+
+      <CareLogSection
+        requestId={r.id}
+        groupId={groupId}
+        me={userId}
+        dog={view.dog ? { id: view.dog.id, name: view.dog.name, meals: view.dog.meals, walks: view.dog.walks } : null}
+        myAssignments={cancelled ? [] : view.myAssignments}
+        iAmCaretaker={view.iAmCaretaker}
+        names={Object.fromEntries(view.helpers.map((h) => [h.userId, h.name]))}
+      />
 
       {!cancelled && view.iAmEligible && view.myAssignments.length === 0 && r.necessity !== "info" && !view.status.isPast && (
         <section className="flex flex-col gap-3 rounded-[24px] bg-surface p-4">

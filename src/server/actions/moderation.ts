@@ -11,7 +11,7 @@ import type { ActionResult } from "@/lib/types";
 
 const reportSchema = z.object({
   groupId: uuid,
-  targetType: z.enum(["request", "dog", "member"]),
+  targetType: z.enum(["request", "dog", "member", "care_log"]),
   targetId: uuid,
   reason: z.string().trim().max(500, "500 caractères maximum."),
 });

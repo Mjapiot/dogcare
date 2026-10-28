@@ -31,11 +31,15 @@ export default function PrivacyPage() {
             sont visibles que par les responsables du chien et la personne qui le garde ; un lien de partage
             temporaire, créé par un responsable, les montre seulement s&apos;il a choisi de les inclure. Si un
             responsable vous invite dans le cercle d&apos;un chien, il voit votre prénom et votre rôle ; vous voyez
-            uniquement le passeport de ce chien.
+            le passeport de ce chien et les demandes de garde sur lesquelles il vous sollicite.
           </li>
           <li>
             <strong>Organisation des gardes</strong> : vos disponibilités (sans motif), vos demandes, vos réponses et
             les gardes qui vous sont confiées.
+          </li>
+          <li>
+            <strong>Carnet de garde</strong> : pendant une garde qui vous est confiée, ce que vous notez (repas,
+            promenades, médicaments, prise en charge, photos, mots). Seuls vous et les responsables du chien le voient.
           </li>
           <li>
             <strong>Notifications</strong> : notifications dans l&apos;application et, si vous les activez, un
@@ -75,6 +79,7 @@ export default function PrivacyPage() {
         <ul>
           <li>Vos données sont conservées tant que votre compte existe.</li>
           <li>Les notifications sont supprimées après 6 mois, le journal de sécurité après 1 an.</li>
+          <li>Les photos du carnet de garde sont supprimées 90 jours après la fin de la garde (le texte reste).</li>
           <li>
             Si vous supprimez votre compte, vos données personnelles sont effacées immédiatement. Les gardes passées
             restent dans l&apos;historique du groupe sans votre nom ; les chiens dont vous étiez le seul responsable sont

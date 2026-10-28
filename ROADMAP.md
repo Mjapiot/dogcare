@@ -39,7 +39,7 @@ Chaque lot fait l'objet d'une spec validée avant d'être codé.
    - [x] `/circle/join/*` dans les liens universels (aujourd'hui l'invitation au cercle s'ouvre dans Safari)
    - [x] Advisors Supabase (sécurité, performance) après les migrations passeport et cercle
 2. [x] Invités et proches hors groupe : répondre aux demandes et être confirmés sur les gardes du chien (en production le 2026-10-28, testé de bout en bout)
-3. [ ] Carnet de garde (repas, promenade, médicament, dépôt/récupération, photo ou commentaire) tenu par le gardien confirmé
+3. [ ] Carnet de garde (repas, promenade, médicament, dépôt/récupération, photo ou commentaire) tenu par le gardien confirmé (implémenté et testé en local, à déployer)
 4. [ ] Notifications du cercle (accès donné, fin d'accès, invitation acceptée) et rappel la veille d'une garde
 5. [ ] Refonte de l'écran « Demandes »
 

@@ -79,6 +79,23 @@ toujours, pendant ses gardes, jamais) :
   responsables sont prévenus. On ne peut pas cesser de solliciter quelqu'un qui a une garde confiée sur la
   demande (il faut d'abord l'annuler). Une demande déplacée hors de ses dates ne la sollicite plus.
 
+## Carnet de garde
+
+Pendant une garde **confirmée**, son gardien (membre du groupe ou personne du cercle) tient le carnet :
+Repas, Promenade, Médicament, Déposé (prise en charge), Récupéré, Photo, Note.
+
+- Un geste note l'entrée à l'heure actuelle ; « Détails » permet de choisir l'heure, un mot (500 car.) et une
+  photo (réduite sur le téléphone). Les consignes du passeport (repas, promenades, traitements si la rubrique
+  Santé lui est accessible) sont rappelées au-dessus des boutons.
+- Ouvert de 2 h avant le début de la garde à 24 h après sa fin (heure de l'entrée comprise dans cette fenêtre),
+  fermé si la garde est annulée ou à reconfirmer. Le gardien modifie ou supprime ses entrées pendant ce temps.
+- Lecture : le gardien et les responsables du chien seulement. Seul le gardien écrit ; un responsable peut
+  signaler une entrée.
+- Déposé, Récupéré et les photos préviennent les responsables (push désactivable : Profil → « Carnet de
+  garde ») ; repas, promenades, médicaments et notes restent dans l'app.
+- Pendant une garde en cours, l'accueil du responsable montre « Aston chez Léa · dernière nouvelle ».
+- Les photos sont supprimées 90 jours après la fin de la garde ; le texte reste.
+
 ## Disponibilités
 
 - Créneaux par défaut (configurables dans `src/domain/config.ts`) : Matin 6h–12h, Après-midi 12h–18h,

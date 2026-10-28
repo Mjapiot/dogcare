@@ -19,7 +19,8 @@ export type NotificationType =
   | "request_cancelled"
   | "response_reset"
   | "member_joined"
-  | "content_reported";
+  | "content_reported"
+  | "care_log";
 
 export type ProfileRow = {
   id: string;
@@ -90,6 +91,23 @@ export type CircleInvitationRow = {
   starts_at: string | null;
   ends_at: string | null;
   expires_at: string;
+  created_at: string;
+};
+
+export type CareLogKind = "meal" | "walk" | "medication" | "drop_off" | "pick_up" | "photo" | "note";
+
+/** An entry of a garde's care log (public.care_log_entries). */
+export type CareLogEntryRow = {
+  id: string;
+  assignment_id: string;
+  request_id: string;
+  dog_id: string;
+  author_id: string;
+  kind: CareLogKind;
+  occurred_at: string;
+  note: string | null;
+  photo_path: string | null;
+  photo_removed_at: string | null;
   created_at: string;
 };
 
@@ -225,6 +243,7 @@ export type NotificationPreferencesRow = {
   cancellations_enabled: boolean;
   reminders_enabled: boolean;
   summary_enabled: boolean;
+  care_log_enabled: boolean;
 };
 
 export type ActionResult<T = undefined> = { ok: true; data: T } | { ok: false; error: string };

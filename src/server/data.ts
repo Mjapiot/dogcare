@@ -8,6 +8,7 @@ import type {
   AvailabilityEntryRow,
   AvailabilityRuleRow,
   CareAssignmentRow,
+  CareLogEntryRow,
   CareRequestRow,
   DogCaretakerRow,
   DogRow,
@@ -251,7 +252,7 @@ export async function getNotificationPreferences(): Promise<NotificationPreferen
   const supabase = await createClient();
   const { data } = await supabase
     .from("notification_preferences")
-    .select("new_requests_enabled, responses_enabled, confirmations_enabled, cancellations_enabled, reminders_enabled, summary_enabled")
+    .select("new_requests_enabled, responses_enabled, confirmations_enabled, cancellations_enabled, reminders_enabled, summary_enabled, care_log_enabled")
     .maybeSingle();
   return (
     (data as NotificationPreferencesRow | null) ?? {
@@ -261,6 +262,7 @@ export async function getNotificationPreferences(): Promise<NotificationPreferen
       cancellations_enabled: true,
       reminders_enabled: true,
       summary_enabled: false,
+      care_log_enabled: true,
     }
   );
 }
@@ -418,4 +420,40 @@ export async function getMyBlockedIds(): Promise<string[]> {
   const { data, error } = await supabase.from("user_blocks").select("blocked_id");
   if (error) return [];
   return (data ?? []).map((b) => b.blocked_id as string);
+}
+
+const CARE_LOG_COLUMNS = "id, assignment_id, request_id, dog_id, author_id, kind, occurred_at, note, photo_path, photo_removed_at, created_at";
+
+export type CareLogEntryView = CareLogEntryRow & { photoUrl: string | null };
+
+/** The care log of a request that I can read (my gardes, or my dog's), photos signed for an hour. */
+export async function getCareLog(requestId: string): Promise<CareLogEntryView[]> {
+  const supabase = await createClient();
+  const entries = must<CareLogEntryRow[]>(
+    await supabase.from("care_log_entries").select(CARE_LOG_COLUMNS).eq("request_id", requestId).order("occurred_at", { ascending: false }).limit(500),
+  );
+  const paths = entries.map((e) => e.photo_path).filter((p): p is string => Boolean(p));
+  const urls = new Map<string, string>();
+  if (paths.length) {
+    const { data } = await supabase.storage.from("care-logs").createSignedUrls(paths, 60 * 60);
+    for (const d of data ?? []) if (d.path && d.signedUrl) urls.set(d.path, d.signedUrl);
+  }
+  return entries.map((e) => ({ ...e, photoUrl: e.photo_path ? (urls.get(e.photo_path) ?? null) : null }));
+}
+
+/** Latest log entry of each of these assignments (home card of an ongoing garde). */
+export async function getLatestCareNews(assignmentIds: string[]): Promise<Record<string, CareLogEntryRow>> {
+  if (assignmentIds.length === 0) return {};
+  const supabase = await createClient();
+  const entries = must<CareLogEntryRow[]>(
+    await supabase
+      .from("care_log_entries")
+      .select(CARE_LOG_COLUMNS)
+      .in("assignment_id", assignmentIds.slice(0, ID_CHUNK))
+      .order("occurred_at", { ascending: false })
+      .limit(300),
+  );
+  const out: Record<string, CareLogEntryRow> = {};
+  for (const e of entries) out[e.assignment_id] ??= e;
+  return out;
 }

@@ -7,26 +7,7 @@ import { Camera, Loader2 } from "lucide-react";
 import { useBrowserClient } from "@/lib/supabase/client";
 import { setDogPhoto } from "@/server/actions/dogs";
 import { DogAvatar } from "@/components/domain/request-bits";
-
-const MAX_INPUT_BYTES = 15 * 1024 * 1024;
-const MAX_SIDE = 1024;
-
-/** Resizes on device before upload: smaller files, no EXIF metadata kept. */
-async function resize(file: File): Promise<Blob> {
-  const bitmap = await createImageBitmap(file);
-  const scale = Math.min(1, MAX_SIDE / Math.max(bitmap.width, bitmap.height));
-  const canvas = document.createElement("canvas");
-  canvas.width = Math.round(bitmap.width * scale);
-  canvas.height = Math.round(bitmap.height * scale);
-  canvas.getContext("2d")!.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-  bitmap.close();
-  const toBlob = (type: string) => new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, type, 0.85));
-  const webp = await toBlob("image/webp");
-  if (webp && webp.type === "image/webp") return webp;
-  const jpeg = await toBlob("image/jpeg");
-  if (!jpeg) throw new Error("encode");
-  return jpeg;
-}
+import { MAX_INPUT_BYTES, resizeImage } from "@/lib/image";
 
 export function PhotoUploader({
   dogId,
@@ -52,7 +33,7 @@ export function PhotoUploader({
     if (!supabase) return toast.error("Envoi de photo indisponible pour le moment.");
     setBusy(true);
     try {
-      const blob = await resize(file);
+      const blob = await resizeImage(file);
       const ext = blob.type === "image/webp" ? "webp" : "jpg";
       const path = `${dogId}/${crypto.randomUUID()}.${ext}`;
       const { error } = await supabase.storage.from("dog-photos").upload(path, blob, { contentType: blob.type, upsert: false });

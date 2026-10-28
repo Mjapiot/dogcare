@@ -54,7 +54,8 @@ const SUPABASE_EMULATION = /* sql */ `
     id uuid primary key default gen_random_uuid(),
     bucket_id text references storage.buckets (id),
     name text not null,
-    owner uuid
+    owner uuid,
+    created_at timestamptz not null default now()
   );
   alter table storage.objects enable row level security;
   grant select, insert, update, delete on storage.objects to authenticated;

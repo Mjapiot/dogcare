@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, HeartHandshake, IdCard } from "lucide-react";
 import { getProfile, requireUserId } from "@/server/session";
-import { getMyInvitedRequests, signDogPhotos } from "@/server/data";
+import { getDog, getMyInvitedRequests, signDogPhotos } from "@/server/data";
 import { buildInvitedView } from "@/domain/invited";
 import { NECESSITY_LABELS, REQUEST_TYPE_LABELS } from "@/domain/status";
 import { uuid } from "@/lib/validation";
@@ -15,6 +15,7 @@ import { CoverageIndicator, DogAvatar, ToneBadge } from "@/components/domain/req
 import { ResponseButtons } from "@/components/domain/response-buttons";
 import { AssignmentActions } from "@/components/domain/assignment-actions";
 import { ReportButton } from "@/components/domain/report-button";
+import { CareLogSection } from "@/components/care-log/care-log-section";
 
 export const metadata: Metadata = { title: "Demande" };
 
@@ -26,13 +27,17 @@ export const metadata: Metadata = { title: "Demande" };
 export default async function CircleRequestPage({ params }: PageProps<"/circle/requests/[id]">) {
   const { id } = await params;
   if (!uuid.safeParse(id).success) notFound();
-  await requireUserId();
+  const userId = await requireUserId();
   const profile = await getProfile();
   if (!profile?.display_name.trim()) redirect(`/onboarding?next=/circle/requests/${id}`);
   const [row] = await getMyInvitedRequests(id);
   if (!row) notFound();
   const view = buildInvitedView(row, requestNow());
-  const photos = await signDogPhotos([{ id: row.dog_id, photo_path: row.dog_photo_path }]);
+  const [photos, dogData] = await Promise.all([
+    signDogPhotos([{ id: row.dog_id, photo_path: row.dog_photo_path }]),
+    // habits for the care log's reminder (visible within the guest's dates)
+    row.my_assignments.length ? getDog(row.dog_id) : Promise.resolve(null),
+  ]);
   const r = view.request;
 
   return (
@@ -83,6 +88,16 @@ export default async function CircleRequestPage({ params }: PageProps<"/circle/r
             <AssignmentActions assignments={r.my_assignments} />
           </section>
         )}
+
+        <CareLogSection
+          requestId={r.id}
+          groupId={r.group_id}
+          me={userId}
+          dog={{ id: r.dog_id, name: r.dog_name, meals: dogData?.dog.meals ?? null, walks: dogData?.dog.walks ?? null }}
+          myAssignments={view.cancelled ? [] : r.my_assignments}
+          iAmCaretaker={false}
+          names={{}}
+        />
 
         {!view.cancelled && r.my_assignments.length === 0 && r.necessity !== "info" && !view.isPast && (
           <section className="flex flex-col gap-3 rounded-[24px] bg-surface p-4">

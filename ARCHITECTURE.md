@@ -49,6 +49,15 @@ réponses). Côté invité, `/circle` liste ses demandes et `/circle/requests/[i
 demande ouverte depuis `/requests/[id]` par quelqu'un hors de son groupe redirige vers `/circle/requests/[id]` ; une
 personne sans groupe arrive sur `/circle` (y compris depuis une notification).
 
+## Carnet de garde
+
+`components/care-log/care-log-section.tsx` (serveur) charge le carnet d'une demande (`getCareLog`, photos signées
+1 h) et rappelle les consignes du passeport ; `care-log-composer.tsx` (boutons rapides, feuille « Détails », envoi
+de la photo réduite par `lib/image.ts` dans le seau `care-logs` puis `addCareLog`) et `care-log-timeline.tsx`
+(fil par jour de Paris, modification, suppression, signalement). Règles pures : `domain/care-log.ts`. Utilisée sur
+`/requests/[id]` et `/circle/requests/[id]` ; l'accueil montre les gardes en cours avec la dernière nouvelle
+(`getLatestCareNews`). La purge des photos tourne avec la distribution des push (`server/push.ts`).
+
 ## Notifications push
 
 1. Une action (demande, réponse, confirmation…) crée des notifications en base (triggers/RPC).

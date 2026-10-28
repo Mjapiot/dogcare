@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, BellRing, CalendarPlus, CircleAlert, CircleCheck, CircleDashed, Clock, Inbox, PawPrint, UserCheck } from "lucide-react";
+import { ArrowRight, BellRing, CalendarPlus, CircleAlert, CircleCheck, CircleDashed, Clock, Inbox, NotebookPen, PawPrint, UserCheck } from "lucide-react";
 import { requireAppContext } from "@/server/session";
-import { getGroupSnapshot, signDogPhotos } from "@/server/data";
+import { getGroupSnapshot, getLatestCareNews, signDogPhotos } from "@/server/data";
+import { CARE_LOG_LABELS, isOngoing } from "@/domain/care-log";
 import { buildRequestViews, dashboardCounts } from "@/domain/views";
 import { addDays, todayLocal } from "@/domain/time";
 import { needsOrganizing } from "@/domain/status";
-import { monthShort, weekdayLabel, formatPeriod } from "@/lib/format";
+import { monthShort, weekdayLabel, formatPeriod, formatTime } from "@/lib/format";
 import { CareRequestCard } from "@/components/domain/request-bits";
 import { TONE_CLASSES } from "@/components/domain/tone";
 import { TopSwitch } from "@/components/calendar/top-switch";
@@ -32,6 +33,12 @@ export default async function TodayPage() {
     .sort((a, b) => a.period.start - b.period.start);
   const reconfirm = views.filter((v) => v.myAssignments.some((a) => a.status === "pending_reconfirmation"));
   const myGuards = upcoming.filter((v) => v.myAssignments.some((a) => a.status === "confirmed"));
+  // my dogs being looked after right now, with the care log's latest news
+  const ongoing = views
+    .filter((v) => v.iAmCaretaker && v.request.lifecycle_status === "active")
+    .flatMap((v) => v.assignments.filter((a) => isOngoing(a, now)).map((a) => ({ view: v, assignment: a })))
+    .slice(0, 3);
+  const news = await getLatestCareNews(ongoing.map((o) => o.assignment.id));
   const [dd, mm] = [today.slice(8, 10), today.slice(5, 7)];
 
   const tiles = [
@@ -102,6 +109,24 @@ export default async function TodayPage() {
           <ArrowRight className="size-5" aria-hidden />
         </Link>
       )}
+
+      {ongoing.map(({ view: v, assignment: a }) => {
+        const last = news[a.id];
+        return (
+          <Link key={a.id} href={`/requests/${v.request.id}`} className="glass shadow-soft flex items-center gap-3 rounded-2xl p-4">
+            <NotebookPen className="size-5 shrink-0 text-sage" aria-hidden />
+            <span className="min-w-0 flex-1">
+              <span className="block text-[15px] font-semibold text-ink">
+                {v.dog?.name ?? "Votre chien"} chez {a.name}
+              </span>
+              <span className="block text-[14px] text-ink-2">
+                {last ? `Dernière nouvelle : ${CARE_LOG_LABELS[last.kind].toLowerCase()} à ${formatTime(last.occurred_at)}` : "Pas encore de nouvelles dans le carnet"}
+              </span>
+            </span>
+            <ArrowRight className="size-5 text-ink-2" aria-hidden />
+          </Link>
+        );
+      })}
 
       {counts.toAnswer > 0 && (
         <Link href="/requests" className="glass flex items-center gap-3 rounded-2xl p-4">

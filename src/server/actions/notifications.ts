@@ -27,6 +27,7 @@ const prefsSchema = z.object({
   cancellations_enabled: z.boolean(),
   reminders_enabled: z.boolean(),
   summary_enabled: z.boolean(),
+  care_log_enabled: z.boolean(),
 });
 
 export async function saveNotificationPreferences(prefs: NotificationPreferencesRow): Promise<ActionResult> {

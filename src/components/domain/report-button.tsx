@@ -15,7 +15,7 @@ export function ReportButton({
   description = "Le signalement est transmis aux administrateurs du groupe et à l'équipe Dogcare, sans votre nom. Pour ne plus voir les demandes d'un membre, vous pouvez aussi le bloquer depuis la page du groupe.",
 }: {
   groupId: string;
-  targetType: "request" | "dog" | "member";
+  targetType: "request" | "dog" | "member" | "care_log";
   targetId: string;
   label: string;
   description?: string;

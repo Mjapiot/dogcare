@@ -147,3 +147,22 @@ export const responseSchema = z.object({
   proposedEnd: z.iso.datetime({ offset: true }).nullable().optional(),
   note: z.string().trim().max(500).optional().default(""),
 });
+
+export const careLogKindSchema = z.enum(["meal", "walk", "medication", "drop_off", "pick_up", "photo", "note"]);
+
+export const careLogSchema = z.object({
+  assignmentId: uuid,
+  kind: careLogKindSchema,
+  occurredAt: z.iso.datetime({ offset: true }).nullable().optional(),
+  note: z.string().trim().max(500, "500 caractères maximum.").optional().default(""),
+  photoPath: z
+    .string()
+    .regex(/^[0-9a-f-]{36}\/[A-Za-z0-9_-]{1,64}\.(jpg|jpeg|png|webp)$/, "Photo invalide.")
+    .nullable()
+    .optional(),
+});
+
+export const careLogEditSchema = z.object({
+  occurredAt: z.iso.datetime({ offset: true }),
+  note: z.string().trim().max(500, "500 caractères maximum.").optional().default(""),
+});
