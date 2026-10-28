@@ -58,6 +58,12 @@ de la photo réduite par `lib/image.ts` dans le seau `care-logs` puis `addCareLo
 `/requests/[id]` et `/circle/requests/[id]` ; l'accueil montre les gardes en cours avec la dernière nouvelle
 (`getLatestCareNews`). La purge des photos tourne avec la distribution des push (`server/push.ts`).
 
+## Tâche quotidienne
+
+Vercel Cron appelle `/api/cron/daily` (`vercel.json`, 17:00 UTC) avec `CRON_SECRET` (`lib/cron.ts`, comparaison
+à temps constant ; route publique dans `proxy.ts`, protégée par ce secret). `runDailyJob` (`server/push.ts`, seul
+endroit qui utilise la clé secrète) appelle `run_daily_reminders` puis distribue les push.
+
 ## Notifications push
 
 1. Une action (demande, réponse, confirmation…) crée des notifications en base (triggers/RPC).

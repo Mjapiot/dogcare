@@ -40,7 +40,7 @@ Chaque lot fait l'objet d'une spec validée avant d'être codé.
    - [x] Advisors Supabase (sécurité, performance) après les migrations passeport et cercle
 2. [x] Invités et proches hors groupe : répondre aux demandes et être confirmés sur les gardes du chien (en production le 2026-10-28, testé de bout en bout)
 3. [x] Carnet de garde (repas, promenade, médicament, dépôt/récupération, photo ou commentaire) tenu par le gardien confirmé (en production le 2026-10-28, testé de bout en bout)
-4. [ ] Notifications du cercle (accès donné, fin d'accès, invitation acceptée) et rappel la veille d'une garde
+4. [ ] Notifications du cercle (accès donné, fin d'accès, invitation acceptée) et rappel la veille d'une garde (implémenté et testé en local, à déployer ; nécessite `CRON_SECRET` sur Vercel)
 5. [ ] Refonte de l'écran « Demandes »
 
 Hors code, côté porteur du projet : étiquettes de confidentialité App Store (contacts d'urgence, vétérinaire),
@@ -53,13 +53,13 @@ Vision : « Toute la vie de votre animal, partagée avec les bonnes personnes »
 1. [x] Passeport numérique : 4 rubriques, santé/urgences protégées, lien de partage temporaire (en production le 2026-10-27)
 2. [x] Cercle de confiance par chien : 5 rôles, accès santé/urgences par personne, invités datés et proches hors groupe (en production le 2026-10-28, parcours invité testé de bout en bout)
    - [x] Invités : répondre aux demandes et être confirmés sur les gardes du chien (en production le 2026-10-28)
-   - [ ] Notifications liées au cercle
+   - [ ] Notifications liées au cercle (sprint en cours, lot 4)
 3. [x] Carnet de garde (repas, promenade, médicament, dépôt/récupération, photo ou commentaire) — en production le 2026-10-28
 4. [ ] Moteur de planning sous contraintes (nuits max, lieux, incompatibilités) avec proposition à valider
 5. [ ] Routines (désactivées par défaut)
 - Passeport sans groupe (entrée « passeport d'abord » dans l'onboarding)
 
-- Rappels la veille d'une garde, résumé hebdomadaire (préférences déjà prévues en base)
+- Résumé hebdomadaire (préférence déjà prévue en base) — les rappels de la veille sont dans le sprint en cours
 - Invitations par les membres (option par groupe)
 - Affichage des conflits d'un gardien (deux gardes simultanées)
 - Créneaux configurables par groupe dans l'interface

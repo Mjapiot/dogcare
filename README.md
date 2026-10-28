@@ -68,6 +68,12 @@ Pour les notifications push (facultatif — sans elles, l'app fonctionne avec la
 La clé secrète Supabase n'est utilisée que côté serveur, pour retrouver les appareils des membres à notifier.
 Elle ne doit jamais porter le préfixe `NEXT_PUBLIC_`.
 
+Rappels de la veille (tâche quotidienne, `vercel.json` → `/api/cron/daily` à 17:00 UTC, soit 18 h l'hiver et
+19 h l'été à Paris) :
+
+- `CRON_SECRET` — **secret**, 16 caractères au moins (par exemple `openssl rand -hex 32`). Vercel l'envoie dans
+  l'en-tête `Authorization` ; sans lui, la route répond 401 et aucun rappel n'est envoyé.
+
 ### Réglages Supabase à faire une fois (tableau de bord)
 
 1. **Authentication → Emails → Templates → Magic Link** : garder le modèle par défaut. La connexion se fait

@@ -187,6 +187,19 @@ async function purgeCareLogPhotos(admin: SupabaseClient) {
   if (forgetError) console.error("[dogcare] forget_care_log_photos", forgetError.code);
 }
 
+/** Daily job: tomorrow's reminders (run_daily_reminders), then delivery of the pushes. */
+export async function runDailyJob(): Promise<{ ok: boolean; reminders: number; sent: number }> {
+  const admin = getAdminClient();
+  if (!admin) return { ok: false, reminders: 0, sent: 0 };
+  const { data, error } = await admin.rpc("run_daily_reminders");
+  if (error) {
+    console.error("[dogcare] run_daily_reminders", error.code);
+    return { ok: false, reminders: 0, sent: 0 };
+  }
+  const { sent } = await dispatchPendingPush();
+  return { ok: true, reminders: Number(data ?? 0), sent };
+}
+
 /** Schedules delivery after the current response (does not slow the user down). */
 export function schedulePushDispatch() {
   if (!isPushConfigured()) return;

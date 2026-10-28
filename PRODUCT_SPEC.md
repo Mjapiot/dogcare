@@ -96,6 +96,17 @@ Repas, Promenade, Médicament, Déposé (prise en charge), Récupéré, Photo, N
 - Pendant une garde en cours, l'accueil du responsable montre « Aston chez Léa · dernière nouvelle ».
 - Les photos sont supprimées 90 jours après la fin de la garde ; le texte reste.
 
+## Rappels et notifications du cercle
+
+- **Rappel la veille** (vers 18 h, heure de Paris) : pour chaque garde confirmée qui commence le lendemain, le
+  gardien (« Demain : garde d'Aston ») et les responsables (« Demain : Léa garde Aston »). Une garde annulée ou à
+  reconfirmer n'est pas rappelée.
+- **Alerte** aux responsables si un besoin **indispensable** qui commence le lendemain n'est pas entièrement couvert.
+- **Cercle** : invitation acceptée ou départ → les responsables ; ajout, changement d'accès (avec le résumé) ou
+  retrait par un responsable → la personne ; un invité est prévenu la veille de la fin de son accès.
+- Chaque rappel n'est envoyé qu'une fois (journal en base). Préférences push : « Rappels de la veille » et
+  « Cercle de confiance » dans le Profil.
+
 ## Disponibilités
 
 - Créneaux par défaut (configurables dans `src/domain/config.ts`) : Matin 6h–12h, Après-midi 12h–18h,

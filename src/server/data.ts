@@ -252,7 +252,7 @@ export async function getNotificationPreferences(): Promise<NotificationPreferen
   const supabase = await createClient();
   const { data } = await supabase
     .from("notification_preferences")
-    .select("new_requests_enabled, responses_enabled, confirmations_enabled, cancellations_enabled, reminders_enabled, summary_enabled, care_log_enabled")
+    .select("new_requests_enabled, responses_enabled, confirmations_enabled, cancellations_enabled, reminders_enabled, summary_enabled, care_log_enabled, circle_enabled")
     .maybeSingle();
   return (
     (data as NotificationPreferencesRow | null) ?? {
@@ -263,6 +263,7 @@ export async function getNotificationPreferences(): Promise<NotificationPreferen
       reminders_enabled: true,
       summary_enabled: false,
       care_log_enabled: true,
+      circle_enabled: true,
     }
   );
 }

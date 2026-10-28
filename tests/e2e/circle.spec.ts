@@ -68,8 +68,10 @@ test("circle: invite a guest, guest sees the passport only, removal", async ({ b
     await sitterPage.waitForURL(/\/circle$/);
     await expect(sitterPage.getByRole("link", { name: /Aston/ })).toBeVisible();
 
-    // the owner sees her and removes her
-    await page.reload();
+    // the owner was told she joined, sees her and removes her
+    await page.goto("/notifications");
+    await expect(page.getByText("Lea a rejoint le cercle d'Aston")).toBeVisible();
+    await page.goto(`/dogs/${dogId}`);
     await page.getByRole("button", { name: /Lea, Invité/ }).click();
     await page.getByRole("button", { name: "Retirer du cercle" }).click();
     await page.getByRole("button", { name: "Retirer", exact: true }).click();

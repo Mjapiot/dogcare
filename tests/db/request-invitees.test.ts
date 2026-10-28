@@ -214,7 +214,9 @@ describe("leaving the circle or changing dates", () => {
     await asUser(db, s.owner, (tx) => tx.query("select public.remove_circle_member($1, $2)", [s.dogId, s.guest]));
     const live = await rows(db, "select id from care_assignments where request_id = $1 and status <> 'cancelled'", [requestId]);
     expect(live).toEqual([]);
-    expect((await notifications(s.guest)).at(-1)?.title).toBe("Votre garde de Aston est annulée");
+    const guestTitles = (await notifications(s.guest)).map((n) => n.title);
+    expect(guestTitles).toContain("Votre garde de Aston est annulée");
+    expect(guestTitles.at(-1)).toBe("Votre accès au passeport d'Aston est terminé");
     expect(await asUser(db, s.guest, (tx) => rows(tx, "select id from care_requests"))).toEqual([]);
   });
 
@@ -225,7 +227,9 @@ describe("leaving the circle or changing dates", () => {
     await answer(s.guest, requestId, "yes");
     await confirm(requestId, s.owner, s.guest);
     await asUser(db, s.guest, (tx) => tx.query("select public.leave_dog_circle($1)", [s.dogId]));
-    expect((await notifications(s.owner)).at(-1)?.title).toMatch(/ne peut plus garder Aston/);
+    const ownerTitles = (await notifications(s.owner)).map((n) => n.title);
+    expect(ownerTitles.some((t) => /ne peut plus garder Aston/.test(t))).toBe(true);
+    expect(ownerTitles.at(-1)).toMatch(/a quitté le cercle d'Aston/);
     expect(await asUser(db, s.guest, (tx) => rows(tx, "select id from dogs"))).toEqual([]);
   });
 

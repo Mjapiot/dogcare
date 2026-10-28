@@ -11,7 +11,9 @@ const ITEMS: Array<{ key: keyof NotificationPreferencesRow; label: string; hint:
   { key: "responses_enabled", label: "Propositions d'aide", hint: "Quand quelqu'un peut garder votre chien" },
   { key: "confirmations_enabled", label: "Confirmations et changements", hint: "Gardes confiées, horaires modifiés" },
   { key: "cancellations_enabled", label: "Annulations", hint: "Garde ou demande annulée" },
+  { key: "reminders_enabled", label: "Rappels de la veille", hint: "Gardes du lendemain, besoins pas encore couverts" },
   { key: "care_log_enabled", label: "Carnet de garde", hint: "Prise en charge, récupération et photos de vos chiens" },
+  { key: "circle_enabled", label: "Cercle de confiance", hint: "Accès donnés, modifiés ou terminés, arrivées et départs" },
 ];
 
 export function NotificationPrefs({ initial }: { initial: NotificationPreferencesRow }) {

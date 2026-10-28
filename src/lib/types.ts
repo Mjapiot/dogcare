@@ -20,7 +20,9 @@ export type NotificationType =
   | "response_reset"
   | "member_joined"
   | "content_reported"
-  | "care_log";
+  | "care_log"
+  | "circle_update"
+  | "care_reminder";
 
 export type ProfileRow = {
   id: string;
@@ -244,6 +246,7 @@ export type NotificationPreferencesRow = {
   reminders_enabled: boolean;
   summary_enabled: boolean;
   care_log_enabled: boolean;
+  circle_enabled: boolean;
 };
 
 export type ActionResult<T = undefined> = { ok: true; data: T } | { ok: false; error: string };
