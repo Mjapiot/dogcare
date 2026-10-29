@@ -67,7 +67,7 @@ Vision : « Toute la vie de votre animal, partagée avec les bonnes personnes »
 - Créneaux configurables par groupe dans l'interface
 - [x] Refonte du Calendrier : agenda, barres du mois, résumé, disponibles du jour (en production le 2026-10-29)
 - [x] Refonte de Mes dispos : semaine par semaine, raccourcis, copie de semaine, besoins du groupe (en production le 2026-10-29)
-- [ ] Refonte du Profil : carte et « Cette année », mon monde, réglages en liste, page Notifications (implémentée et testée en local, à déployer)
+- [x] Refonte du Profil : carte et « Cette année », mon monde, réglages en liste, page Notifications (en production le 2026-10-29)
 - Mode sombre
 - Types TypeScript générés depuis la base (`supabase gen types`)
 

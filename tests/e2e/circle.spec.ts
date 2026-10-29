@@ -4,7 +4,7 @@
  * health nor any group; the owner removes them and access stops.
  */
 import { expect, test } from "@playwright/test";
-import { adminClient, cleanup, createTestUser, signIn } from "./helpers";
+import { adminClient, cleanup, createTestUser, gotoStable, signIn } from "./helpers";
 
 test("circle: invite a guest, guest sees the passport only, removal", async ({ browser }) => {
   // two sign-ups against a deployed app: slower than the default budget
@@ -69,9 +69,9 @@ test("circle: invite a guest, guest sees the passport only, removal", async ({ b
     await expect(sitterPage.getByRole("link", { name: /Aston/ })).toBeVisible();
 
     // the owner was told she joined, sees her and removes her
-    await page.goto("/notifications");
+    await gotoStable(page, "/notifications");
     await expect(page.getByText("Lea a rejoint le cercle d'Aston")).toBeVisible();
-    await page.goto(`/dogs/${dogId}`);
+    await gotoStable(page, `/dogs/${dogId}`);
     await page.getByRole("button", { name: /Lea, Invité/ }).click();
     await page.getByRole("button", { name: "Retirer du cercle" }).click();
     await page.getByRole("button", { name: "Retirer", exact: true }).click();
