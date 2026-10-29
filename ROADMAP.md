@@ -65,7 +65,7 @@ Vision : « Toute la vie de votre animal, partagée avec les bonnes personnes »
 - Invitations par les membres (option par groupe)
 - Affichage des conflits d'un gardien (deux gardes simultanées)
 - Créneaux configurables par groupe dans l'interface
-- [ ] Refonte du Calendrier : agenda, barres du mois, résumé, disponibles du jour (implémentée et testée en local, à déployer)
+- [x] Refonte du Calendrier : agenda, barres du mois, résumé, disponibles du jour (en production le 2026-10-29)
 - Mode sombre
 - Types TypeScript générés depuis la base (`supabase gen types`)
 

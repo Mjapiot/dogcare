@@ -63,15 +63,16 @@ test("care log: helper writes during the garde, owner reads, others do not", asy
     await emma.waitForURL(new RegExp(`/requests/${requestId}$`));
     await expect(emma.getByRole("heading", { name: "Carnet de garde" })).toBeVisible();
     await expect(emma.getByText("Croquettes à 19h")).toBeVisible();
+    // each entry refreshes the page: slower when several tests run against production
     const buttons = emma.getByRole("group", { name: "Noter pour Aston" });
     await buttons.getByRole("button", { name: "Repas" }).click();
-    await expect(emma.getByText(/· Repas/)).toBeVisible();
+    await expect(emma.getByText(/· Repas/)).toBeVisible({ timeout: 15_000 });
     await buttons.getByRole("button", { name: "Déposé" }).click();
-    await expect(emma.getByText(/· Déposé/)).toBeVisible();
+    await expect(emma.getByText(/· Déposé/)).toBeVisible({ timeout: 15_000 });
     await emma.getByLabel("Choisir une photo").first().setInputFiles({ name: "aston.png", mimeType: "image/png", buffer: PNG });
     await emma.getByLabel("Un mot (facultatif)").fill("Sieste au soleil");
     await emma.getByRole("button", { name: "Ajouter", exact: true }).click();
-    await expect(emma.getByText("Sieste au soleil")).toBeVisible();
+    await expect(emma.getByText("Sieste au soleil")).toBeVisible({ timeout: 15_000 });
 
     // Julie reads the log, with the photo, and was told about the drop-off
     const julie = await signIn(contexts[1], admin, owner.email, `/requests/${requestId}`);
