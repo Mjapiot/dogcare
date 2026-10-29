@@ -57,6 +57,13 @@ personne sans groupe arrive sur `/circle` (y compris depuis une notification).
 pouce glissant, cartes, liste animée avec `motion`). La pastille de la barre d'onglets suit la même règle
 (`app/(app)/layout.tsx`).
 
+## Calendrier
+
+`app/(app)/calendar/page.tsx` charge le groupe sur la période (dispos comprises, `getGroupSnapshot` en mode
+dates), filtre et prépare les éléments (`domain/calendar.ts` : `toCalItem`, `filterCalItems`, `calSummary`,
+`availableOn`). Composants `components/calendar/` : `calendar-view.tsx` (en-tête, résumé, portée, glissement
+animé), `agenda.tsx` (`agendaRows`), `month-grid.tsx` (`weekBars`), `day-sheet.tsx`, `legend.tsx`.
+
 ## Moteur de planning
 
 Calcul pur et déterministe dans `domain/planner.ts` (`proposePlan` : glouton « va le plus loin » pour minimiser

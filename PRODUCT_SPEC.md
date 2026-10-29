@@ -224,6 +224,16 @@ Dimension stockée : `lifecycle_status` (active / cancelled). Dimension calculé
 Éligibles = membres du groupe et personnes du cercle sollicitées sur la demande, moins les responsables du chien. **L'absence de réponse n'est jamais un refus** :
 on n'affiche jamais « sans solution » tant que quelqu'un n'a pas répondu.
 
+## Calendrier
+
+- **Agenda** (vue par défaut, 4 semaines) : une carte par besoin, même sur plusieurs jours (période, couverture,
+  gardiens, statut) ; les jours où rien ne commence sont regroupés (« rien de prévu » ou « en cours : Aston »).
+- **Mois** : chaque besoin est une barre sur ses jours (coupée par semaine, au plus 3 lignes, « +n » au-delà).
+- Résumé de la période (sans solution, à organiser, couverts) qui sert de filtre ; portée Tout / Mes chiens /
+  Mes gardes ; filtres par chien et propriétaire ; glisser pour changer de période.
+- La feuille d'un jour montre ses besoins et **qui s'est déclaré disponible**, créneau par créneau (seulement les
+  dispos partagées avec le groupe) — une indication, jamais un engagement.
+
 ## Couleurs (toujours avec icône + libellé)
 
 | Teinte | Sens |

@@ -129,6 +129,11 @@ export async function getGroupSnapshot(
     if (!minDate || s < minDate) minDate = s;
     if (!maxDate || e > maxDate) maxDate = e;
   }
+  // a date range (calendar) also needs availability on days without requests
+  if ("from" in range) {
+    if (!minDate || range.from < minDate) minDate = range.from;
+    if (!maxDate || range.to > maxDate) maxDate = range.to;
+  }
 
   const memberIds = members.map((m) => m.user_id);
   const [responses, assignments, entries, rules, invitees] = await Promise.all([
