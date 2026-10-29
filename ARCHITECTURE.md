@@ -57,6 +57,12 @@ personne sans groupe arrive sur `/circle` (y compris depuis une notification).
 pouce glissant, cartes, liste animée avec `motion`). La pastille de la barre d'onglets suit la même règle
 (`app/(app)/layout.tsx`).
 
+## Profil
+
+`app/(app)/profile/page.tsx` (+ `profile/notifications`, `profile/calendar`) ; résumé de l'année
+`domain/profile.ts` (`yearStats`, données `getYearGardes`) ; lignes de réglages `components/profile/settings-row.tsx`,
+état des notifications lu sans rien demander `push-status.tsx`, `install-row.tsx` (`useCanInstall`).
+
 ## Mes dispos
 
 `app/(app)/availability/page.tsx` (onglets-liens `ScreenTabs`) ; `components/availability/week-editor.tsx`

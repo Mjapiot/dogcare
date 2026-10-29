@@ -24,6 +24,18 @@ function readEnvironment() {
 
 const subscribe = () => () => {};
 
+/** Whether installing makes sense here: in a browser, not already installed, not in the iPhone app. */
+export function useCanInstall(): boolean {
+  return useSyncExternalStore(
+    subscribe,
+    () =>
+      !isNativeApp() &&
+      !window.matchMedia("(display-mode: standalone)").matches &&
+      (navigator as Navigator & { standalone?: boolean }).standalone !== true,
+    () => false,
+  );
+}
+
 /** Explains how to install the app on iPhone (only in Safari, not installed). */
 export function InstallHint({ always = false }: { always?: boolean }) {
   const env = useSyncExternalStore(subscribe, readEnvironment, () => "hide");

@@ -78,7 +78,7 @@ export async function forgetThisDevice({ localOnly = false }: { localOnly?: bool
  * The single "Notifications" block: this device's push state and, once
  * enabled, the (folded) choice of what to receive.
  */
-export function PushSettings({ vapidPublicKey, preferences }: { vapidPublicKey: string | null; preferences: React.ReactNode }) {
+export function PushSettings({ vapidPublicKey, preferences }: { vapidPublicKey: string | null; preferences?: React.ReactNode }) {
   const [state, setState] = useState<State>("loading");
   const [endpoint, setEndpoint] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -234,13 +234,15 @@ export function PushSettings({ vapidPublicKey, preferences }: { vapidPublicKey: 
               <BellOff className="size-4" aria-hidden /> Désactiver
             </PillButton>
           </div>
-          <details className="group -mx-4 -mb-4 border-t border-line">
-            <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-2 px-4 text-[15px] font-medium text-ink [&::-webkit-details-marker]:hidden">
-              Choisir les notifications
-              <ChevronDown className="size-4 text-ink-3 transition-transform group-open:rotate-180" aria-hidden />
-            </summary>
-            {preferences}
-          </details>
+          {preferences && (
+            <details className="group -mx-4 -mb-4 border-t border-line">
+              <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-2 px-4 text-[15px] font-medium text-ink [&::-webkit-details-marker]:hidden">
+                Choisir les notifications
+                <ChevronDown className="size-4 text-ink-3 transition-transform group-open:rotate-180" aria-hidden />
+              </summary>
+              {preferences}
+            </details>
+          )}
         </>
       )}
     </div>

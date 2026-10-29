@@ -243,6 +243,15 @@ on n'affiche jamais « sans solution » tant que quelqu'un n'a pas répondu.
 - La feuille d'un jour montre ses besoins et **qui s'est déclaré disponible**, créneau par créneau (seulement les
   dispos partagées avec le groupe) — une indication, jamais un engagement.
 
+## Profil
+
+Une carte personnelle (initiales, prénom modifiable, e-mail, et pour soi seul « Cette année : N gardes assurées ·
+N reçues pour vos chiens », gardes confirmées et terminées de l'année civile), puis mes chiens et les chiens qui me
+sont confiés (rangées de photos), mes groupes (membres, rôle), des réglages en liste avec leur état
+(Notifications, Abonnement calendrier, Installer l'application seulement dans un navigateur, Confidentialité,
+Assistance) et le compte. La page Notifications réunit l'activation sur l'appareil et les préférences push par
+thème.
+
 ## Couleurs (toujours avec icône + libellé)
 
 | Teinte | Sens |

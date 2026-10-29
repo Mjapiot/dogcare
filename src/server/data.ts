@@ -484,3 +484,42 @@ export async function getBusyAssignments(
       .limit(500),
   );
 }
+
+/** Confirmed gardes ended this year: mine, and those on my dogs' requests (profile summary). */
+export async function getYearGardes(
+  userId: string,
+  myDogIds: string[],
+  sinceMs: number,
+): Promise<Array<{ assigned_user_id: string; ends_at: string; dog_id: string }>> {
+  const supabase = await createClient();
+  type Row = { id: string; assigned_user_id: string; ends_at: string; care_requests: { dog_id: string } | null };
+  const ended = () =>
+    supabase
+      .from("care_assignments")
+      .select("id, assigned_user_id, ends_at, care_requests!inner(dog_id)")
+      .eq("status", "confirmed")
+      .gte("ends_at", new Date(sinceMs).toISOString())
+      .lte("ends_at", new Date().toISOString())
+      .limit(1000);
+  const [mine, onMyDogs] = await Promise.all([
+    ended().eq("assigned_user_id", userId),
+    myDogIds.length ? ended().in("care_requests.dog_id", myDogIds.slice(0, ID_CHUNK)) : null,
+  ]);
+  const rows = new Map<string, Row>();
+  // a to-one embed (each assignment has one request), typed by hand
+  const asRows = (r: { data: unknown; error: unknown }) => must(r as { data: Row[] | null; error: unknown });
+  for (const r of [...asRows(mine), ...(onMyDogs ? asRows(onMyDogs) : [])]) rows.set(r.id, r);
+  return [...rows.values()]
+    .filter((r) => r.care_requests)
+    .map((r) => ({ assigned_user_id: r.assigned_user_id, ends_at: r.ends_at, dog_id: r.care_requests!.dog_id }));
+}
+
+/** Number of members of each of these groups. */
+export async function getGroupMemberCounts(groupIds: string[]): Promise<Record<string, number>> {
+  if (groupIds.length === 0) return {};
+  const supabase = await createClient();
+  const rows = must<{ group_id: string }[]>(await supabase.from("group_members").select("group_id").in("group_id", groupIds.slice(0, ID_CHUNK)).limit(5000));
+  const out: Record<string, number> = {};
+  for (const r of rows) out[r.group_id] = (out[r.group_id] ?? 0) + 1;
+  return out;
+}
