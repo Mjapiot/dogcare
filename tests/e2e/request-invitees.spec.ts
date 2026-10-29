@@ -70,7 +70,7 @@ test("circle invitee: asked on a request, answers, is confirmed, removal cancels
 
     // the owner confirms her
     await page.goto(requestUrl);
-    await page.getByRole("button", { name: "Confirmer" }).first().click();
+    await page.getByRole("button", { name: "Confirmer", exact: true }).first().click();
     await page.getByRole("button", { name: /Confirmer Lea/ }).click();
     // the page refreshes after the confirmation: slower when several tests run against production
     await expect(page.getByText("Couvert").first()).toBeVisible({ timeout: 15_000 });

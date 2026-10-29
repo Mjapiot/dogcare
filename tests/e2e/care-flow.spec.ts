@@ -91,7 +91,7 @@ test("full care coordination flow", async ({ browser }) => {
     // 7. Julie confirms Emma
     await gotoStable(julie, requestUrl);
     await expect(julie.getByText("Volontaire à confirmer").first()).toBeVisible();
-    await julie.getByRole("button", { name: "Confirmer" }).first().click();
+    await julie.getByRole("button", { name: "Confirmer", exact: true }).first().click();
     await julie.getByRole("button", { name: /Confirmer Emma/ }).click();
 
     // 8. Covered
@@ -114,7 +114,7 @@ test("full care coordination flow", async ({ browser }) => {
     await chloe.goto(requestUrl);
     await chloe.getByRole("button", { name: "Oui, je peux" }).click();
     await gotoStable(julie, requestUrl);
-    await julie.getByRole("button", { name: "Confirmer" }).first().click();
+    await julie.getByRole("button", { name: "Confirmer", exact: true }).first().click();
     await julie.getByRole("button", { name: /Confirmer Chloé/ }).click();
     await expect(julie.getByText("Couvert").first()).toBeVisible();
 
