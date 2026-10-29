@@ -65,12 +65,15 @@ test("full care coordination flow", async ({ browser }) => {
       await page.close();
     }
 
-    // 4. Emma declares availability (whole "Après-midi" column)
+    // 4. Emma declares availability (whole "Après-midi" column, this week and next: tomorrow may be next week)
     const emma = await emmaCtx.newPage();
     await emma.goto("/availability");
-    await emma.getByRole("button", { name: "Sélectionner tous les créneaux Après-midi" }).click();
-    await emma.getByRole("button", { name: /Dispo/ }).first().click();
-    await expect(emma.getByText(/marqués? disponibles?/)).toBeVisible();
+    for (const week of [0, 1]) {
+      if (week) await emma.getByRole("button", { name: "Semaine suivante" }).click();
+      await emma.getByRole("button", { name: /Sélectionner tous les créneaux Après-midi/ }).click();
+      await emma.getByRole("button", { name: "Dispo", exact: true }).click();
+      await expect(emma.getByText(/marqués? disponibles?/).first()).toBeVisible();
+    }
 
     // 5. Julie posts a request for Oscar tomorrow 13:00–17:00
     const tomorrow = new Date(Date.now() + 86_400_000).toLocaleDateString("sv-SE", { timeZone: "Europe/Paris" });

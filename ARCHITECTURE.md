@@ -57,6 +57,13 @@ personne sans groupe arrive sur `/circle` (y compris depuis une notification).
 pouce glissant, cartes, liste animée avec `motion`). La pastille de la barre d'onglets suit la même règle
 (`app/(app)/layout.tsx`).
 
+## Mes dispos
+
+`app/(app)/availability/page.tsx` (onglets-liens `ScreenTabs`) ; `components/availability/week-editor.tsx`
+(semaine, sélection, raccourcis, copie, besoins) ; règles pures `domain/availability-screen.ts` (`weekStarts`,
+`presetCells`, `copyPreviousWeek`, `filledCount`, `needsByDay`, `habitsSummary`) ; les besoins viennent des mêmes
+éléments que l'écran « Demandes » (`fromGroupView` / `fromInvitedView`, `needsMyAnswer`).
+
 ## Calendrier
 
 `app/(app)/calendar/page.tsx` charge le groupe sur la période (dispos comprises, `getGroupSnapshot` en mode

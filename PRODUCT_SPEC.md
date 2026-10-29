@@ -119,6 +119,15 @@ Repas, Promenade, Médicament, Déposé (prise en charge), Récupéré, Photo, N
 - Les disponibilités sont saisies une fois et partagées groupe par groupe (interrupteur, activé par défaut).
   Aucun motif d'indisponibilité n'est demandé ni affiché.
 
+### Écran « Mes dispos »
+
+Trois onglets : **Prochains jours** (une semaine à la fois sur 4 semaines, flèches ou glisser, jauge « créneaux
+renseignés », raccourcis Toute la semaine / Les soirs / Le week-end qui préparent une sélection, « Comme la semaine
+dernière » qui recopie les saisies jour par jour de la semaine précédente — les habitudes s'appliquent déjà
+d'elles-mêmes), **Habitudes** (grille hebdomadaire et résumé en clair) et **Partage** (par groupe). Un besoin du
+groupe qui attend ma réponse apparaît sur ses jours (« Aston a besoin d'aide · Répondre ») : répondre reste un geste
+séparé, une dispo n'est jamais une réponse.
+
 ### Évaluation d'une période
 
 Pour une demande donnée, chaque membre est :
