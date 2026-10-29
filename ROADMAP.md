@@ -66,7 +66,7 @@ Vision : « Toute la vie de votre animal, partagée avec les bonnes personnes »
 - Affichage des conflits d'un gardien (deux gardes simultanées)
 - Créneaux configurables par groupe dans l'interface
 - [x] Refonte du Calendrier : agenda, barres du mois, résumé, disponibles du jour (en production le 2026-10-29)
-- [ ] Refonte de Mes dispos : semaine par semaine, raccourcis, copie de semaine, besoins du groupe (implémentée et testée en local, à déployer)
+- [x] Refonte de Mes dispos : semaine par semaine, raccourcis, copie de semaine, besoins du groupe (en production le 2026-10-29)
 - Mode sombre
 - Types TypeScript générés depuis la base (`supabase gen types`)
 

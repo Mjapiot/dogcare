@@ -70,7 +70,10 @@ test("full care coordination flow", async ({ browser }) => {
     await emma.goto("/availability");
     for (const week of [0, 1]) {
       if (week) await emma.getByRole("button", { name: "Semaine suivante" }).click();
-      await emma.getByRole("button", { name: /Sélectionner tous les créneaux Après-midi/ }).click();
+      // during the slide, the old and new weeks are both on screen for a moment
+      const column = emma.getByRole("button", { name: /Sélectionner tous les créneaux Après-midi/ });
+      await expect(column).toHaveCount(1);
+      await column.click();
       await emma.getByRole("button", { name: "Dispo", exact: true }).click();
       await expect(emma.getByText(/marqués? disponibles?/).first()).toBeVisible();
     }

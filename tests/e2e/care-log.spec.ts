@@ -4,7 +4,7 @@
  * another member of the group sees nothing of it.
  */
 import { expect, test } from "@playwright/test";
-import { adminClient, cleanup, createTestUser, signIn } from "./helpers";
+import { adminClient, cleanup, createTestUser, gotoStable, signIn } from "./helpers";
 
 // 2×2 PNG
 const PNG = Buffer.from(
@@ -80,9 +80,9 @@ test("care log: helper writes during the garde, owner reads, others do not", asy
     await expect(julie.getByText("Sieste au soleil")).toBeVisible();
     await expect(julie.getByRole("img", { name: /Photo du/ })).toBeVisible();
     await expect(julie.getByText(/· Repas/)).toBeVisible();
-    await julie.goto("/");
+    await gotoStable(julie, "/");
     await expect(julie.getByText(/Aston chez Emma/)).toBeVisible();
-    await julie.goto("/notifications");
+    await gotoStable(julie, "/notifications");
     await expect(julie.getByText("Emma a pris en charge Aston")).toBeVisible();
     await expect(julie.getByText("Nouvelle photo d'Aston")).toBeVisible();
 
