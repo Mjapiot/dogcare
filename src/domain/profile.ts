@@ -5,7 +5,7 @@
 import { zonedInstant } from "./time";
 import { toLocalDate } from "./time";
 
-export type YearGarde = { assigned_user_id: string; ends_at: string; dog_id: string };
+export type YearGarde = { request_id: string; assigned_user_id: string; ends_at: string; dog_id: string };
 
 /** Start of the current year in Paris. */
 export function yearStart(now: number): number {
@@ -18,9 +18,11 @@ export function yearStats(gardes: readonly YearGarde[], me: string, myDogIds: re
     const end = new Date(g.ends_at).getTime();
     return end >= from && end <= now;
   });
+  // one garde per request, even when it was split into several slices
+  const perRequest = (list: YearGarde[]) => new Set(list.map((g) => g.request_id)).size;
   return {
-    given: done.filter((g) => g.assigned_user_id === me && !myDogIds.includes(g.dog_id)).length,
-    received: done.filter((g) => g.assigned_user_id !== me && myDogIds.includes(g.dog_id)).length,
+    given: perRequest(done.filter((g) => g.assigned_user_id === me && !myDogIds.includes(g.dog_id))),
+    received: perRequest(done.filter((g) => g.assigned_user_id !== me && myDogIds.includes(g.dog_id))),
   };
 }
 

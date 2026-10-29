@@ -177,6 +177,11 @@ planning** : l'app répartit ce qui reste entre les volontaires, il ajuste si be
   les propositions partielles sont remises à zéro et leurs auteurs prévenus.
 - Une demande terminée ne peut plus recevoir de confirmation.
 
+### Suppression d'un groupe
+
+Un administrateur supprime un groupe par la fonction dédiée : les gardes encore à venir sont d'abord annulées, et
+leurs gardiens et les responsables des chiens sont prévenus. Aucune suppression directe n'est possible.
+
 ### Départ d'un membre
 
 Si un gardien quitte le groupe, en est retiré ou supprime son compte, ses gardes à venir sont annulées
@@ -202,10 +207,12 @@ se chevaucher (contrainte en base). Plusieurs gardiens peuvent couvrir des parti
 
 Tout membre peut signaler une demande, la fiche d'un chien ou un membre de son groupe (motif facultatif) :
 le signalement est conservé pour l'équipe Dogcare et les administrateurs du groupe sont notifiés, sans le nom
-de l'auteur. Tout membre peut en bloquer un autre : aucun des deux ne voit plus les demandes de l'autre ni ne
-peut y répondre, et aucune notification ne circule entre eux. Une demande sur laquelle on a déjà une garde
-confirmée reste visible (jamais de changement silencieux). Limite connue : un membre bloqué compte toujours
-comme « sans réponse » pour les autres, ce qui peut retarder le statut « Sans solution ».
+de l'auteur. Tout membre peut en bloquer un autre : aucun des deux ne voit plus les demandes de l'autre ni ne peut y répondre,
+on ne peut plus confier de garde à quelqu'un avec qui on est bloqué, et les messages qui sollicitent (nouvelle
+demande, proposition d'aide) ne circulent plus entre eux. Les messages sur un engagement (garde confirmée, annulée,
+à reconfirmer, demande modifiée ou annulée, rappel, carnet) passent toujours : un engagement n'est jamais modifié
+en silence. Une demande sur laquelle on a déjà une garde confirmée reste visible. Limite connue : un membre bloqué
+compte toujours comme « sans réponse » pour les autres, ce qui peut retarder le statut « Sans solution ».
 
 ### Abonnement calendrier
 

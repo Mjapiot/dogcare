@@ -168,10 +168,6 @@ export async function dispatchPendingPush(): Promise<{ sent: number }> {
     if (batch.length < 100) break;
   }
 
-  // light housekeeping: old notifications and audit events
-  const { error: purgeError } = await admin.rpc("purge_old_records");
-  if (purgeError) console.error("[dogcare] purge_old_records", purgeError.code);
-  await purgeCareLogPhotos(admin);
   return { sent };
 }
 
@@ -197,6 +193,10 @@ export async function runDailyJob(): Promise<{ ok: boolean; reminders: number; s
     return { ok: false, reminders: 0, sent: 0 };
   }
   const { sent } = await dispatchPendingPush();
+  // housekeeping once a day: old notifications and audit events, care log photos
+  const { error: purgeError } = await admin.rpc("purge_old_records");
+  if (purgeError) console.error("[dogcare] purge_old_records", purgeError.code);
+  await purgeCareLogPhotos(admin);
   return { ok: true, reminders: Number(data ?? 0), sent };
 }
 

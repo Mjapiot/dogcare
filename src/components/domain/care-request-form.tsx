@@ -122,10 +122,10 @@ export function CareRequestForm({
         setError(result.error);
         return;
       }
-      const inviteError = editing ? null : (result.data as { inviteError: string | null }).inviteError;
-      if (inviteError) toast.error(`Demande publiée, mais : ${inviteError}`);
+      const { inviteError } = result.data as { inviteError: string | null };
+      if (inviteError) toast.error(`Demande ${editing ? "modifiée" : "publiée"}, mais : ${inviteError}`);
       else toast.success(editing ? "Demande modifiée" : "Demande publiée, les membres sont prévenus");
-      const id = editing ? requestId! : (result.data as { requestId: string }).requestId;
+      const id = "requestId" in result.data ? result.data.requestId : requestId!;
       router.replace(`/requests/${id}`);
       router.refresh();
     });

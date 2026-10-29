@@ -55,6 +55,14 @@ test("circle invitee: asked on a request, answers, is confirmed, removal cancels
     await page.waitForURL(/\/requests\/[0-9a-f-]{36}$/);
     const requestUrl = page.url();
     const requestId = requestUrl.split("/").pop()!;
+    // her notification has no group: its link leads to her own request page (/circle/requests/…)
+    const { data: notes } = await admin
+      .from("notifications")
+      .select("group_id")
+      .eq("user_id", sitter.id)
+      .eq("request_id", requestId)
+      .eq("notification_type", "new_request");
+    expect(notes).toEqual([{ group_id: null }]);
     await expect(page.getByText("Invité", { exact: true })).toBeVisible();
 
     // she answers from her space, without seeing the group

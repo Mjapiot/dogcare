@@ -56,12 +56,10 @@ async function fetchAllByIds<T>(
   ids: readonly string[],
   page: (chunk: string[], from: number, to: number) => PromiseLike<PageResult>,
 ): Promise<T[]> {
-  const out: T[] = [];
-  for (let i = 0; i < ids.length; i += ID_CHUNK) {
-    const chunk = ids.slice(i, i + ID_CHUNK);
-    out.push(...(await fetchAll<T>((from, to) => page(chunk, from, to))));
-  }
-  return out;
+  const chunks: string[][] = [];
+  for (let i = 0; i < ids.length; i += ID_CHUNK) chunks.push(ids.slice(i, i + ID_CHUNK));
+  // chunks are independent: fetch them in parallel
+  return (await Promise.all(chunks.map((chunk) => fetchAll<T>((from, to) => page(chunk, from, to))))).flat();
 }
 
 export const getGroupMembers = cache(async (groupId: string): Promise<MemberInfo[]> => {
@@ -98,7 +96,9 @@ export async function getGroupSnapshot(
   groupId: string,
   me: string,
   range: { from: LocalDate; to: LocalDate } | { requestIds: string[] },
+  options: { availability?: boolean } = {},
 ): Promise<GroupSnapshot> {
+  const withAvailability = options.availability ?? true;
   const supabase = await createClient();
   const [members, { dogs, caretakers }] = await Promise.all([getGroupMembers(groupId), getGroupDogs(groupId)]);
 
@@ -148,7 +148,7 @@ export async function getGroupSnapshot(
     fetchAllByIds<CareAssignmentRow>(ids, (chunk, from, to) =>
       supabase.from("care_assignments").select(ASSIGNMENT_COLUMNS).in("request_id", chunk).order("id").range(from, to),
     ),
-    minDate && maxDate
+    withAvailability && minDate && maxDate
       ? fetchAllByIds<AvailabilityEntryRow>(memberIds, (chunk, from, to) =>
           supabase
             .from("availability_entries")
@@ -162,9 +162,11 @@ export async function getGroupSnapshot(
             .range(from, to),
         )
       : Promise.resolve([] as AvailabilityEntryRow[]),
-    fetchAllByIds<AvailabilityRuleRow>(memberIds, (chunk, from, to) =>
-      supabase.from("availability_rules").select("id, user_id, weekday, slot, status").in("user_id", chunk).order("id").range(from, to),
-    ),
+    withAvailability
+      ? fetchAllByIds<AvailabilityRuleRow>(memberIds, (chunk, from, to) =>
+          supabase.from("availability_rules").select("id, user_id, weekday, slot, status").in("user_id", chunk).order("id").range(from, to),
+        )
+      : Promise.resolve([] as AvailabilityRuleRow[]),
     getRequestInvitees(ids),
   ]);
 
@@ -186,12 +188,10 @@ export async function getGroupSnapshot(
 async function getRequestInvitees(requestIds: readonly string[]): Promise<RequestInviteeRow[]> {
   if (requestIds.length === 0) return [];
   const supabase = await createClient();
-  const out: RequestInviteeRow[] = [];
-  for (let i = 0; i < requestIds.length; i += ID_CHUNK) {
-    const chunk = requestIds.slice(i, i + ID_CHUNK);
-    out.push(...must<RequestInviteeRow[]>(await supabase.rpc("request_invitees_of", { p_request_ids: chunk })));
-  }
-  return out;
+  const chunks: string[][] = [];
+  for (let i = 0; i < requestIds.length; i += ID_CHUNK) chunks.push(requestIds.slice(i, i + ID_CHUNK));
+  const results = await Promise.all(chunks.map((chunk) => supabase.rpc("request_invitees_of", { p_request_ids: chunk })));
+  return results.flatMap((r) => must<RequestInviteeRow[]>(r));
 }
 
 /** Close people and guests of my dogs in this group, who may be asked on a request. */
@@ -222,9 +222,18 @@ export async function getUpcomingRequestIds(groupId: string): Promise<string[]> 
   return rows.map((r) => r.id);
 }
 
-/** Snapshot of upcoming requests, shared by the nav badge and the Demandes screen. */
+/** Snapshot of upcoming requests, for the Demandes screen. */
 export const getUpcomingSnapshot = cache(async (groupId: string, me: string): Promise<GroupSnapshot> => {
   return getGroupSnapshot(groupId, me, { requestIds: await getUpcomingRequestIds(groupId) });
+});
+
+/**
+ * Same, without anybody's availability: enough for "waiting for my answer"
+ * (availability only tells "potential helpers" from "awaiting answers", both
+ * still to organise). Used by the nav badge on every screen.
+ */
+export const getUpcomingStatusSnapshot = cache(async (groupId: string, me: string): Promise<GroupSnapshot> => {
+  return getGroupSnapshot(groupId, me, { requestIds: await getUpcomingRequestIds(groupId) }, { availability: false });
 });
 
 export async function getMyAvailability(userId: string, from: LocalDate, to: LocalDate) {
@@ -490,13 +499,13 @@ export async function getYearGardes(
   userId: string,
   myDogIds: string[],
   sinceMs: number,
-): Promise<Array<{ assigned_user_id: string; ends_at: string; dog_id: string }>> {
+): Promise<Array<{ request_id: string; assigned_user_id: string; ends_at: string; dog_id: string }>> {
   const supabase = await createClient();
-  type Row = { id: string; assigned_user_id: string; ends_at: string; care_requests: { dog_id: string } | null };
+  type Row = { id: string; request_id: string; assigned_user_id: string; ends_at: string; care_requests: { dog_id: string } | null };
   const ended = () =>
     supabase
       .from("care_assignments")
-      .select("id, assigned_user_id, ends_at, care_requests!inner(dog_id)")
+      .select("id, request_id, assigned_user_id, ends_at, care_requests!inner(dog_id)")
       .eq("status", "confirmed")
       .gte("ends_at", new Date(sinceMs).toISOString())
       .lte("ends_at", new Date().toISOString())
@@ -511,7 +520,7 @@ export async function getYearGardes(
   for (const r of [...asRows(mine), ...(onMyDogs ? asRows(onMyDogs) : [])]) rows.set(r.id, r);
   return [...rows.values()]
     .filter((r) => r.care_requests)
-    .map((r) => ({ assigned_user_id: r.assigned_user_id, ends_at: r.ends_at, dog_id: r.care_requests!.dog_id }));
+    .map((r) => ({ request_id: r.request_id, assigned_user_id: r.assigned_user_id, ends_at: r.ends_at, dog_id: r.care_requests!.dog_id }));
 }
 
 /** Number of members of each of these groups. */

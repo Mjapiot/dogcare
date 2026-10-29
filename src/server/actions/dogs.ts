@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { todayLocal } from "@/domain/time";
 import {
   dogEmergencySchema,
   dogHabitsSchema,
@@ -41,8 +42,9 @@ export async function createDog(
   return { ok: true, data: { dogId: data as string } };
 }
 
+// today in Paris (not UTC: between midnight and 2 a.m. they differ)
 const noFutureBirthDate = (birthDate: string) =>
-  birthDate && birthDate > new Date().toISOString().slice(0, 10) ? "La date de naissance ne peut pas être dans le futur." : null;
+  birthDate && birthDate > todayLocal() ? "La date de naissance ne peut pas être dans le futur." : null;
 
 /** Updates columns of `dogs` (identity or habits); RLS lets only caretakers do it. */
 async function updateDogColumns(dogId: string, values: Record<string, string | number | boolean | null>): Promise<ActionResult> {

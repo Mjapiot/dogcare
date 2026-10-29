@@ -73,7 +73,7 @@ export async function createCareRequest(
 export async function updateCareRequest(
   requestId: string,
   input: z.input<typeof careRequestSchema>,
-): Promise<ActionResult> {
+): Promise<ActionResult<{ inviteError: string | null }>> {
   const parsed = careRequestSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message };
   if (!uuid.safeParse(requestId).success) return { ok: false, error: "Demande introuvable." };
@@ -100,8 +100,8 @@ export async function updateCareRequest(
   const inviteError = await saveInvitees(requestId, v.inviteeIds);
   schedulePushDispatch();
   revalidatePath("/", "layout");
-  if (inviteError) return { ok: false, error: `Demande modifiée, mais : ${inviteError}` };
-  return { ok: true, data: undefined };
+  // the request is saved even if asking circle people failed
+  return { ok: true, data: { inviteError } };
 }
 
 export async function cancelCareRequest(requestId: string, reason: string): Promise<ActionResult> {

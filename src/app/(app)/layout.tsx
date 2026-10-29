@@ -1,5 +1,5 @@
 import { getMyGroups, requireAppContext } from "@/server/session";
-import { getMyInvitedRequests, getUnreadCount, getUpcomingSnapshot } from "@/server/data";
+import { getMyInvitedRequests, getUnreadCount, getUpcomingStatusSnapshot } from "@/server/data";
 import { buildRequestViews, needsMyAnswer } from "@/domain/views";
 import { buildInvitedView } from "@/domain/invited";
 import { requestNow } from "@/server/clock";
@@ -12,7 +12,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
   const [groups, unread, upcoming, invited] = await Promise.all([
     getMyGroups(),
     getUnreadCount(),
-    getUpcomingSnapshot(group.id, userId),
+    getUpcomingStatusSnapshot(group.id, userId),
     getMyInvitedRequests(),
   ]);
   // same rule as the "À répondre" list: my group's requests and those of the circles I am in

@@ -2,6 +2,12 @@ import { describe, expect, it } from "vitest";
 import { buildPushPayload, urlBase64ToUint8Array } from "@/lib/push-payload";
 
 describe("buildPushPayload", () => {
+  it("links members to the group's request page, and circle invitees to theirs", () => {
+    const base = { id: "n", notification_type: "new_request" as const, title: "t", body: null, request_id: "r1" };
+    expect(buildPushPayload({ ...base, group_id: "g1" }).url).toBe("/requests/r1");
+    expect(buildPushPayload({ ...base, group_id: null }).url).toBe("/circle/requests/r1");
+  });
+
   it("links to the request and groups notifications per request", () => {
     const p = buildPushPayload({ id: "n1", notification_type: "new_volunteer", title: "Emma peut aider", body: "Toute la période", request_id: "r1" });
     expect(p).toEqual({ title: "Emma peut aider", body: "Toute la période", url: "/requests/r1", tag: "request-r1" });

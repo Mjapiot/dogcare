@@ -93,13 +93,19 @@ explications) ; entrées construites par `domain/plan-inputs.ts` (offres = « Ou
 de la photo réduite par `lib/image.ts` dans le seau `care-logs` puis `addCareLog`) et `care-log-timeline.tsx`
 (fil par jour de Paris, modification, suppression, signalement). Règles pures : `domain/care-log.ts`. Utilisée sur
 `/requests/[id]` et `/circle/requests/[id]` ; l'accueil montre les gardes en cours avec la dernière nouvelle
-(`getLatestCareNews`). La purge des photos tourne avec la distribution des push (`server/push.ts`).
+(`getLatestCareNews`). La purge des photos tourne avec la tâche quotidienne (`runDailyJob`, `server/push.ts`).
+
+## Liens des notifications
+
+`requestHref` (`lib/push-payload.ts`) : `/requests/[id]` pour un membre du groupe, `/circle/requests/[id]` quand la
+notification n'a pas de groupe (personne du cercle hors du groupe) — pour le push comme pour la cloche.
 
 ## Tâche quotidienne
 
 Vercel Cron appelle `/api/cron/daily` (`vercel.json`, 17:00 UTC) avec `CRON_SECRET` (`lib/cron.ts`, comparaison
 à temps constant ; route publique dans `proxy.ts`, protégée par ce secret). `runDailyJob` (`server/push.ts`, seul
-endroit qui utilise la clé secrète) appelle `run_daily_reminders` puis distribue les push.
+endroit qui utilise la clé secrète) appelle `run_daily_reminders`, distribue les push, puis fait le ménage (anciennes
+notifications, journal, photos du carnet) — plus après chaque action.
 
 ## Notifications push
 
@@ -109,7 +115,7 @@ endroit qui utilise la clé secrète) appelle `run_daily_reminders` puis distrib
    (VAPID) ou APNs à chaque appareil du destinataire. Les décisions sont pures et testées (`src/lib/push-delivery.ts`) :
    une notification sans aucun appareil atteint à cause d'une erreur temporaire est remise en file
    (`release_push_batch`, 5 essais max), un appareil n'est oublié qu'après 5 échecs consécutifs (jamais pour
-   une erreur de configuration serveur). Chaque passage purge aussi les données anciennes.
+   une erreur de configuration serveur). La purge des données anciennes tourne une fois par jour, avec la tâche quotidienne.
 3. Le service worker affiche la notification ; la toucher ouvre la demande concernée.
 
 Sur iPhone, les push exigent l'app installée sur l'écran d'accueil (iOS 16.4+) et une autorisation

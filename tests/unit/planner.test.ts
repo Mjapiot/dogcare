@@ -121,3 +121,26 @@ describe("proposePlan", () => {
     expect(proposePlan(input)).toEqual(proposePlan(input));
   });
 });
+
+describe("proposePlan with gardes already confirmed", () => {
+  it("counts a helper's confirmed nights in their run of consecutive nights", () => {
+    // Emma already has Monday 9 → Thursday 12 at 10:00 (3 nights) and offered the whole week
+    const taken = [{ start: at(9, "09:00"), end: at(12, "10:00"), userId: "emma" }];
+    const p = proposePlan({ period, taken, offers: [offer("emma", period.start, period.end)] });
+    // she cannot take the next night: the plan leaves it to cover
+    expect(p.slices[0]).toMatchObject({ userId: "emma", start: at(12, "10:00"), end: at(12, "20:00") });
+    expect(p.holes[0]).toMatchObject({ start: at(12, "20:00"), end: at(13, "10:00") });
+  });
+
+  it("does not hand someone the nights just before their next confirmed garde beyond the limit", () => {
+    // Léa holds Thursday 12 → Sunday 15 (3 nights); before it, the plan must not add another night of hers
+    const taken = [{ start: at(12, "18:00"), end: at(15, "18:00"), userId: "lea" }];
+    const p = proposePlan({ period: { start: at(11, "09:00"), end: at(15, "18:00") }, taken, offers: [offer("lea", at(11, "09:00"), at(12, "18:00"))] });
+    // her evening of the 11th, then the night is left to cover, then her afternoon of the 12th (not a night)
+    expect(p.slices.map((x) => [x.userId, x.start, x.end])).toEqual([
+      ["lea", at(11, "09:00"), at(11, "20:00")],
+      ["lea", at(12, "10:00"), at(12, "18:00")],
+    ]);
+    expect(p.holes[0]).toMatchObject({ start: at(11, "20:00"), end: at(12, "10:00") });
+  });
+});

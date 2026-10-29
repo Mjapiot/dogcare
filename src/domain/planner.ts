@@ -93,8 +93,8 @@ type Candidate = { offer: PlanOffer; reach: number; capped: boolean };
 
 export function proposePlan(input: {
   period: Interval;
-  /** Live assignments already on the request (never moved). */
-  taken: readonly Interval[];
+  /** Live assignments already on the request (never moved), with their helper when known. */
+  taken: ReadonlyArray<Interval & { userId?: string }>;
   offers: readonly PlanOffer[];
   rules?: PlanRules;
 }): Plan {
@@ -108,8 +108,18 @@ export function proposePlan(input: {
     }),
   );
   const assignedMs = new Map<string, number>();
-  // per person: index of the last night they hold and the current run
-  const streak = new Map<string, { last: number; count: number }>();
+  // who holds each night: gardes already confirmed, then the slices given by the plan
+  const holder: Array<string | undefined> = anchors.map((a) => input.taken.find((t) => t.userId && t.start <= a && a < t.end)?.userId);
+  const runBefore = (userId: string, idx: number) => {
+    let n = 0;
+    for (let i = idx - 1; i >= 0 && holder[i] === userId; i--) n++;
+    return n;
+  };
+  const runAfter = (userId: string, idx: number) => {
+    let n = 0;
+    for (let i = idx + 1; i < anchors.length && holder[i] === userId; i++) n++;
+    return n;
+  };
   const slices: PlanSlice[] = [];
   const holes: PlanHole[] = [];
 
@@ -123,9 +133,12 @@ export function proposePlan(input: {
       let capped = false;
       const inRange = anchors.map((a, idx) => ({ a, idx })).filter(({ a }) => a >= t && a < reach);
       if (inRange.length) {
-        const s = streak.get(o.userId);
-        const base = s && s.last === inRange[0].idx - 1 ? s.count : 0;
-        const allowed = rules.maxConsecutiveNights - base;
+        // nights already held just before, and confirmed ones right after, extend the run
+        const base = runBefore(o.userId, inRange[0].idx);
+        let allowed = rules.maxConsecutiveNights - base;
+        if (inRange.length <= allowed && base + inRange.length + runAfter(o.userId, inRange.at(-1)!.idx) > rules.maxConsecutiveNights) {
+          allowed = inRange.length - 1; // leave the night before their next garde to someone else
+        }
         if (inRange.length > allowed) {
           capped = true;
           reach = allowed > 0 ? Math.min(reach, morningAfter(inRange[allowed - 1].a)) : Math.min(reach, eveningBefore(inRange[0].a));
@@ -178,9 +191,7 @@ export function proposePlan(input: {
       else slices.push({ userId: best.offer.userId, name: best.offer.name, start: t, end: best.reach, reason });
       assignedMs.set(best.offer.userId, (assignedMs.get(best.offer.userId) ?? 0) + (best.reach - t));
       anchors.forEach((a, idx) => {
-        if (a < t || a >= best.reach) return;
-        const s = streak.get(best.offer.userId);
-        streak.set(best.offer.userId, { last: idx, count: s && s.last === idx - 1 ? s.count + 1 : 1 });
+        if (a >= t && a < best.reach) holder[idx] = best.offer.userId;
       });
       t = best.reach;
     }

@@ -59,9 +59,10 @@ beforeAll(async () => {
 });
 
 describe("C1 — deleting groups and accounts that have requests", () => {
-  it("an admin can delete a group that has requests", async () => {
+  it("an admin can delete a group that has requests (through delete_group only)", async () => {
     const s = await scenario(1);
-    await asUser(db, s.owner, (tx) => tx.query("delete from groups where id = $1", [s.groupId]));
+    await expect(asUser(db, s.owner, (tx) => tx.query("delete from groups where id = $1", [s.groupId]))).rejects.toThrow(/permission denied/);
+    await asUser(db, s.owner, (tx) => tx.query("select public.delete_group($1)", [s.groupId]));
     expect(await rows(db, "select id from care_requests where group_id = $1", [s.groupId])).toEqual([]);
   });
 

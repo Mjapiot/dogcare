@@ -10,7 +10,12 @@ describe("this year", () => {
   });
 
   it("counts gardes I gave and gardes my dogs received, ended this year only", () => {
-    const g = (assigned: string, dog: string, ends: string) => ({ assigned_user_id: assigned, dog_id: dog, ends_at: new Date(zonedInstant(ends, "18:00")).toISOString() });
+    const g = (assigned: string, dog: string, ends: string, request = `r-${assigned}-${ends}`) => ({
+      request_id: request,
+      assigned_user_id: assigned,
+      dog_id: dog,
+      ends_at: new Date(zonedInstant(ends, "18:00")).toISOString(),
+    });
     const gardes = [
       g("me", "friend-dog", "2026-03-02"),
       g("me", "friend-dog", "2026-10-30"),
@@ -18,6 +23,7 @@ describe("this year", () => {
       g("me", "friend-dog", "2025-12-31"), // last year
       g("me", "friend-dog", "2026-11-20"), // not over yet
       g("me", "my-dog", "2026-05-05"), // my own dog: neither given nor received
+      g("me", "friend-dog", "2026-03-03", "r-me-2026-03-02"), // second slice of the same garde
     ];
     expect(yearStats(gardes, "me", ["my-dog"], NOW)).toEqual({ given: 2, received: 1 });
   });

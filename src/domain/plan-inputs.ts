@@ -44,9 +44,9 @@ export function planRules(dog: { plan_max_nights?: number; plan_min_slice_hours?
   };
 }
 
-/** Live assignments already on the request (never moved by the plan). */
-export function takenIntervals(view: RequestView): Interval[] {
-  return view.assignments.map((a) => toInterval(a.starts_at, a.ends_at));
+/** Live assignments already on the request (never moved by the plan), with their helper. */
+export function takenIntervals(view: RequestView): Array<Interval & { userId: string }> {
+  return view.assignments.map((a) => ({ ...toInterval(a.starts_at, a.ends_at), userId: a.assigned_user_id }));
 }
 
 /**

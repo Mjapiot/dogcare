@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { EmptyState, PageTitle } from "@/components/ui/kit";
 import { MarkAllRead } from "@/components/app/mark-all-read";
 import type { NotificationType } from "@/lib/types";
+import { requestHref } from "@/lib/push-payload";
 
 export const metadata: Metadata = { title: "Notifications" };
 
@@ -58,7 +59,7 @@ export default async function NotificationsPage() {
             );
             return (
               <li key={n.id}>
-                {n.request_id ? <Link href={`/requests/${n.request_id}`}>{inner}</Link> : inner}
+                {n.request_id ? <Link href={requestHref(n.request_id, n.group_id)}>{inner}</Link> : inner}
               </li>
             );
           })}
