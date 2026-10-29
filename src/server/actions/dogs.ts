@@ -9,6 +9,7 @@ import {
   dogHealthSchema,
   dogIdentitySchema,
   dogSchema,
+  planningRulesSchema,
   shareLinkSchema,
   uuid,
 } from "@/lib/validation";
@@ -83,6 +84,12 @@ export async function updateDogHabits(dogId: string, input: z.input<typeof dogHa
     behavior: v.behavior || null,
     care_notes: v.careNotes || null,
   });
+}
+
+export async function updatePlanningRules(dogId: string, input: z.input<typeof planningRulesSchema>): Promise<ActionResult> {
+  const parsed = planningRulesSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "Réglages invalides." };
+  return updateDogColumns(dogId, { plan_max_nights: parsed.data.maxNights, plan_min_slice_hours: parsed.data.minSliceHours });
 }
 
 export async function saveDogHealth(dogId: string, input: z.input<typeof dogHealthSchema>): Promise<ActionResult> {

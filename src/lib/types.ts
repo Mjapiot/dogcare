@@ -69,6 +69,9 @@ export type DogRow = {
   walks: string | null;
   sleep: string | null;
   behavior: string | null;
+  /** Planning rules: maximum consecutive nights per helper, minimum slice (hours). */
+  plan_max_nights: number;
+  plan_min_slice_hours: number;
   created_by: string | null;
   archived_at: string | null;
 };

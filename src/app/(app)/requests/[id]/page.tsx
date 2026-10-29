@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, HeartHandshake, Info, Users } from "lucide-react";
 import { getMyGroups, requireAppContext } from "@/server/session";
-import { getGroupSnapshot, getRequestGroupId, signDogPhotos } from "@/server/data";
+import { getBusyAssignments, getGroupSnapshot, getRequestGroupId, signDogPhotos } from "@/server/data";
 import { buildRequestViews } from "@/domain/views";
 import { NECESSITY_LABELS, REQUEST_TYPE_LABELS } from "@/domain/status";
 import { formatDuration, formatPeriod } from "@/lib/format";
@@ -16,6 +16,9 @@ import { HelperList } from "@/components/domain/helper-list";
 import { OwnerActions } from "@/components/domain/owner-actions";
 import { ReportButton } from "@/components/domain/report-button";
 import { CareLogSection } from "@/components/care-log/care-log-section";
+import { PlanCard } from "@/components/planning/plan-card";
+import { canPlan, holeSuggestions, planOffers, planRules, takenIntervals } from "@/domain/plan-inputs";
+import { proposePlan } from "@/domain/planner";
 import { uuid } from "@/lib/validation";
 import { requestNow } from "@/server/clock";
 
@@ -33,7 +36,23 @@ export default async function RequestDetailPage({ params }: PageProps<"/requests
   const snapshot = await getGroupSnapshot(groupId, userId, { requestIds: [id] });
   const view = buildRequestViews(snapshot, requestNow())[0];
   if (!view) notFound();
-  const photos = await signDogPhotos(view.dog ? [view.dog] : []);
+  const now = requestNow();
+  const planning = canPlan(view, now);
+  const yesIds = view.helpers.filter((h) => h.response === "yes").map((h) => h.userId);
+  const [photos, busy] = await Promise.all([
+    signDogPhotos(view.dog ? [view.dog] : []),
+    planning ? getBusyAssignments(yesIds, view.period, id) : Promise.resolve([]),
+  ]);
+  // planning engine: same inputs on the server (suggestions for holes) and in the card
+  const plan = planning
+    ? (() => {
+        const offers = planOffers(view, snapshot, busy);
+        const rules = planRules(view.dog);
+        const taken = takenIntervals(view);
+        const holes = proposePlan({ period: view.period, taken, offers, rules }).holes;
+        return { offers, rules, taken, suggestions: holeSuggestions(holes, view, snapshot) };
+      })()
+    : null;
   const r = view.request;
   const cancelled = r.lifecycle_status === "cancelled";
   const { counts } = view.status;
@@ -145,6 +164,19 @@ export default async function RequestDetailPage({ params }: PageProps<"/requests
             }
           />
         </section>
+      )}
+
+      {plan && (
+        <PlanCard
+          key={`${r.revision}-${view.assignments.length}-${plan.offers.map((o) => `${o.userId}:${o.offer.start}-${o.offer.end}`).join(",")}`}
+          requestId={r.id}
+          dogName={view.dog?.name ?? "mon chien"}
+          period={view.period}
+          taken={plan.taken}
+          offers={plan.offers}
+          rules={plan.rules}
+          suggestions={plan.suggestions}
+        />
       )}
 
       {r.necessity !== "info" && (

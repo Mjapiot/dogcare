@@ -55,7 +55,9 @@ Vision : « Toute la vie de votre animal, partagée avec les bonnes personnes »
    - [x] Invités : répondre aux demandes et être confirmés sur les gardes du chien (en production le 2026-10-28)
    - [x] Notifications liées au cercle (en production le 2026-10-28)
 3. [x] Carnet de garde (repas, promenade, médicament, dépôt/récupération, photo ou commentaire) — en production le 2026-10-28
-4. [ ] Moteur de planning sous contraintes (nuits max, lieux, incompatibilités) avec proposition à valider
+4. [ ] Moteur de planning sous contraintes avec proposition à valider
+   - [ ] Une demande à la fois : nuits d'affilée max, tranche minimale, conflits, confirmation tout ou rien (implémenté et testé en local, à déployer)
+   - [ ] Plusieurs demandes ou chiens à la fois ; lieux et incompatibilités entre chiens
 5. [ ] Routines (désactivées par défaut)
 - Passeport sans groupe (entrée « passeport d'abord » dans l'onboarding)
 

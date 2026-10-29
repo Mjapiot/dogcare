@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import { careRequestSchema, responseSchema, uuid } from "@/lib/validation";
+import { careRequestSchema, planSliceSchema, responseSchema, uuid } from "@/lib/validation";
 import { zonedInstant } from "@/domain/time";
 import { requireUserId } from "@/server/session";
 import { toUserMessage } from "@/server/errors";
@@ -197,4 +197,21 @@ export async function answerReconfirmation(assignmentId: string, accept: boolean
   schedulePushDispatch();
   revalidatePath("/", "layout");
   return { ok: true, data: undefined };
+}
+
+/** Confirms a validated plan: every slice at once, or none (the database checks each one). */
+export async function confirmPlan(requestId: string, slices: z.input<typeof planSliceSchema>[]): Promise<ActionResult<{ count: number }>> {
+  if (!uuid.safeParse(requestId).success) return { ok: false, error: "Demande introuvable." };
+  const parsed = z.array(planSliceSchema).min(1).max(50).safeParse(slices);
+  if (!parsed.success) return { ok: false, error: "Planning invalide." };
+  await requireUserId();
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("confirm_plan", {
+    p_request_id: requestId,
+    p_slices: parsed.data.map((s) => ({ user_id: s.userId, starts_at: s.start, ends_at: s.end })),
+  });
+  if (error) return { ok: false, error: toUserMessage(error) };
+  schedulePushDispatch();
+  revalidatePath("/", "layout");
+  return { ok: true, data: { count: Number(data ?? 0) } };
 }

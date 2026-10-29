@@ -57,6 +57,15 @@ personne sans groupe arrive sur `/circle` (y compris depuis une notification).
 pouce glissant, cartes, liste animée avec `motion`). La pastille de la barre d'onglets suit la même règle
 (`app/(app)/layout.tsx`).
 
+## Moteur de planning
+
+Calcul pur et déterministe dans `domain/planner.ts` (`proposePlan` : glouton « va le plus loin » pour minimiser
+les relais, nuits d'affilée plafonnées avec repère à 01:00 heure de Paris, absorption des tranches courtes,
+explications) ; entrées construites par `domain/plan-inputs.ts` (offres = « Oui » moins les autres gardes via
+`getBusyAssignments`, réglages du chien, suggestions pour les trous d'après les dispos). Carte
+`components/planning/plan-card.tsx` (frise, ajustement, confirmation par `confirmPlan` → `confirm_plan`) sur
+`/requests/[id]` ; réglages `components/planning/planning-rules.tsx` sur la fiche du chien.
+
 ## Carnet de garde
 
 `components/care-log/care-log-section.tsx` (serveur) charge le carnet d'une demande (`getCareLog`, photos signées

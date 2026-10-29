@@ -30,7 +30,7 @@ const REQUEST_COLUMNS =
 const ASSIGNMENT_COLUMNS =
   "id, request_id, assigned_user_id, starts_at, ends_at, status, confirmed_by, confirmed_at, cancelled_at, cancellation_reason, previous_starts_at, previous_ends_at";
 const DOG_COLUMNS =
-  "id, name, breed, birth_date, photo_path, care_notes, sex, sterilized, weight_kg, identification, distinctive_marks, meals, walks, sleep, behavior, created_by, archived_at";
+  "id, name, breed, birth_date, photo_path, care_notes, sex, sterilized, weight_kg, identification, distinctive_marks, meals, walks, sleep, behavior, plan_max_nights, plan_min_slice_hours, created_by, archived_at";
 
 function must<T>(result: { data: T | null; error: unknown }): T {
   if (result.error) throw result.error;
@@ -457,4 +457,25 @@ export async function getLatestCareNews(assignmentIds: string[]): Promise<Record
   const out: Record<string, CareLogEntryRow> = {};
   for (const e of entries) out[e.assignment_id] ??= e;
   return out;
+}
+
+/** Live gardes of these people that overlap a period, on other requests I can see (planning conflicts). */
+export async function getBusyAssignments(
+  userIds: string[],
+  period: { start: number; end: number },
+  excludeRequestId: string,
+): Promise<Array<Pick<CareAssignmentRow, "assigned_user_id" | "starts_at" | "ends_at">>> {
+  if (userIds.length === 0) return [];
+  const supabase = await createClient();
+  return must(
+    await supabase
+      .from("care_assignments")
+      .select("assigned_user_id, starts_at, ends_at")
+      .in("assigned_user_id", userIds.slice(0, ID_CHUNK))
+      .neq("request_id", excludeRequestId)
+      .neq("status", "cancelled")
+      .lt("starts_at", new Date(period.end).toISOString())
+      .gt("ends_at", new Date(period.start).toISOString())
+      .limit(500),
+  );
 }

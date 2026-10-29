@@ -27,6 +27,7 @@ import { EmergencyEditor, HabitsEditor, HealthEditor, IdentityEditor } from "@/c
 import { PassportShare } from "@/components/dogs/passport-share";
 import { CircleCard } from "@/components/dogs/circle-card";
 import { LeaveCircleButton } from "@/components/dogs/leave-circle-button";
+import { PlanningRules } from "@/components/planning/planning-rules";
 import { Rise, Stagger } from "@/components/ui/motion";
 
 export const metadata: Metadata = { title: "Passeport" };
@@ -207,6 +208,12 @@ export default async function DogPage({ params }: PageProps<"/dogs/[id]">) {
       {editable && (
         <Rise>
           <CircleCard dogId={dog.id} dogName={dog.name} origin={origin} me={userId} members={circle} invitations={invitations} />
+        </Rise>
+      )}
+
+      {editable && (
+        <Rise>
+          <PlanningRules dogId={dog.id} maxNights={dog.plan_max_nights} minSliceHours={dog.plan_min_slice_hours} />
         </Rise>
       )}
 

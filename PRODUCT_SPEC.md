@@ -140,6 +140,21 @@ garde en cours avec un accès au carnet, puis les suivantes) et **Mes demandes**
 « 2 oui · 1 non · 3 sans réponse », « Relancer » s'il manque des réponses). Les demandes des cercles où l'on est
 sollicité y figurent avec un badge « Cercle d'Aston » et comptent dans la pastille de l'onglet.
 
+### Proposition de planning
+
+Sur une demande partageable qui a des trous et au moins un « Oui », le responsable voit une **proposition de
+planning** : l'app répartit ce qui reste entre les volontaires, il ajuste si besoin et **confirme tout d'un coup**
+(toutes les tranches ou aucune, chaque gardien prévenu).
+
+- Une tranche ne va qu'à quelqu'un dont le « Oui » la couvre, et jamais pendant une autre de ses gardes.
+- Jamais plus de N nuits d'affilée par gardien (réglage du chien, 3 par défaut ; « Ajuster » permet de passer
+  outre, avec un avertissement).
+- Ordre de priorité : couvrir le plus possible, le moins de relais, la répartition la plus équitable, puis qui a
+  répondu en premier. Les tranches plus courtes que le minimum (réglage du chien, 3 h) sont données à un voisin
+  quand c'est possible. Chaque tranche et chaque trou est expliqué.
+- Pour un trou, les membres sans réponse qui se sont déclarés disponibles sont suggérés ; « Relancer » passe par
+  la feuille de partage.
+
 ### Modification et annulation (jamais silencieuses)
 
 - Annulation de la demande : les gardes confirmées sont annulées, gardiens et volontaires prévenus.

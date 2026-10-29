@@ -148,6 +148,17 @@ export const responseSchema = z.object({
   note: z.string().trim().max(500).optional().default(""),
 });
 
+export const planningRulesSchema = z.object({
+  maxNights: z.number().int().min(1).max(14),
+  minSliceHours: z.number().int().min(1).max(12),
+});
+
+export const planSliceSchema = z.object({
+  userId: uuid,
+  start: z.iso.datetime({ offset: true }),
+  end: z.iso.datetime({ offset: true }),
+});
+
 export const careLogKindSchema = z.enum(["meal", "walk", "medication", "drop_off", "pick_up", "photo", "note"]);
 
 export const careLogSchema = z.object({

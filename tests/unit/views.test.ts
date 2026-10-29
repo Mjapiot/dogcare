@@ -61,7 +61,7 @@ function snapshot(over: Partial<GroupSnapshot> = {}): GroupSnapshot {
       joined_at: "",
       display_name: u,
     })),
-    dogs: [{ id: "oscar", name: "Oscar", breed: null, birth_date: null, photo_path: null, care_notes: null, sex: null, sterilized: null, weight_kg: null, identification: null, distinctive_marks: null, meals: null, walks: null, sleep: null, behavior: null, created_by: "julie", archived_at: null }],
+    dogs: [{ id: "oscar", name: "Oscar", breed: null, birth_date: null, photo_path: null, care_notes: null, sex: null, sterilized: null, weight_kg: null, identification: null, distinctive_marks: null, meals: null, walks: null, sleep: null, behavior: null, plan_max_nights: 3, plan_min_slice_hours: 3, created_by: "julie", archived_at: null }],
     caretakers: [{ dog_id: "oscar", user_id: "julie", role: "owner" }],
     requests: [request("r1")],
     responses: [],
