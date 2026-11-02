@@ -37,7 +37,8 @@ test("passport without a group, then shared with a new group", async ({ browser 
     await expect(page.getByText("Poulet")).toBeVisible({ timeout: 15_000 });
     await page.getByRole("button", { name: "Créer un lien" }).click();
     await page.getByRole("button", { name: "Créer et partager" }).click();
-    await expect(page.locator("p[title*='/p/']")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("dialog").getByText(/\/p\//)).toBeVisible({ timeout: 15_000 });
+    await page.getByRole("button", { name: "Terminé" }).click();
     // no planning without a group, but a way to start one
     await expect(page.getByRole("link", { name: /Planifier une absence/ })).toHaveCount(0);
     await expect(page.getByRole("link", { name: /Organiser des gardes entre amis/ })).toBeVisible();
