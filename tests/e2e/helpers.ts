@@ -44,5 +44,7 @@ export async function signIn(context: BrowserContext, admin: SupabaseClient, ema
 /** Removes everything created by a test run (groups first, then users). */
 export async function cleanup(admin: SupabaseClient, userIds: string[], groupIds: string[]) {
   if (groupIds.length) await admin.from("groups").delete().in("id", groupIds);
+  // dogs outlive their creator's account (archived, without caretaker): remove the test users' dogs too
+  if (userIds.length) await admin.from("dogs").delete().in("created_by", userIds);
   for (const id of userIds) await admin.auth.admin.deleteUser(id);
 }
