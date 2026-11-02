@@ -16,6 +16,8 @@ export type RequestStatus =
   | "partially_covered"
   | "confirmed"
   | "uncovered"
+  /** Nobody can be asked (no other member, all blocked): not "everyone said no". */
+  | "nobody_to_ask"
   | "cancelled";
 
 /** Visual tone used by the calendar. Never conveyed by color alone. */
@@ -89,6 +91,7 @@ export function computeRequestStatus(input: StatusInput): StatusResult {
   else if (input.coverage.state === "full") status = "confirmed";
   else if (input.coverage.state === "partial") status = "partially_covered";
   else if (volunteersForGaps.length > 0) status = "volunteer_found";
+  else if (eligible.size === 0) status = "nobody_to_ask";
   // Only explicit refusals count: silence is never a "no".
   else if (pendingIds.length === 0) status = "uncovered";
   else if (pendingPotentiallyAvailable > 0) status = "potential_helpers";
@@ -106,6 +109,7 @@ export function statusTone(status: RequestStatus, necessity: NecessityLevel): St
     case "cancelled":
       return "none";
     case "uncovered":
+    case "nobody_to_ask":
       return necessity === "required" ? "uncovered" : "muted";
     case "partially_covered":
       return necessity === "required" ? "partial" : "pending";
@@ -129,7 +133,8 @@ export function needsOrganizing(status: RequestStatus): boolean {
     status === "potential_helpers" ||
     status === "volunteer_found" ||
     status === "partially_covered" ||
-    status === "uncovered"
+    status === "uncovered" ||
+    status === "nobody_to_ask"
   );
 }
 
@@ -141,6 +146,7 @@ export const STATUS_LABELS: Record<RequestStatus, string> = {
   partially_covered: "Partiellement couvert",
   confirmed: "Couvert",
   uncovered: "Sans solution",
+  nobody_to_ask: "Personne à solliciter",
   cancelled: "Annulée",
 };
 

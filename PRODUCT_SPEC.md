@@ -161,7 +161,8 @@ planning** : l'app répartit ce qui reste entre les volontaires, il ajuste si be
 
 - Une tranche ne va qu'à quelqu'un dont le « Oui » la couvre, et jamais pendant une autre de ses gardes.
 - Jamais plus de N nuits d'affilée par gardien (réglage du chien, 3 par défaut ; « Ajuster » permet de passer
-  outre, avec un avertissement).
+  outre, avec un avertissement). Ce plafond est volontairement un conseil, pas un verrou en base : le responsable
+  garde le dernier mot. Les réglages eux-mêmes sont bornés en base (1–14 nuits, 1–12 h).
 - Ordre de priorité : couvrir le plus possible, le moins de relais, la répartition la plus équitable, puis qui a
   répondu en premier. Les tranches plus courtes que le minimum (réglage du chien, 3 h) sont données à un voisin
   quand c'est possible. Chaque tranche et chaque trou est expliqué.
@@ -224,6 +225,8 @@ leurs gardiens et les responsables des chiens sont prévenus. Aucune suppression
 
 Si un gardien quitte le groupe, en est retiré ou supprime son compte, ses gardes à venir sont annulées
 et le propriétaire est prévenu : le jour redevient « à organiser » au lieu de rester faussement couvert.
+Si le dernier responsable d'un chien supprime son compte, les besoins à venir du chien sont annulés : gardiens et
+volontaires sont prévenus, et le chien est archivé.
 
 ## Réponses
 
@@ -304,6 +307,7 @@ thème.
 | Vert sauge — Couvert | garde(s) confirmée(s) sur toute la période |
 | Abricot — À organiser | en attente de réponses ou de confirmation |
 | Rose-rouge — Sans solution | besoin indispensable, tout le monde a dit non |
+| Rose-rouge — Personne à solliciter | besoin indispensable, personne d'autre ne peut être sollicité (aucun autre membre, ou tous bloqués) : invitez quelqu'un ou demandez à votre cercle |
 | Rose-rouge hachuré — Partiellement couvert | une partie d'un besoin indispensable reste sans gardien |
 | Lavande — Information | chien seul, pour information |
 | Gris — Aucun besoin / sans réponse positive (besoin non indispensable) | |

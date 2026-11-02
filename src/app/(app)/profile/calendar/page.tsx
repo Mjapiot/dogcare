@@ -16,7 +16,8 @@ export default async function CalendarFeedPage() {
     <div className="flex flex-col gap-5 pt-2">
       <BackToProfile />
       <PageTitle title="Mon calendrier" subtitle="Vos gardes confirmées dans le Calendrier de votre iPhone, mises à jour automatiquement." />
-      <CalendarFeed origin={origin} initialToken={token} />
+      {/* a link renewed or turned off on another device replaces this one */}
+      <CalendarFeed key={token ?? "off"} origin={origin} initialToken={token} />
     </div>
   );
 }

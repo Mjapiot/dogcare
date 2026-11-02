@@ -45,5 +45,7 @@ describe("timeline", () => {
   it("gives the latest news", () => {
     expect(latestCareNews(entries)?.id).toBe("c");
     expect(latestCareNews([])).toBeNull();
+    // instants are compared, not their text (08:00+02:00 is 06:00Z, before 07:30Z)
+    expect(latestCareNews([{ id: "z", occurred_at: "2026-11-10T07:30:00.000Z" }, { id: "p", occurred_at: "2026-11-10T08:00:00+02:00" }])?.id).toBe("z");
   });
 });

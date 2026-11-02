@@ -42,5 +42,6 @@ export const STATUS_ICONS: Record<RequestStatus, LucideIcon> = {
   partially_covered: CircleDashed,
   confirmed: CircleCheck,
   uncovered: CircleAlert,
+  nobody_to_ask: CircleAlert,
   cancelled: XCircle,
 };

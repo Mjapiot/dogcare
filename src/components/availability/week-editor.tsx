@@ -29,6 +29,16 @@ import { SlotCellFace, STATUS_TEXT } from "./slot-cell";
 const EASE = [0.32, 0.72, 0, 1] as const;
 
 /**
+ * Slide in from the side of the move. The exiting view reads the direction
+ * from AnimatePresence's `custom` (its own props are stale once it leaves).
+ */
+const SLIDE = {
+  enter: (d: number) => ({ opacity: 0, x: d * 48 }),
+  center: { opacity: 1, x: 0 },
+  exit: (d: number) => ({ opacity: 0, x: d * -48 }),
+};
+
+/**
  * "Prochains jours", one week at a time: quick selections, copying last week,
  * the filled gauge and the group's needs on my days. Selected cells get a
  * state from the floating bar. Never an engagement.
@@ -199,9 +209,11 @@ export function WeekEditor({
         <AnimatePresence mode="popLayout" initial={false} custom={direction}>
           <motion.div
             key={monday}
-            initial={{ opacity: 0, x: direction * 48 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: direction * -48 }}
+            custom={direction}
+            variants={SLIDE}
+            initial="enter"
+            animate="center"
+            exit="exit"
             transition={{ duration: 0.35, ease: EASE }}
             drag="x"
             dragSnapToOrigin
@@ -225,7 +237,7 @@ export function WeekEditor({
                   aria-label={`Sélectionner tous les créneaux ${SLOTS[slot].label} de la semaine`}
                 >
                   <span className="text-[12px] font-semibold text-ink">{SLOTS[slot].label}</span>
-                  <span className="text-[10px] text-ink-3 tabular">
+                  <span className="text-[12px] leading-tight text-ink-3 tabular">
                     {SLOTS[slot].start.replace(":00", "h")}–{SLOTS[slot].end.replace(":00", "h")}
                   </span>
                 </button>

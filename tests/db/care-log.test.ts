@@ -157,6 +157,18 @@ describe("photos and notifications", () => {
     await expect(add(s.helper, s.assignmentId, "photo", null, null, `${s.assignmentId}/p2.webp`)).rejects.toThrow(/Photo introuvable/);
   });
 
+  it("photos: at most 30 files per garde, and a file still in the log cannot be deleted", async () => {
+    const s = await scenario();
+    for (let i = 0; i < 30; i++) await upload(s.helper, `${s.assignmentId}/n${i}.webp`);
+    await expect(upload(s.helper, `${s.assignmentId}/n30.webp`)).rejects.toThrow(/row-level security/);
+    await add(s.helper, s.assignmentId, "photo", null, null, `${s.assignmentId}/n0.webp`);
+    const remove = (name: string) =>
+      asUser(db, s.helper, (tx) => rows(tx, "delete from storage.objects where bucket_id = 'care-logs' and name = $1 returning name", [name]));
+    // RLS hides the row from the delete: nothing is removed
+    expect(await remove(`${s.assignmentId}/n0.webp`)).toEqual([]);
+    expect(await remove(`${s.assignmentId}/n1.webp`)).toHaveLength(1);
+  });
+
   it("photos are purged 90 days after the garde (text kept), and orphan files after a day", async () => {
     const s = await scenario();
     await upload(s.helper, `${s.assignmentId}/old.webp`);

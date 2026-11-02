@@ -19,7 +19,8 @@ export function AnimatedList({ items, className }: { items: Array<{ key: string;
             layout
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, x: -32, transition: { duration: 0.25, ease: EASE } }}
+            // a leaving card can no longer be tapped
+            exit={{ opacity: 0, x: -32, pointerEvents: "none", transition: { duration: 0.25, ease: EASE } }}
             transition={{ duration: 0.4, ease: EASE }}
           >
             {i.node}

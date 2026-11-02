@@ -14,11 +14,13 @@ import { STATUS_ICONS, TONE_CLASSES } from "@/components/domain/tone";
 /** A day: its needs, who declared themselves available (slot by slot), and adding a need. */
 export function DaySheet({
   date,
+  open,
   items,
   available,
   onClose,
 }: {
   date: LocalDate | null;
+  open: boolean;
   items: CalItem[];
   available: Record<SlotKey, string[]> | undefined;
   onClose: () => void;
@@ -26,7 +28,7 @@ export function DaySheet({
   const dayItems = date ? items.filter((i) => toLocalDate(i.start) <= date && date <= toLocalDate(i.end - 1)) : [];
   const slots = available ? SLOT_KEYS.filter((k) => available[k].length > 0) : [];
   return (
-    <Sheet open={date !== null} onOpenChange={(o) => !o && onClose()}>
+    <Sheet open={open && date !== null} onOpenChange={(o) => !o && onClose()}>
       <SheetContent side="bottom" className="max-h-[88dvh] overflow-y-auto rounded-t-[28px] border-0 pb-safe">
         {date && (
           <>

@@ -80,6 +80,17 @@ describe("C1 — deleting groups and accounts that have requests", () => {
     expect(await rows(db, "select id from auth.users where id = $1", [s.owner])).toEqual([]);
   });
 
+  it("when the last caretaker deletes their account, the dog's needs ahead are cancelled and helpers told", async () => {
+    const s = await scenario(1);
+    const [emma] = s.helpers;
+    await confirmHelper(s, emma);
+    await asUser(db, s.owner, (tx) => tx.query("select public.delete_my_account()"));
+    expect(await rows(db, "select lifecycle_status from care_requests where id = $1", [s.requestId])).toEqual([{ lifecycle_status: "cancelled" }]);
+    expect(await rows(db, "select id from care_assignments where request_id = $1 and status <> 'cancelled'", [s.requestId])).toEqual([]);
+    const told = await rows<{ notification_type: string }>(db, "select notification_type from notifications where user_id = $1 and request_id = $2", [emma, s.requestId]);
+    expect(told.map((n) => n.notification_type)).toContain("request_cancelled");
+  });
+
   it("removing a dog from a group that still has its requests stays refused", async () => {
     const s = await scenario(0);
     await expect(

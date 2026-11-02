@@ -12,6 +12,7 @@ import { formatLocalDate, formatTime } from "@/lib/format";
 import type { CareLogEntryRow } from "@/lib/types";
 import { Field, PillButton, TextArea, TextInput } from "@/components/ui/kit";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { ConfirmationDialog } from "@/components/domain/confirmation-dialog";
 import { ReportButton } from "@/components/domain/report-button";
 import { CARE_LOG_ICONS } from "./care-log-composer";
@@ -42,6 +43,9 @@ export function CareLogTimeline({
   const [pending, startTransition] = useTransition();
   const [editing, setEditing] = useState<TimelineEntry | null>(null);
   const [deleting, setDeleting] = useState<TimelineEntry | null>(null);
+  // the photo viewer keeps its photo while it closes
+  const [viewing, setViewing] = useState<TimelineEntry | null>(null);
+  const [viewerOpen, setViewerOpen] = useState(false);
 
   if (entries.length === 0) {
     return <p className="rounded-[24px] bg-surface p-4 text-[15px] text-ink-3">Rien pour l&apos;instant.</p>;
@@ -71,7 +75,15 @@ export function CareLogTimeline({
                       </p>
                       {e.note && <p className="whitespace-pre-line text-[15px] text-ink-2">{e.note}</p>}
                       {e.photoUrl && (
-                        <a href={e.photoUrl} target="_blank" rel="noreferrer" className="self-start">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setViewing(e);
+                            setViewerOpen(true);
+                          }}
+                          className="self-start rounded-2xl focus-visible:ring-2 focus-visible:ring-ink"
+                          aria-label={`Agrandir la photo de ${formatTime(e.occurred_at)}`}
+                        >
                           <Image
                             src={e.photoUrl}
                             alt={`Photo du ${formatTime(e.occurred_at)}`}
@@ -80,7 +92,7 @@ export function CareLogTimeline({
                             unoptimized
                             className="size-40 rounded-2xl object-cover"
                           />
-                        </a>
+                        </button>
                       )}
                       {e.photo_removed_at && (
                         <p className="flex items-center gap-1.5 text-[13px] text-ink-3">
@@ -157,6 +169,21 @@ export function CareLogTimeline({
           });
         }}
       />
+      <Dialog open={viewerOpen} onOpenChange={setViewerOpen}>
+        <DialogContent className="max-w-[calc(100%-1rem)] gap-3 rounded-[28px] bg-surface p-2 pt-12 sm:max-w-lg">
+          <DialogTitle className="sr-only">{viewing ? `Photo de ${formatTime(viewing.occurred_at)}` : "Photo"}</DialogTitle>
+          {viewing?.photoUrl && (
+            <Image
+              src={viewing.photoUrl}
+              alt={`Photo de ${formatTime(viewing.occurred_at)}`}
+              width={1200}
+              height={1200}
+              unoptimized
+              className="max-h-[75dvh] w-full rounded-[22px] object-contain"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { computeCoverage, findAssignmentConflicts } from "@/domain/coverage";
-import { computeRequestStatus, dayTone, type StatusInput } from "@/domain/status";
+import { computeRequestStatus, dayTone, needsOrganizing, statusLabel, type StatusInput } from "@/domain/status";
 import { zonedInstant } from "@/domain/time";
 import type { PeriodAvailability } from "@/domain/availability";
 
@@ -83,6 +83,14 @@ describe("computeRequestStatus", () => {
     expect(r.counts).toMatchObject({ no: 2, pending: 1 });
   });
 
+  it("says « Personne à solliciter » when nobody can be asked, not « Sans solution »", () => {
+    const r = computeRequestStatus(base({ eligibleUserIds: [] }));
+    expect(r.status).toBe("nobody_to_ask");
+    expect(r.tone).toBe("uncovered");
+    expect(statusLabel(r.status, "required")).toBe("Personne à solliciter");
+    expect(needsOrganizing(r.status)).toBe(true);
+  });
+
   it("is uncovered (red) when every eligible member explicitly said no", () => {
     const r = computeRequestStatus(
       base({
@@ -132,10 +140,6 @@ describe("computeRequestStatus", () => {
   it("informational and cancelled take precedence", () => {
     expect(computeRequestStatus(base({ necessity: "info" })).status).toBe("informational");
     expect(computeRequestStatus(base({ lifecycle: "cancelled" })).status).toBe("cancelled");
-  });
-
-  it("treats a group with no eligible member as uncovered", () => {
-    expect(computeRequestStatus(base({ eligibleUserIds: [] })).status).toBe("uncovered");
   });
 
   it("flags past requests", () => {

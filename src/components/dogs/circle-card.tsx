@@ -111,7 +111,7 @@ export function CircleCard({
                     {m.display_name}
                     {m.user_id === me && <span className="font-normal text-ink-3"> (vous)</span>}
                   </span>
-                  <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold", KIND_STYLES[m.kind])}>
+                  <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-[12px] font-semibold", KIND_STYLES[m.kind])}>
                     {CIRCLE_KIND_LABELS[m.kind]}
                   </span>
                 </span>

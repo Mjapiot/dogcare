@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { consecutiveNights, countHandoffs, nightAnchors, proposePlan, type PlanOffer } from "@/domain/planner";
+import { consecutiveNights, countHandoffs, mergeContiguous, nightAnchors, proposePlan, type PlanOffer } from "@/domain/planner";
 import { zonedInstant } from "@/domain/time";
 
 const H = 3_600_000;
@@ -180,5 +180,19 @@ describe("proposePlan with per-person rules", () => {
     ]);
     expect(p.nights.lea ?? 0).toBe(0);
     expect(p.holes[0].reason).toBe("lea ne garde jamais la nuit");
+  });
+});
+
+describe("mergeContiguous", () => {
+  it("never shows the same person on two consecutive lines", () => {
+    const line = (userId: string, start: number, end: number) => ({ userId, name: userId, start, end, reason: "r" });
+    expect(
+      mergeContiguous([line("emma", at(9, "12:00"), at(9, "18:00")), line("emma", at(9, "09:00"), at(9, "12:00")), line("lea", at(9, "18:00"), at(9, "20:00"))]).map(
+        (s) => [s.userId, s.start, s.end],
+      ),
+    ).toEqual([
+      ["emma", at(9, "09:00"), at(9, "18:00")],
+      ["lea", at(9, "18:00"), at(9, "20:00")],
+    ]);
   });
 });

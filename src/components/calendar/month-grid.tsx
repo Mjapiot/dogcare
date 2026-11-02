@@ -1,5 +1,5 @@
 import { weekBars, type CalItem } from "@/domain/calendar";
-import { TONE_LABELS, dayTone } from "@/domain/status";
+import { TONE_LABELS } from "@/domain/status";
 import { addDays, dateRange, toLocalDate, type LocalDate } from "@/domain/time";
 import { formatLocalDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -68,7 +68,7 @@ export function MonthGrid({
                     <span
                       key={`${b.item.id}-${monday}`}
                       className={cn(
-                        "flex min-w-0 items-center gap-0.5 px-1 text-[11px] font-semibold",
+                        "flex min-w-0 items-center gap-0.5 px-1 text-[12px] font-semibold",
                         TONE_CLASSES[b.item.tone],
                         b.continuesBefore ? "rounded-l-none" : "ml-0.5 rounded-l-md",
                         b.continuesAfter ? "rounded-r-none" : "mr-0.5 rounded-r-md",
@@ -83,7 +83,7 @@ export function MonthGrid({
               </div>
               )}
               {hidden.some((n) => n > 0) && (
-                <div className="grid grid-cols-7 text-center text-[11px] font-medium text-ink-3" aria-hidden>
+                <div className="grid grid-cols-7 text-center text-[12px] font-medium text-ink-3" aria-hidden>
                   {hidden.map((n, i) => (
                     <span key={i}>{n > 0 ? `+${n}` : ""}</span>
                   ))}
@@ -93,7 +93,6 @@ export function MonthGrid({
               <div className="absolute inset-0 grid grid-cols-7">
                 {week.map((d) => {
                   const list = touching(d);
-                  const tone = list.length ? dayTone(list.map((i) => i.tone)) : null;
                   return (
                     <button
                       role="gridcell"
@@ -102,7 +101,9 @@ export function MonthGrid({
                       onClick={() => onSelectDay(d)}
                       className="min-h-11 rounded-xl focus-visible:ring-2 focus-visible:ring-ink"
                       aria-label={`${formatLocalDate(d, { weekday: "long", day: "numeric", month: "long" })}${
-                        list.length ? `, ${list.length} besoin${list.length > 1 ? "s" : ""}${tone ? `, ${TONE_LABELS[tone]}` : ""}` : ", aucun besoin"
+                        list.length
+                          ? ` : ${list.map((i) => `${i.dogName}, ${TONE_LABELS[i.tone]}`).join(" ; ")}`
+                          : ", aucun besoin"
                       }`}
                     />
                   );

@@ -166,7 +166,7 @@ export function buildRequestViews(snapshot: GroupSnapshot, now: number): Request
       label: statusLabel(status.status, request.necessity),
       assignments: liveAssignments
         .map((a) => ({ ...a, name: nameOf(members, a.assigned_user_id, invitees) }))
-        .sort((a, b) => a.starts_at.localeCompare(b.starts_at)),
+        .sort((a, b) => Date.parse(a.starts_at) - Date.parse(b.starts_at)),
       helpers,
     };
   });

@@ -102,6 +102,9 @@ export function countHandoffs(slices: readonly { userId: string; start: number; 
 
 type Candidate = { offer: PlanOffer; reach: number; capped: boolean };
 
+/** When they answered (offers from availability have no answer: they come last among ties). */
+const answeredAt = (o: PlanOffer) => (o.respondedAt ? Date.parse(o.respondedAt) : Number.MAX_SAFE_INTEGER);
+
 export function proposePlan(input: {
   period: Interval;
   /** Live assignments already on the request (never moved), with their helper when known. */
@@ -203,7 +206,7 @@ export function proposePlan(input: {
         (a, b) =>
           b.reach - a.reach ||
           (assignedMs.get(a.offer.userId) ?? 0) - (assignedMs.get(b.offer.userId) ?? 0) ||
-          a.offer.respondedAt.localeCompare(b.offer.respondedAt) ||
+          answeredAt(a.offer) - answeredAt(b.offer) ||
           a.offer.userId.localeCompare(b.offer.userId),
       );
       const best = eligible[0];
@@ -221,7 +224,7 @@ export function proposePlan(input: {
     }
   }
 
-  const finalSlices = absorbShortSlices(slices, available, rules, input.period, cap);
+  const finalSlices = mergeContiguous(absorbShortSlices(slices, available, rules, input.period, cap));
   const coveredMs = finalSlices.reduce((sum, s) => sum + (s.end - s.start), 0);
   return {
     slices: finalSlices,
@@ -262,6 +265,17 @@ function absorbShortSlices(
     }
   }
   return current;
+}
+
+/** Contiguous slices of the same person become one line (absorbing can join them). */
+export function mergeContiguous(slices: PlanSlice[]): PlanSlice[] {
+  const out: PlanSlice[] = [];
+  for (const s of [...slices].sort((a, b) => a.start - b.start)) {
+    const last = out.at(-1);
+    if (last && last.userId === s.userId && last.end === s.start) last.end = s.end;
+    else out.push({ ...s });
+  }
+  return out;
 }
 
 function mergeHoles(holes: PlanHole[]): PlanHole[] {

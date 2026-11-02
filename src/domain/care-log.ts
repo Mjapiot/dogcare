@@ -61,7 +61,7 @@ export type CareLogDay<T> = { date: LocalDate; entries: T[] };
 
 /** Newest day first, newest entry first within a day (Paris days). */
 export function groupCareLogByDay<T extends Pick<CareLogEntryRow, "occurred_at">>(entries: readonly T[]): CareLogDay<T>[] {
-  const sorted = [...entries].sort((a, b) => b.occurred_at.localeCompare(a.occurred_at));
+  const sorted = [...entries].sort((a, b) => Date.parse(b.occurred_at) - Date.parse(a.occurred_at));
   const days: CareLogDay<T>[] = [];
   for (const e of sorted) {
     const date = toLocalDate(e.occurred_at);
@@ -75,6 +75,6 @@ export function groupCareLogByDay<T extends Pick<CareLogEntryRow, "occurred_at">
 /** Most recent entry, or null. */
 export function latestCareNews<T extends Pick<CareLogEntryRow, "occurred_at">>(entries: readonly T[]): T | null {
   let latest: T | null = null;
-  for (const e of entries) if (!latest || e.occurred_at > latest.occurred_at) latest = e;
+  for (const e of entries) if (!latest || Date.parse(e.occurred_at) > Date.parse(latest.occurred_at)) latest = e;
   return latest;
 }

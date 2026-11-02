@@ -119,7 +119,7 @@ export async function getGroupSnapshot(
             .order("starts_at")
             .range(from, to),
         );
-  requests.sort((a, b) => a.starts_at.localeCompare(b.starts_at));
+  requests.sort((a, b) => Date.parse(a.starts_at) - Date.parse(b.starts_at));
   const ids = requests.map((r) => r.id);
 
   // availability window covering every request in Paris time (plus the previous night)

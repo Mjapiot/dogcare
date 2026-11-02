@@ -47,11 +47,27 @@ function shiftMonth(date: LocalDate, delta: number): LocalDate {
   return fmtDate(year + Math.floor(m / 12), ((m % 12) + 12) % 12 + 1, 1);
 }
 
+/**
+ * Slide in from the side of the move. The exiting view reads the direction
+ * from AnimatePresence's `custom` (its own props are stale once it leaves).
+ */
+const SLIDE = {
+  enter: (d: number) => ({ opacity: 0, x: d * 48 }),
+  center: { opacity: 1, x: 0 },
+  exit: (d: number) => ({ opacity: 0, x: d * -48 }),
+};
+
 export function CalendarView({ view, anchor, from, to, today, items, summary, scope, focus, filters, dogs, owners, available }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  // the sheet keeps showing its day while it closes
   const [selectedDate, setSelectedDate] = useState<LocalDate | null>(null);
+  const [dayOpen, setDayOpen] = useState(false);
+  const openDay = (date: LocalDate) => {
+    setSelectedDate(date);
+    setDayOpen(true);
+  };
   const [filtersOpen, setFiltersOpen] = useState(false);
   // direction of the last move, for the slide animation
   const [direction, setDirection] = useState(0);
@@ -206,9 +222,10 @@ export function CalendarView({ view, anchor, from, to, today, items, summary, sc
           <motion.div
             key={`${view}-${from}`}
             custom={direction}
-            initial={{ opacity: 0, x: direction * 48 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: direction * -48 }}
+            variants={SLIDE}
+            initial="enter"
+            animate="center"
+            exit="exit"
             transition={{ duration: 0.35, ease: EASE }}
             drag="x"
             dragSnapToOrigin
@@ -221,9 +238,9 @@ export function CalendarView({ view, anchor, from, to, today, items, summary, sc
             style={{ touchAction: "pan-y" }}
           >
             {view === "agenda" ? (
-              <Agenda items={items} from={from} to={to} today={today} onSelectDay={setSelectedDate} />
+              <Agenda items={items} from={from} to={to} today={today} onSelectDay={openDay} />
             ) : (
-              <MonthGrid items={items} from={from} to={to} anchor={anchor} today={today} onSelectDay={setSelectedDate} />
+              <MonthGrid items={items} from={from} to={to} anchor={anchor} today={today} onSelectDay={openDay} />
             )}
           </motion.div>
         </AnimatePresence>
@@ -246,9 +263,10 @@ export function CalendarView({ view, anchor, from, to, today, items, summary, sc
 
       <DaySheet
         date={selectedDate}
+        open={dayOpen}
         items={items}
         available={selectedDate ? available[selectedDate] : undefined}
-        onClose={() => setSelectedDate(null)}
+        onClose={() => setDayOpen(false)}
       />
 
       <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
