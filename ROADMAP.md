@@ -71,7 +71,7 @@ Vision : « Toute la vie de votre animal, partagée avec les bonnes personnes »
 - [x] Refonte du Calendrier : agenda, barres du mois, résumé, disponibles du jour (en production le 2026-10-29)
 - [x] Refonte de Mes dispos : semaine par semaine, raccourcis, copie de semaine, besoins du groupe (en production le 2026-10-29)
 - [x] Refonte du Profil : carte et « Cette année », mon monde, réglages en liste, page Notifications (en production le 2026-10-29)
-- [ ] Lot de polissage (accessibilité, fiabilité, détails d'interface) : « Personne à solliciter », VoiceOver du mois, textes agrandis, feuille du jour et sens des animations, cartes sortantes inactives, planning sans doublon, tris par instants, photos du carnet dans l'app, compte du dernier responsable, limites photos, rafraîchissements — implémenté et testé
+- [x] Lot de polissage (accessibilité, fiabilité, détails d'interface) : « Personne à solliciter », VoiceOver du mois, textes agrandis, feuille du jour et sens des animations, cartes sortantes inactives, planning sans doublon, tris par instants, photos du carnet dans l'app, compte du dernier responsable, limites photos, rafraîchissements — en production le 2026-11-02
 - [x] Correctifs de la revue du 2026-10-29 : blocage et engagements, suppression de groupe, lien des invités, bouton Fermer 44 px, planning et nuits confirmées, ménage quotidien, pastille allégée, mineurs (en production le 2026-10-29)
 - Mode sombre
 - Types TypeScript générés depuis la base (`supabase gen types`)

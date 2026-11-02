@@ -69,7 +69,7 @@ test("calendar: one card per need, month bars, available members", async ({ brow
     // month: the need is a bar; tapping one of its days opens it
     await page.getByRole("radio", { name: "Mois" }).click();
     await page.waitForURL(/view=month/);
-    const dayCell = page.getByRole("gridcell", { name: /1 besoin/ }).first();
+    const dayCell = page.getByRole("gridcell", { name: / : Aston, / }).first();
     await expect(dayCell).toBeVisible();
     await dayCell.click();
     await expect(page.getByRole("dialog").getByRole("link", { name: /Aston · Garde/ })).toBeVisible();
