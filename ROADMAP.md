@@ -62,7 +62,7 @@ Vision : « Toute la vie de votre animal, partagée avec les bonnes personnes »
    - [x] Une demande à la fois : nuits d'affilée max, tranche minimale, conflits, confirmation tout ou rien (en production le 2026-10-29)
    - [ ] Plusieurs demandes ou chiens à la fois ; lieux et incompatibilités entre chiens
 5. [ ] Routines (désactivées par défaut)
-- Passeport sans groupe (entrée « passeport d'abord » dans l'onboarding)
+- [ ] Passeport sans groupe (« passeport d'abord ») : choix à l'inscription, espace « Mes chiens », fiche complète en solo (lien de partage, cercle), partage proposé en entrant dans un groupe — implémenté, tests unitaires et base OK ; E2E après mise en production
 
 - Résumé hebdomadaire (préférence déjà prévue en base) — les rappels de la veille sont dans le sprint en cours
 - Invitations par les membres (option par groupe)

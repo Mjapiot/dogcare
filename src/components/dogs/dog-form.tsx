@@ -43,7 +43,7 @@ export function DogForm({
           const r = await createDog({ ...v, groupIds });
           if (!r.ok) return setError(r.error);
           toast.success(`${v.name} a été ajouté`);
-          router.replace(afterCreate ?? `/dogs/${r.data.dogId}`);
+          router.replace((afterCreate ?? "/dogs/{dog}").replace("{dog}", r.data.dogId));
         });
       }}
     >

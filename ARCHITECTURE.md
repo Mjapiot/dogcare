@@ -37,8 +37,11 @@ lien actif. Rubriques en lecture : `src/components/dogs/passport-view.tsx` (part
 
 Carte « Cercle de confiance » (responsables) : `components/dogs/circle-card.tsx`, actions `server/actions/circle.ts`,
 règles d'affichage et fenêtres d'invité `domain/circle.ts`. Une personne invitée hors des groupes n'a pas de groupe :
-`requireAppContext` la redirige vers `/circle` (« Chiens confiés »), `/circle/[dogId]` affiche le passeport en
-lecture seule, `/circle/join/[token]` accepte l'invitation (l'onboarding saute alors les étapes de groupe).
+`requireAppContext` la redirige vers `/circle` (« Mes chiens »), comme quiconque garde un chien sans groupe
+(passeport d'abord) ; `/circle/[dogId]` affiche le passeport en lecture seule, `/circle/dogs/new` et
+`/circle/dogs/[id]` créent et affichent un chien sans groupe avec le même écran que l'app
+(`components/dogs/dog-screen.tsx`, mode `solo` : sans planning), `/onboarding/share-dogs` propose de partager ses
+chiens en entrant dans un groupe (`shareDogsStep`, action `shareDogsWithGroup`), `/circle/join/[token]` accepte l'invitation (l'onboarding saute alors les étapes de groupe).
 
 Personnes du cercle sur les demandes : le formulaire de demande propose « Demander aussi à »
 (`request_invitee_candidates`, règle de dates `circleCovers` dans `domain/circle.ts`, enregistrement par

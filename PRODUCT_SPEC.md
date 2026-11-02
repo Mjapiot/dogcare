@@ -49,6 +49,22 @@ La fiche du chien est son passeport, en quatre rubriques (tout est facultatif sa
   est révocable à tout moment ; le nombre d'ouvertures est affiché ; 10 liens actifs au plus par chien.
   La page publique ne montre ni e-mail, ni groupe, ni planning, et n'est pas indexée.
 
+### Passeport d'abord (sans groupe)
+
+Le passeport est gratuit et utile sans groupe, pour attirer de nouveaux utilisateurs avant leur première garde.
+
+- À l'inscription, après le prénom, l'écran « Votre groupe » propose aussi **« Juste le passeport de mon chien »** :
+  le chien est créé sans groupe.
+- **« Mes chiens »** (`/circle`) est l'accueil de quelqu'un sans groupe : ses chiens (passeport modifiable), les
+  chiens qu'on lui confie dans un cercle, les demandes et propositions qui lui sont adressées, son compte.
+- En solo : passeport complet (photo, identité, habitudes, santé, urgences), **lien de partage**, **cercle de
+  confiance** (inviter son pet-sitter comme « Professionnel » ou un proche). Pas de planning ni de carnet de garde :
+  ils demandent une demande, donc un groupe. La carte « Organiser des gardes entre amis » mène à la création ou à
+  l'adhésion d'un groupe.
+- En créant ou rejoignant un groupe (création, code, lien), l'écran **« Vos chiens dans « … » »** propose de partager
+  chaque chien avec ce groupe, coché par défaut, modifiable ensuite depuis la fiche. Il est sauté s'il n'y a rien à
+  partager ; s'il y a déjà un chien, l'étape « Votre chien » de l'onboarding est sautée.
+
 ### Cercle de confiance
 
 Chaque chien a un cercle : qui voit quoi. Rôles (accès Santé / Urgences réglables par personne :

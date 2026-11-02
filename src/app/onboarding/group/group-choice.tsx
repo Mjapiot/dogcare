@@ -2,11 +2,12 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { KeyRound, Users } from "lucide-react";
+import { IdCard, KeyRound, Users } from "lucide-react";
 import { createGroup, joinGroupWithCode } from "@/server/actions/groups";
 import { normalizeJoinCode } from "@/lib/join-code";
 import { toast } from "sonner";
 import { Card, Field, PillButton, PillLink, TextInput } from "@/components/ui/kit";
+import { shareDogsStep } from "@/lib/onboarding";
 
 function extractToken(value: string): string | null {
   const trimmed = value.trim();
@@ -40,7 +41,7 @@ export function GroupChoice({ hasGroups }: { hasGroups: boolean }) {
                 const r = await joinGroupWithCode(code);
                 if (!r.ok) return setLinkError(r.error);
                 toast.success(`Bienvenue dans « ${r.data.groupName} » !`);
-                router.replace(hasGroups ? "/" : "/onboarding/habits");
+                router.replace(shareDogsStep(r.data.groupId, hasGroups ? "/" : "/onboarding/habits"));
               });
               return;
             }
@@ -84,7 +85,7 @@ export function GroupChoice({ hasGroups }: { hasGroups: boolean }) {
             startTransition(async () => {
               const result = await createGroup(name);
               if (!result.ok) return setError(result.error);
-              router.replace(hasGroups ? "/" : "/dogs/new?welcome=1");
+              router.replace(shareDogsStep(result.data.groupId, hasGroups ? "/" : "/dogs/new?welcome=1"));
             });
           }}
         >
@@ -102,6 +103,22 @@ export function GroupChoice({ hasGroups }: { hasGroups: boolean }) {
           </PillButton>
         </form>
       </Card>
+
+      {/* passport first: no group needed to keep the dog's passport */}
+      {!hasGroups && (
+        <Card className="flex flex-col gap-3">
+          <div className="flex items-center gap-2 text-[17px] font-semibold text-ink">
+            <IdCard className="size-5" aria-hidden /> Juste le passeport de mon chien
+          </div>
+          <p className="text-[14px] text-ink-2">
+            Identité, habitudes, santé et urgences, à partager avec votre vétérinaire ou votre pet-sitter. Gratuit, sans groupe :
+            vous inviterez vos amis plus tard.
+          </p>
+          <PillLink href="/circle/dogs/new" variant="soft">
+            Créer son passeport
+          </PillLink>
+        </Card>
+      )}
 
       {hasGroups && (
         <PillLink href="/" variant="ghost">

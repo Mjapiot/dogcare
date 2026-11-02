@@ -78,6 +78,7 @@ export async function revokeCircleInvitation(dogId: string, invitationId: string
   const { error } = await supabase.rpc("revoke_circle_invitation", { p_invitation_id: invitationId });
   if (error) return { ok: false, error: toUserMessage(error) };
   revalidatePath(`/dogs/${dogId}`);
+  revalidatePath(`/circle/dogs/${dogId}`);
   return { ok: true, data: undefined };
 }
 
@@ -118,5 +119,6 @@ export async function setHelperPref(dogId: string, userId: string, input: z.inpu
   });
   if (error) return { ok: false, error: toUserMessage(error) };
   revalidatePath(`/dogs/${dogId}`);
+  revalidatePath(`/circle/dogs/${dogId}`);
   return { ok: true, data: undefined };
 }

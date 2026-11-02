@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { acceptInvitation } from "@/server/actions/groups";
 import { PillButton } from "@/components/ui/kit";
+import { shareDogsStep } from "@/lib/onboarding";
 
 export function JoinButton({ token, next }: { token: string; next: string }) {
   const router = useRouter();
@@ -21,7 +22,7 @@ export function JoinButton({ token, next }: { token: string; next: string }) {
             const result = await acceptInvitation(token);
             if (!result.ok) return setError(result.error);
             toast.success("Bienvenue dans le groupe !");
-            router.replace(next);
+            router.replace(shareDogsStep(result.data.groupId, next));
           })
         }
       >

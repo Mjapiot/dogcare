@@ -73,7 +73,17 @@ export async function requireAppContext() {
   // independent reads: one round trip instead of two
   const [profile, group] = await Promise.all([getProfile(), getCurrentGroup()]);
   if (!profile || !profile.display_name.trim()) redirect("/onboarding");
-  // a person only invited to a dog's circle has no group: their space is /circle
-  if (!group) redirect((await getMyCircleDogs()).length ? "/circle" : "/onboarding/group");
+  // without a group, someone with a dog (passport first) or invited to a dog's circle lives in "Mes chiens"
+  if (!group) redirect((await hasDogsWithoutGroup(userId)) ? "/circle" : "/onboarding/group");
   return { userId, profile, group };
+}
+
+/** True when the person keeps a dog's passport or is in a dog's circle. */
+async function hasDogsWithoutGroup(userId: string): Promise<boolean> {
+  const supabase = await createClient();
+  const [own, circle] = await Promise.all([
+    supabase.from("dog_caretakers").select("dog_id", { count: "exact", head: true }).eq("user_id", userId),
+    getMyCircleDogs(),
+  ]);
+  return (own.count ?? 0) > 0 || circle.length > 0;
 }

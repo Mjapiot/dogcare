@@ -22,7 +22,8 @@ export default async function OnboardingGroupPage() {
             Bonjour {profile.display_name.split(" ")[0]} !
           </h1>
           <p className="mt-3 text-[17px] text-ink-2">
-            Rejoignez le groupe de vos amis avec son code ou le lien reçu, ou créez le vôtre.
+            Rejoignez le groupe de vos amis avec son code ou le lien reçu, créez le vôtre, ou commencez par le passeport de
+            votre chien.
           </p>
         </div>
         <GroupChoice hasGroups={groups.length > 0} />

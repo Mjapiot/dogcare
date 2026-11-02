@@ -112,6 +112,7 @@ export async function saveDogHealth(dogId: string, input: z.input<typeof dogHeal
   });
   if (error) return { ok: false, error: toUserMessage(error) };
   revalidatePath(`/dogs/${dogId}`);
+  revalidatePath(`/circle/dogs/${dogId}`);
   return { ok: true, data: undefined };
 }
 
@@ -128,6 +129,7 @@ export async function saveDogEmergency(dogId: string, input: z.input<typeof dogE
   });
   if (error) return { ok: false, error: toUserMessage(error) };
   revalidatePath(`/dogs/${dogId}`);
+  revalidatePath(`/circle/dogs/${dogId}`);
   return { ok: true, data: undefined };
 }
 
@@ -147,6 +149,7 @@ export async function createPassportLink(
   });
   if (error) return { ok: false, error: toUserMessage(error) };
   revalidatePath(`/dogs/${dogId}`);
+  revalidatePath(`/circle/dogs/${dogId}`);
   return { ok: true, data: { token: data as string } };
 }
 
@@ -156,6 +159,7 @@ export async function revokePassportLink(dogId: string, linkId: string): Promise
   const { error } = await supabase.rpc("revoke_dog_share_link", { p_link_id: linkId });
   if (error) return { ok: false, error: toUserMessage(error) };
   revalidatePath(`/dogs/${dogId}`);
+  revalidatePath(`/circle/dogs/${dogId}`);
   return { ok: true, data: undefined };
 }
 
@@ -215,12 +219,28 @@ export async function setDogGroups(dogId: string, groupIds: string[], previous: 
   return { ok: true, data: undefined };
 }
 
+/** Shares dogs I keep with a group I am in (entering a group with dogs kept without one). */
+export async function shareDogsWithGroup(groupId: string, dogIds: string[]): Promise<ActionResult> {
+  const parsed = z.object({ groupId: uuid, dogIds: z.array(uuid).min(1).max(20) }).safeParse({ groupId, dogIds });
+  if (!parsed.success) return { ok: false, error: "Chiens invalides." };
+  await requireUserId();
+  const supabase = await createClient();
+  // RLS: only a caretaker shares a dog, only into their groups
+  const { error } = await supabase
+    .from("group_dogs")
+    .upsert(parsed.data.dogIds.map((dog_id) => ({ group_id: parsed.data.groupId, dog_id })), { onConflict: "group_id,dog_id", ignoreDuplicates: true });
+  if (error) return { ok: false, error: toUserMessage(error) };
+  revalidatePath("/", "layout");
+  return { ok: true, data: undefined };
+}
+
 export async function addCaretaker(dogId: string, userId: string): Promise<ActionResult> {
   if (!uuid.safeParse(dogId).success || !uuid.safeParse(userId).success) return { ok: false, error: "Paramètres invalides." };
   const supabase = await createClient();
   const { error } = await supabase.rpc("add_dog_caretaker", { p_dog_id: dogId, p_user_id: userId });
   if (error) return { ok: false, error: toUserMessage(error) };
   revalidatePath(`/dogs/${dogId}`);
+  revalidatePath(`/circle/dogs/${dogId}`);
   return { ok: true, data: undefined };
 }
 
