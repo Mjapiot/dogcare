@@ -46,7 +46,7 @@ test("full care coordination flow", async ({ browser }) => {
     groupIds.push(...(groups ?? []).map((g) => g.group_id as string));
 
     // 2. Invitation link, Emma and Chloé join
-    await julie.goto(`/groups/${groupIds[0]}`);
+    await gotoStable(julie, `/groups/${groupIds[0]}`);
     await julie.getByRole("button", { name: "Créer un lien d'invitation" }).click();
     const link = (await julie.getByText(/\/invite\//).textContent())!.trim();
     const invitePath = new URL(link).pathname;
@@ -67,7 +67,7 @@ test("full care coordination flow", async ({ browser }) => {
 
     // 4. Emma declares availability (whole "Après-midi" column, this week and next: tomorrow may be next week)
     const emma = await emmaCtx.newPage();
-    await emma.goto("/availability");
+    await gotoStable(emma, "/availability");
     for (const week of [0, 1]) {
       if (week) await emma.getByRole("button", { name: "Semaine suivante" }).click();
       // during the slide, the old and new weeks are both on screen for a moment
@@ -80,7 +80,7 @@ test("full care coordination flow", async ({ browser }) => {
 
     // 5. Julie posts a request for Oscar tomorrow 13:00–17:00
     const tomorrow = new Date(Date.now() + 86_400_000).toLocaleDateString("sv-SE", { timeZone: "Europe/Paris" });
-    await julie.goto(`/requests/new?date=${tomorrow}`);
+    await gotoStable(julie, `/requests/new?date=${tomorrow}`);
     await julie.getByRole("button", { name: /Garde partielle/ }).click();
     await julie.getByLabel("Heure").first().fill("13:00");
     await julie.getByLabel("Heure").nth(1).fill("17:00");
@@ -90,7 +90,7 @@ test("full care coordination flow", async ({ browser }) => {
     await expect(julie.getByText("Aides potentielles").first()).toBeVisible();
 
     // 6. Emma says yes from "Demandes"
-    await emma.goto("/requests");
+    await gotoStable(emma, "/requests");
     await emma.getByRole("button", { name: "Oui, je peux" }).first().click();
     await expect(emma.getByText(/Le propriétaire est prévenu/)).toBeVisible();
 
@@ -104,7 +104,7 @@ test("full care coordination flow", async ({ browser }) => {
     await expect(julie.getByText("Couvert").first()).toBeVisible();
 
     // 9. Emma cancels
-    await emma.goto(requestUrl);
+    await gotoStable(emma, requestUrl);
     await emma.getByRole("button", { name: "Je ne peux plus assurer cette garde" }).click();
     await emma.getByRole("button", { name: "Oui, annuler la garde" }).click();
     await expect(emma.getByText(/le propriétaire est prévenu/)).toBeVisible();
@@ -112,12 +112,12 @@ test("full care coordination flow", async ({ browser }) => {
     // 10. Uncovered again, Julie is notified
     await gotoStable(julie, requestUrl);
     await expect(julie.getByText("Couvert", { exact: true })).toHaveCount(0);
-    await julie.goto("/notifications");
+    await gotoStable(julie, "/notifications");
     await expect(julie.getByText("Emma ne peut plus garder Oscar")).toBeVisible();
 
     // 11. Chloé offers help, 12. Julie confirms Chloé
     const chloe = await chloeCtx.newPage();
-    await chloe.goto(requestUrl);
+    await gotoStable(chloe, requestUrl);
     await chloe.getByRole("button", { name: "Oui, je peux" }).click();
     await gotoStable(julie, requestUrl);
     await julie.getByRole("button", { name: "Confirmer", exact: true }).first().click();
