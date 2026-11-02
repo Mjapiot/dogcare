@@ -72,7 +72,9 @@ test("care log: helper writes during the garde, owner reads, others do not", asy
     await emma.getByLabel("Choisir une photo").first().setInputFiles({ name: "aston.png", mimeType: "image/png", buffer: PNG });
     await emma.getByLabel("Un mot (facultatif)").fill("Sieste au soleil");
     await emma.getByRole("button", { name: "Ajouter", exact: true }).click();
-    await expect(emma.getByText("Sieste au soleil")).toBeVisible({ timeout: 15_000 });
+    // the note must be in the log itself (the sheet's text field shows it too until it is saved)
+    await expect(emma.getByRole("dialog")).toHaveCount(0, { timeout: 15_000 });
+    await expect(emma.getByRole("region", { name: "Carnet de garde" }).getByText("Sieste au soleil")).toBeVisible({ timeout: 15_000 });
 
     // Julie reads the log, with the photo, and was told about the drop-off
     const julie = await signIn(contexts[1], admin, owner.email, `/requests/${requestId}`);
