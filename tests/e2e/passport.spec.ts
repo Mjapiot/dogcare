@@ -4,7 +4,7 @@
  * revokes it and the link stops working.
  */
 import { expect, test } from "@playwright/test";
-import { adminClient, cleanup, createTestUser, signIn } from "./helpers";
+import { adminClient, cleanup, createTestUser, gotoStable, signIn } from "./helpers";
 
 test("passport: fill in, share without an account, revoke", async ({ browser }) => {
   const admin = adminClient();
@@ -34,7 +34,7 @@ test("passport: fill in, share without an account, revoke", async ({ browser }) 
     const dogId = dog!.dog_id as string;
 
     // health and emergency sections
-    await page.goto(`/dogs/${dogId}`);
+    await gotoStable(page, `/dogs/${dogId}`);
     await page.getByRole("button", { name: "Modifier : Santé" }).click();
     await page.getByLabel("Allergies").fill("Poulet");
     await page.getByRole("button", { name: "Enregistrer" }).click();
@@ -56,7 +56,7 @@ test("passport: fill in, share without an account, revoke", async ({ browser }) 
 
     // a visitor without an account reads it
     const visitor = await visitorCtx.newPage();
-    await visitor.goto(path);
+    await gotoStable(visitor, path);
     await expect(visitor.getByRole("heading", { name: "Aston" })).toBeVisible();
     await expect(visitor.getByText("Poulet")).toBeVisible();
     await expect(visitor.getByRole("link", { name: "Appeler Samantha" })).toBeVisible();

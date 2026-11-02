@@ -108,11 +108,8 @@ export function AbsencePlanner({
         toast.error(r.error);
         return;
       }
-      if (r.data.sendError) toast.error(`Demande publiée, mais les propositions n'ont pas pu partir : ${r.data.sendError}`);
-      else {
-        hapticSuccess();
-        toast.success(outgoing.length ? `Propositions envoyées à ${outgoing.length} personne${outgoing.length > 1 ? "s" : ""}` : "Demande publiée");
-      }
+      hapticSuccess();
+      toast.success(outgoing.length ? `Propositions envoyées à ${outgoing.length} personne${outgoing.length > 1 ? "s" : ""}` : "Demande publiée");
       router.push(`/requests/${r.data.requestId}`);
     });
 

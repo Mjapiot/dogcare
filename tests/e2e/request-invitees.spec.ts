@@ -4,7 +4,7 @@
  * sees her garde; removed from the circle, her garde is cancelled.
  */
 import { expect, test } from "@playwright/test";
-import { adminClient, cleanup, createTestUser, signIn } from "./helpers";
+import { adminClient, cleanup, createTestUser, gotoStable, signIn } from "./helpers";
 
 test("circle invitee: asked on a request, answers, is confirmed, removal cancels", async ({ browser }) => {
   // two sign-ups against a deployed app: slower than the default budget
@@ -37,7 +37,7 @@ test("circle invitee: asked on a request, answers, is confirmed, removal cancels
     const dogId = dog!.dog_id as string;
 
     // invite the pet-sitter as a guest (default: today → in 3 days)
-    await page.goto(`/dogs/${dogId}`);
+    await gotoStable(page, `/dogs/${dogId}`);
     await page.getByRole("button", { name: "Inviter dans le cercle" }).click();
     await page.getByRole("button", { name: "Créer et partager le lien" }).click();
     const url = await page.locator("p[title*='/circle/join/']").getAttribute("title");
@@ -48,7 +48,7 @@ test("circle invitee: asked on a request, answers, is confirmed, removal cancels
 
     // the owner asks her on a request for tomorrow ("Demander aussi à", on by default)
     const tomorrow = new Date(Date.now() + 86_400_000).toLocaleDateString("sv-SE", { timeZone: "Europe/Paris" });
-    await page.goto(`/requests/new?date=${tomorrow}`);
+    await gotoStable(page, `/requests/new?date=${tomorrow}`);
     await expect(page.getByText("Demander aussi à")).toBeVisible();
     await expect(page.getByRole("switch", { name: /Lea/ })).toBeChecked();
     await page.getByRole("button", { name: "Publier la demande" }).click();
@@ -66,29 +66,29 @@ test("circle invitee: asked on a request, answers, is confirmed, removal cancels
     await expect(page.getByText("Invité", { exact: true })).toBeVisible();
 
     // she answers from her space, without seeing the group
-    await sitterPage.goto("/circle");
+    await gotoStable(sitterPage, "/circle");
     await expect(sitterPage.getByText("Attend votre réponse")).toBeVisible();
     await sitterPage.getByRole("link", { name: /Aston.*Attend votre réponse/ }).click();
     await sitterPage.waitForURL(new RegExp(`/circle/requests/${requestId}$`));
     await sitterPage.getByRole("button", { name: "Oui, je peux" }).click();
     await expect(sitterPage.getByText("Vous avez proposé votre aide")).toBeVisible();
     // the group's request page sends her back to her space
-    await sitterPage.goto(`/requests/${requestId}`);
+    await gotoStable(sitterPage, `/requests/${requestId}`);
     await expect(sitterPage).not.toHaveURL(new RegExp(`/requests/${requestId}$`));
 
     // the owner confirms her
-    await page.goto(requestUrl);
+    await gotoStable(page, requestUrl);
     await page.getByRole("button", { name: "Confirmer", exact: true }).first().click();
     await page.getByRole("button", { name: /Confirmer Lea/ }).click();
     // the page refreshes after the confirmation: slower when several tests run against production
     await expect(page.getByText("Couvert").first()).toBeVisible({ timeout: 15_000 });
 
     // she sees her garde
-    await sitterPage.goto(`/circle/requests/${requestId}`);
+    await gotoStable(sitterPage, `/circle/requests/${requestId}`);
     await expect(sitterPage.getByText(/Garde confirmée :/)).toBeVisible();
 
     // removed from the circle: her garde is cancelled
-    await page.goto(`/dogs/${dogId}`);
+    await gotoStable(page, `/dogs/${dogId}`);
     await page.getByRole("button", { name: /Lea, Invité/ }).click();
     await page.getByRole("button", { name: "Retirer du cercle" }).click();
     await page.getByRole("button", { name: "Retirer", exact: true }).click();

@@ -36,7 +36,7 @@ test("circle: invite a guest, guest sees the passport only, removal", async ({ b
     const { data: dog } = await admin.from("dog_caretakers").select("dog_id").eq("user_id", owner.id).single();
     const dogId = dog!.dog_id as string;
 
-    await page.goto(`/dogs/${dogId}`);
+    await gotoStable(page, `/dogs/${dogId}`);
     await page.getByRole("button", { name: "Modifier : Santé" }).click();
     await page.getByLabel("Allergies").fill("Poulet");
     await page.getByRole("button", { name: "Enregistrer" }).click();
@@ -64,7 +64,7 @@ test("circle: invite a guest, guest sees the passport only, removal", async ({ b
     await expect(sitterPage.getByText("Appeler le véto")).toBeVisible();
     await expect(sitterPage.getByText("Poulet")).toHaveCount(0);
     // no group: the app home leads to the circle page
-    await sitterPage.goto("/");
+    await gotoStable(sitterPage, "/");
     await sitterPage.waitForURL(/\/circle$/);
     await expect(sitterPage.getByRole("link", { name: /Aston/ })).toBeVisible();
 
@@ -82,7 +82,7 @@ test("circle: invite a guest, guest sees the passport only, removal", async ({ b
     await page.getByRole("button", { name: "Retirer du cercle" }).click();
     await page.getByRole("button", { name: "Retirer", exact: true }).click();
     await expect(page.getByText("Retiré du cercle")).toBeVisible();
-    await sitterPage.goto(`/circle/${dogId}`);
+    await gotoStable(sitterPage, `/circle/${dogId}`);
     await expect(sitterPage.getByRole("heading", { name: "Aston" })).toHaveCount(0);
   } finally {
     // after a timeout the contexts may already be closed: never skip the cleanup

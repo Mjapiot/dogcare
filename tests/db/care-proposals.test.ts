@@ -180,3 +180,26 @@ describe("withdraw and lifecycle", () => {
     ).rejects.toThrow(/permission denied/);
   });
 });
+
+describe("plan_absence", () => {
+  const plan = (by: string, s: S, proposals: Proposal[]) =>
+    asUser(db, by, (tx) =>
+      one<{ id: string }>(tx, "select public.plan_absence($1, $2, $3, $4, '', $5::jsonb) as id", [s.groupId, s.dogId, inHours(100), inHours(150), JSON.stringify(proposals)]),
+    ).then((r) => r.id);
+
+  it("creates the request and the proposals together: the member only gets the proposal", async () => {
+    const s = await scenario();
+    const id = await plan(s.owner, s, [{ user_id: s.emma, slices: [{ starts_at: inHours(100), ends_at: inHours(120) }] }]);
+    expect((await notes(s.emma, id)).map((n) => n.notification_type)).toEqual(["care_proposal"]);
+    expect(await rows(db, "select splittable, necessity from care_requests where id = $1", [id])).toEqual([{ splittable: true, necessity: "required" }]);
+  });
+
+  it("is all or nothing: a refused proposal leaves no request behind", async () => {
+    const s = await scenario();
+    const before = await rows(db, "select id from care_requests where dog_id = $1", [s.dogId]);
+    await expect(plan(s.owner, s, [{ user_id: s.outsider, slices: [{ starts_at: inHours(100), ends_at: inHours(120) }] }])).rejects.toThrow(/cercle du chien/);
+    expect(await rows(db, "select id from care_requests where dog_id = $1", [s.dogId])).toEqual(before);
+    // only a caretaker plans an absence for the dog
+    await expect(plan(s.emma, s, [])).rejects.toThrow(/row-level security|permission/);
+  });
+});

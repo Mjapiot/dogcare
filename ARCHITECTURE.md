@@ -92,8 +92,8 @@ créneaux.
 « Planifier une absence » : page `/plan` (serveur) → `domain/absence.ts` (`planAbsence` : offres tirées des dispos
 par `availabilityOffers` / `availableIntervals`, plan, propositions par personne, candidats du cercle pour les
 trous) ; `components/planning/absence-form.tsx` (dates dans l'URL) et `absence-planner.tsx` (trous et trois
-issues, « Sans X », envoi par `planAbsence` dans `server/actions/proposals.ts` → insertion de la demande puis
-`send_proposals`). Propositions : `components/planning/proposals.tsx` (`ProposalsSection` sur la demande côté
+issues, « Sans X », envoi par `planAbsence` dans `server/actions/proposals.ts` → `plan_absence` : demande et
+`send_proposals` dans une seule transaction). Propositions : `components/planning/proposals.tsx` (`ProposalsSection` sur la demande côté
 responsable ; `ProposalCard` dans « Demandes », « Chiens confiés » et sur la demande côté personne sollicitée),
 données `getRequestProposals` / `getMyPendingProposals`.
 

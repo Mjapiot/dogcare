@@ -26,12 +26,12 @@ async function rpcSend(requestId: string, proposals: Proposal[]): Promise<string
 }
 
 /**
- * "Planifier une absence": publishes a shareable request for the period, then
- * sends each person their part. The request exists even if sending fails.
+ * "Planifier une absence": publishes a shareable request for the period and
+ * sends each person their part, in one transaction (both or nothing).
  */
 export async function planAbsence(
   input: z.input<typeof absenceSchema>,
-): Promise<ActionResult<{ requestId: string; sendError: string | null }>> {
+): Promise<ActionResult<{ requestId: string }>> {
   const parsed = absenceSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message };
   const v = parsed.data;
@@ -43,29 +43,27 @@ export async function planAbsence(
 
   await requireUserId();
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("care_requests")
-    .insert({
-      group_id: v.groupId,
-      dog_id: v.dogId,
-      request_type: "care",
-      necessity: "required",
-      starts_at: new Date(start).toISOString(),
-      ends_at: new Date(end).toISOString(),
-      description: v.description || null,
-      splittable: true,
-    })
-    .select("id")
-    .single();
+  // one transaction: the request and every proposal, or nothing
+  const { data, error } = await supabase.rpc("plan_absence", {
+    p_group_id: v.groupId,
+    p_dog_id: v.dogId,
+    p_starts_at: new Date(start).toISOString(),
+    p_ends_at: new Date(end).toISOString(),
+    p_description: v.description || "",
+    p_proposals: v.proposals.map((p) => ({
+      user_id: p.userId,
+      place: p.place,
+      slices: p.slices.map((s) => ({ starts_at: s.start, ends_at: s.end })),
+    })),
+  });
   if (error) {
     if (error.code === "42501") return { ok: false, error: "Seul un responsable de ce chien peut publier une demande." };
     return { ok: false, error: toUserMessage(error) };
   }
-  const requestId = (data as { id: string }).id;
-  const sendError = v.proposals.length ? await rpcSend(requestId, v.proposals) : null;
+  const requestId = data as string;
   schedulePushDispatch();
   revalidatePath("/", "layout");
-  return { ok: true, data: { requestId, sendError } };
+  return { ok: true, data: { requestId } };
 }
 
 /** Sends (or sends again) proposals on an existing request. */
