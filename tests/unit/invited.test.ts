@@ -35,6 +35,7 @@ describe("circleCovers (same rule as the database)", () => {
   const period = { start: T0, end: T0 + 12 * H };
   it("a close person always, a guest only when their dates cover the whole period", () => {
     expect(circleCovers({ role: "close", starts_at: null, ends_at: null }, period)).toBe(true);
+    expect(circleCovers({ role: "pro", starts_at: null, ends_at: null }, period)).toBe(true);
     expect(circleCovers({ role: "guest", starts_at: null, ends_at: iso(T0 + 12 * H) }, period)).toBe(true);
     expect(circleCovers({ role: "guest", starts_at: null, ends_at: iso(T0 + 11 * H) }, period)).toBe(false);
     expect(circleCovers({ role: "guest", starts_at: iso(T0 + H), ends_at: iso(T0 + 48 * H) }, period)).toBe(false);

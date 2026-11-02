@@ -61,8 +61,12 @@ toujours, pendant ses gardes, jamais) :
 | Proche | membre d'un groupe ou personne invitée directement | toujours | non |
 | Entourage | tout membre d'un groupe du chien, sans réglage | pendant ses gardes (J-7 → fin) | non |
 | Invité | personne invitée directement, entre deux dates (≤ 1 an) | au choix (oui / non) | non |
+| Professionnel | pet-sitter rémunéré invité directement, jusqu'à ce qu'on le retire | pendant ses gardes | non |
 
-- On invite un proche ou un invité par un **lien à usage unique** (7 jours, révocable, empreinte seule
+- **Pour les gardes**, réglé par les responsables pour chaque personne : où le chien est gardé (chez elle ou
+  chez moi), nuits d'affilée maximum (« jamais la nuit » possible ; sinon la règle du chien) et une note
+  (« ils ont un chat »). Le futur planning de vacances s'en servira.
+- On invite un proche, un invité ou un professionnel par un **lien à usage unique** (7 jours, révocable, empreinte seule
   stockée). La personne crée son compte avec le lien e-mail habituel, sans rejoindre de groupe.
 - Une personne invitée hors des groupes voit le passeport et **les demandes sur lesquelles on la sollicite**
   (pas les groupes, leurs membres ni le planning), dans « Chiens confiés » (`/circle`) ; à la fin de ses dates,

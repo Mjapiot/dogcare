@@ -1,7 +1,9 @@
 import { localDayInterval, toLocalDate, type LocalDate } from "./time";
 
 /** Roles of a dog's circle of trust (owner and co-owner are its caretakers). */
-export type CircleKind = "owner" | "co_owner" | "close" | "entourage" | "guest";
+export type CircleKind = "owner" | "co_owner" | "close" | "entourage" | "guest" | "pro";
+/** People invited directly to a dog (outside its groups). */
+export type DirectRole = "close" | "guest" | "pro";
 export type SectionAccess = "always" | "during_care" | "never";
 
 export const CIRCLE_KIND_LABELS: Record<CircleKind, string> = {
@@ -10,6 +12,7 @@ export const CIRCLE_KIND_LABELS: Record<CircleKind, string> = {
   close: "Proche",
   entourage: "Entourage",
   guest: "Invité",
+  pro: "Professionnel",
 };
 
 export const CIRCLE_KIND_HINTS: Record<CircleKind, string> = {
@@ -18,6 +21,7 @@ export const CIRCLE_KIND_HINTS: Record<CircleKind, string> = {
   close: "Voit toujours la santé et les urgences.",
   entourage: "Voit la santé et les urgences pendant ses gardes.",
   guest: "Accès au passeport entre deux dates.",
+  pro: "Pet-sitter rémunéré : passeport, santé et urgences pendant ses gardes.",
 };
 
 export const ACCESS_LABELS: Record<SectionAccess, string> = {
@@ -27,10 +31,11 @@ export const ACCESS_LABELS: Record<SectionAccess, string> = {
 };
 
 /** Default health/emergency access of a role, as offered in the editor. */
-export const ROLE_DEFAULTS: Record<"close" | "entourage" | "guest", SectionAccess> = {
+export const ROLE_DEFAULTS: Record<"close" | "entourage" | "guest" | "pro", SectionAccess> = {
   close: "always",
   entourage: "during_care",
   guest: "always",
+  pro: "during_care",
 };
 
 /**
@@ -59,15 +64,15 @@ export function guestState(window: { starts_at: string | null; ends_at: string |
 }
 
 /**
- * Whether a close person or guest can be asked over a period: a close person
- * always, a guest only if their dates cover it entirely (same rule as
+ * Whether a close person, pro or guest can be asked over a period: a close
+ * person or a pro always, a guest only if their dates cover it entirely (same rule as
  * private.circle_covers in the database).
  */
 export function circleCovers(
-  person: { role: "close" | "guest"; starts_at: string | null; ends_at: string | null },
+  person: { role: DirectRole; starts_at: string | null; ends_at: string | null },
   period: { start: number; end: number },
 ): boolean {
-  if (person.role === "close") return true;
+  if (person.role !== "guest") return true;
   if (!person.ends_at) return false;
   const startsOk = !person.starts_at || new Date(person.starts_at).getTime() <= period.start;
   return startsOk && new Date(person.ends_at).getTime() >= period.end;

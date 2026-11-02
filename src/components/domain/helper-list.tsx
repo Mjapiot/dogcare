@@ -25,7 +25,7 @@ type Helper = {
   availability: PeriodAvailability | "hidden";
   assignments: Array<{ id: string; start: number; end: number; status: "confirmed" | "pending_reconfirmation" | "cancelled" }>;
   /** Circle person asked outside the group. */
-  circleRole?: "close" | "guest" | null;
+  circleRole?: "close" | "guest" | "pro" | null;
 };
 
 function defaultRange(offer: Interval, gaps: Interval[]): Interval {

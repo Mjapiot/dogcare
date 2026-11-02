@@ -72,6 +72,12 @@ test("circle: invite a guest, guest sees the passport only, removal", async ({ b
     await gotoStable(page, "/notifications");
     await expect(page.getByText("Lea a rejoint le cercle d'Aston")).toBeVisible();
     await gotoStable(page, `/dogs/${dogId}`);
+    // garde preferences: never at night, with a reason
+    await page.getByRole("button", { name: /Lea, Invité/ }).click();
+    await page.getByLabel("Nuits d'affilée maximum").selectOption("0");
+    await page.getByLabel("Pourquoi (facultatif)").fill("Elle a un chat");
+    await page.getByRole("button", { name: "Enregistrer" }).click();
+    await expect(page.getByText(/Chez eux · jamais la nuit · Elle a un chat/)).toBeVisible({ timeout: 15_000 });
     await page.getByRole("button", { name: /Lea, Invité/ }).click();
     await page.getByRole("button", { name: "Retirer du cercle" }).click();
     await page.getByRole("button", { name: "Retirer", exact: true }).click();

@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { addDays, toLocalDate, type LocalDate, zonedInstant } from "@/domain/time";
 import type { GroupSnapshot, MemberInfo } from "@/domain/views";
 import type { PassportEmergency, PassportHealth } from "@/domain/passport";
+import type { DirectRole } from "@/domain/circle";
 import type {
   AvailabilityEntryRow,
   AvailabilityRuleRow,
@@ -369,7 +370,7 @@ export async function getPendingCircleInvitations(dogId: string): Promise<Circle
   );
 }
 
-export type CircleDog = { dog_id: string; name: string; photo_path: string | null; role: "close" | "guest"; starts_at: string | null; ends_at: string | null };
+export type CircleDog = { dog_id: string; name: string; photo_path: string | null; role: DirectRole; starts_at: string | null; ends_at: string | null };
 
 /** Dogs opened to the current user by a circle invitation (not as caretaker or group member). */
 export async function getMyCircleDogs(): Promise<CircleDog[]> {
@@ -531,4 +532,12 @@ export async function getGroupMemberCounts(groupIds: string[]): Promise<Record<s
   const out: Record<string, number> = {};
   for (const r of rows) out[r.group_id] = (out[r.group_id] ?? 0) + 1;
   return out;
+}
+
+export type HelperPref = { user_id: string; place: "helper" | "owner"; max_nights: number | null; note: string | null };
+
+/** Garde preferences the dog's caretakers set per person (where, nights max, note). */
+export async function getHelperPrefs(dogId: string): Promise<HelperPref[]> {
+  const supabase = await createClient();
+  return must<HelperPref[]>(await supabase.from("dog_helper_prefs").select("user_id, place, max_nights, note").eq("dog_id", dogId));
 }

@@ -80,17 +80,23 @@ const sectionAccess = z.enum(["always", "during_care", "never"]);
 const isoInstant = z.iso.datetime({ offset: true, message: "Date invalide." });
 
 export const circleMemberSchema = z.object({
-  role: z.enum(["close", "entourage", "guest"]),
+  role: z.enum(["close", "entourage", "guest", "pro"]),
   health: sectionAccess,
   emergency: sectionAccess,
   startsAt: isoInstant.nullable(),
   endsAt: isoInstant.nullable(),
 });
 
+export const helperPrefSchema = z.object({
+  place: z.enum(["helper", "owner"]),
+  maxNights: z.number().int().min(0).max(14).nullable(),
+  note: z.string().trim().max(140, "140 caractères maximum.").optional().default(""),
+});
+
 export const circleInviteSchema = z.object({
-  role: z.enum(["close", "guest"]),
-  health: z.enum(["always", "never"]),
-  emergency: z.enum(["always", "never"]),
+  role: z.enum(["close", "guest", "pro"]),
+  health: sectionAccess,
+  emergency: sectionAccess,
   startsAt: isoInstant.nullable(),
   endsAt: isoInstant.nullable(),
 });

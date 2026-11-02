@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import type { DirectRole } from "@/domain/circle";
 import { redirect } from "next/navigation";
 import { CircleAlert, HeartHandshake } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
@@ -14,7 +15,7 @@ type Preview = {
   dog_id: string | null;
   dog_name: string | null;
   inviter_name: string | null;
-  role: "close" | "guest" | null;
+  role: DirectRole | null;
   ends_at: string | null;
   status: "valid" | "accepted" | "invalid" | "revoked" | "used" | "expired";
 };

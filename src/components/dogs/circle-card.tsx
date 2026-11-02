@@ -3,8 +3,8 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Check, ChevronRight, HeartPulse, Phone, UserPlus, Users, X } from "lucide-react";
-import { createCircleInvitation, removeCircleMember, revokeCircleInvitation, setCircleMember } from "@/server/actions/circle";
+import { Check, ChevronRight, HeartPulse, Home, Moon, Phone, UserPlus, Users, X } from "lucide-react";
+import { createCircleInvitation, removeCircleMember, revokeCircleInvitation, setCircleMember, setHelperPref } from "@/server/actions/circle";
 import { addCaretaker, removeCaretaker } from "@/server/actions/dogs";
 import {
   ACCESS_LABELS,
@@ -20,7 +20,8 @@ import {
 import { addDays, toLocalDate, todayLocal } from "@/domain/time";
 import { shareLink } from "@/lib/native";
 import type { CircleInvitationRow, CircleMemberRow, ActionResult } from "@/lib/types";
-import { Avatar, Card, Field, PillButton, Segmented, TextInput } from "@/components/ui/kit";
+import type { HelperPref } from "@/server/data";
+import { Avatar, Card, Field, PillButton, Segmented, Select, TextInput } from "@/components/ui/kit";
 import { Switch } from "@/components/ui/switch";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ConfirmationDialog } from "@/components/domain/confirmation-dialog";
@@ -36,7 +37,14 @@ const KIND_STYLES: Record<CircleKind, string> = {
   close: "bg-sage/15 text-sage",
   entourage: "bg-surface-2 text-ink-2",
   guest: "bg-[var(--tone-pending)] text-[var(--tone-pending-ink)]",
+  pro: "bg-[var(--tone-info)] text-[var(--tone-info-ink)]",
 };
+
+/** "Chez eux · 2 nuits max" for a person's garde preferences. */
+function prefSummary(p: HelperPref, defaultMaxNights: number): string {
+  const nights = p.max_nights === null ? `${defaultMaxNights} nuits max` : p.max_nights === 0 ? "jamais la nuit" : `${p.max_nights} nuit${p.max_nights > 1 ? "s" : ""} max`;
+  return `${p.place === "owner" ? "Chez moi" : "Chez eux"} · ${nights}${p.note ? ` · ${p.note}` : ""}`;
+}
 
 /**
  * Circle of trust (caretakers only): who sees what about the dog. Each person
@@ -50,6 +58,8 @@ export function CircleCard({
   me,
   members,
   invitations,
+  prefs = [],
+  defaultMaxNights = 3,
 }: {
   dogId: string;
   dogName: string;
@@ -57,6 +67,10 @@ export function CircleCard({
   me: string;
   members: CircleMemberRow[];
   invitations: CircleInvitationRow[];
+  /** Garde preferences per person (caretakers only). */
+  prefs?: HelperPref[];
+  /** The dog's own rule, used when a person has none. */
+  defaultMaxNights?: number;
 }) {
   const router = useRouter();
   const [editing, setEditing] = useState<CircleMemberRow | null>(null);
@@ -109,6 +123,12 @@ export function CircleCard({
                       <AccessHint icon={HeartPulse} label="Santé" access={m.health_access} />
                       <AccessHint icon={Phone} label="Urgences" access={m.emergency_access} />
                     </>
+                  )}
+                  {prefs.find((p) => p.user_id === m.user_id) && (
+                    <span className="inline-flex items-center gap-1 text-ink-2">
+                      <Home className="size-3.5" aria-hidden />
+                      {prefSummary(prefs.find((p) => p.user_id === m.user_id)!, defaultMaxNights)}
+                    </span>
                   )}
                   {m.ends_at && (
                     <span className={cn("font-medium", state === "ended" ? "text-[#7a1b14]" : "text-ink-2")}>
@@ -175,7 +195,15 @@ export function CircleCard({
       </p>
 
       {editing && (
-        <MemberSheet key={editing.user_id} dogId={dogId} member={editing} self={editing.user_id === me} onClose={() => setEditing(null)} />
+        <MemberSheet
+          key={editing.user_id}
+          dogId={dogId}
+          member={editing}
+          self={editing.user_id === me}
+          pref={prefs.find((p) => p.user_id === editing.user_id) ?? null}
+          defaultMaxNights={defaultMaxNights}
+          onClose={() => setEditing(null)}
+        />
       )}
       <InviteSheet open={inviting} onOpenChange={setInviting} dogId={dogId} dogName={dogName} origin={origin} />
     </Card>
@@ -191,7 +219,7 @@ function AccessHint({ icon: Icon, label, access }: { icon: typeof Phone; label: 
   );
 }
 
-type EditableRole = "co_owner" | "close" | "entourage" | "guest";
+type EditableRole = "co_owner" | "close" | "entourage" | "guest" | "pro";
 
 /** Role picker as large tappable cards, each explaining what it allows. */
 function RolePicker({ value, options, onChange }: { value: EditableRole; options: EditableRole[]; onChange: (r: EditableRole) => void }) {
@@ -280,12 +308,16 @@ function MemberSheet({
   dogId,
   member,
   self,
+  pref,
+  defaultMaxNights,
   onClose,
 }: {
   dogId: string;
   member: CircleMemberRow;
   /** a co-owner looking at their own row can only step down */
   self: boolean;
+  pref: HelperPref | null;
+  defaultMaxNights: number;
   onClose: () => void;
 }) {
   const router = useRouter();
@@ -296,15 +328,24 @@ function MemberSheet({
   const [emergency, setEmergency] = useState<SectionAccess>(member.emergency_access);
   const [from, setFrom] = useState(member.starts_at ? toLocalDate(member.starts_at) : "");
   const [to, setTo] = useState(member.ends_at ? lastGuestDay(member.ends_at) : addDays(today, 3));
+  // garde preferences: where, nights in a row ("" = the dog's rule), a note
+  const [place, setPlace] = useState<"helper" | "owner">(pref?.place ?? "helper");
+  const [maxNights, setMaxNights] = useState(pref?.max_nights === null || pref === null ? "" : String(pref.max_nights));
+  const [note, setNote] = useState(pref?.note ?? "");
+  const prefChanged =
+    place !== (pref?.place ?? "helper") ||
+    maxNights !== (pref?.max_nights === null || pref === null ? "" : String(pref.max_nights)) ||
+    note.trim() !== (pref?.note ?? "");
   const [confirmRemove, setConfirmRemove] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const roles: EditableRole[] = self
     ? ["co_owner", "entourage"]
     : member.in_group
-      ? ["co_owner", "close", "entourage", "guest"]
-      : ["close", "guest"];
-  const hasSettings = member.kind === "close" || member.kind === "guest" || (member.kind === "entourage" && !isDefault(member));
+      ? ["co_owner", "close", "entourage", "guest", "pro"]
+      : ["close", "guest", "pro"];
+  const hasSettings =
+    member.kind === "close" || member.kind === "guest" || member.kind === "pro" || (member.kind === "entourage" && !isDefault(member));
 
   const pickRole = (r: EditableRole) => {
     setRole(r);
@@ -327,6 +368,10 @@ function MemberSheet({
 
   const save = () =>
     run(async () => {
+      if (prefChanged && role !== "co_owner") {
+        const p = await setHelperPref(dogId, member.user_id, { place, maxNights: maxNights === "" ? null : Number(maxNights), note });
+        if (!p.ok) return p;
+      }
       if (role === "co_owner") {
         return member.kind === "co_owner" ? { ok: true, data: undefined } : addCaretaker(dogId, member.user_id);
       }
@@ -352,11 +397,44 @@ function MemberSheet({
           <RolePicker value={role} options={roles} onChange={pickRole} />
           {role !== "co_owner" && !self && (
             <>
-              <AccessPicker label="Santé" value={health} onChange={setHealth} withDuringCare={member.in_group} />
-              <AccessPicker label="Urgences" value={emergency} onChange={setEmergency} withDuringCare={member.in_group} />
+              <AccessPicker label="Santé" value={health} onChange={setHealth} withDuringCare />
+              <AccessPicker label="Urgences" value={emergency} onChange={setEmergency} withDuringCare />
             </>
           )}
           {role === "guest" && <GuestDates from={from} to={to} onFrom={setFrom} onTo={setTo} idPrefix="member" />}
+          {role !== "co_owner" && !self && (
+            <section className="flex flex-col gap-3 rounded-2xl bg-surface-2 p-4" aria-labelledby="garde-prefs">
+              <h3 id="garde-prefs" className="flex items-center gap-2 text-[15px] font-semibold text-ink">
+                <Moon className="size-4" aria-hidden /> Pour les gardes
+              </h3>
+              <div className="flex flex-col gap-1.5">
+                <span className="text-sm font-medium text-ink-2">Où le chien est gardé</span>
+                <Segmented
+                  label="Où le chien est gardé"
+                  value={place}
+                  onChange={setPlace}
+                  options={[
+                    { value: "helper", label: "Chez eux" },
+                    { value: "owner", label: "Chez moi" },
+                  ]}
+                />
+              </div>
+              <Field label="Nuits d'affilée maximum" htmlFor="pref-nights">
+                <Select id="pref-nights" value={maxNights} onChange={(e) => setMaxNights(e.target.value)}>
+                  <option value="">Règle du chien ({defaultMaxNights})</option>
+                  <option value="0">Jamais la nuit</option>
+                  {[1, 2, 3, 4, 5, 7, 10, 14].map((n) => (
+                    <option key={n} value={String(n)}>
+                      {n} nuit{n > 1 ? "s" : ""}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+              <Field label="Pourquoi (facultatif)" htmlFor="pref-note" hint="Par exemple : « ils ont un chat »">
+                <TextInput id="pref-note" maxLength={140} value={note} onChange={(e) => setNote(e.target.value)} />
+              </Field>
+            </section>
+          )}
           {error && (
             <p className="rounded-2xl bg-[#f6dcd9] px-4 py-3 text-[14px] font-medium text-[#7a1b14]" role="alert">
               {error}
@@ -412,7 +490,7 @@ function InviteSheet({
 }) {
   const router = useRouter();
   const today = todayLocal();
-  const [role, setRole] = useState<"close" | "guest">("guest");
+  const [role, setRole] = useState<"close" | "guest" | "pro">("guest");
   const [health, setHealth] = useState(true);
   const [emergency, setEmergency] = useState(true);
   const [from, setFrom] = useState("");
@@ -425,8 +503,9 @@ function InviteSheet({
       const window = role === "guest" ? guestWindow(from, to) : { startsAt: null, endsAt: null };
       const r = await createCircleInvitation(dogId, {
         role,
-        health: health ? "always" : "never",
-        emergency: emergency ? "always" : "never",
+        // a pro sees health and emergency during their gardes; others always
+        health: health ? (role === "pro" ? "during_care" : "always") : "never",
+        emergency: emergency ? (role === "pro" ? "during_care" : "always") : "never",
         startsAt: window.startsAt,
         endsAt: window.endsAt,
       });
@@ -462,18 +541,18 @@ function InviteSheet({
           />
         ) : (
           <div className="flex flex-col gap-4 px-4 pb-6">
-            <RolePicker value={role} options={["guest", "close"]} onChange={(r) => setRole(r as "close" | "guest")} />
+            <RolePicker value={role} options={["guest", "close", "pro"]} onChange={(r) => setRole(r as "close" | "guest" | "pro")} />
             {role === "guest" && <GuestDates from={from} to={to} onFrom={setFrom} onTo={setTo} idPrefix="invite" />}
             <ul className="flex flex-col divide-y divide-line rounded-2xl bg-surface-2">
               <li className="flex min-h-14 items-center justify-between gap-3 px-4 py-2">
                 <label htmlFor="invite-health" className="flex items-center gap-3 text-[15px] font-medium text-ink">
-                  <HeartPulse className="size-5 text-ink-2" aria-hidden /> Voir la santé
+                  <HeartPulse className="size-5 text-ink-2" aria-hidden /> Voir la santé{role === "pro" && " pendant ses gardes"}
                 </label>
                 <Switch id="invite-health" checked={health} onCheckedChange={setHealth} />
               </li>
               <li className="flex min-h-14 items-center justify-between gap-3 px-4 py-2">
                 <label htmlFor="invite-emergency" className="flex items-center gap-3 text-[15px] font-medium text-ink">
-                  <Phone className="size-5 text-ink-2" aria-hidden /> Voir les urgences
+                  <Phone className="size-5 text-ink-2" aria-hidden /> Voir les urgences{role === "pro" && " pendant ses gardes"}
                 </label>
                 <Switch id="invite-emergency" checked={emergency} onCheckedChange={setEmergency} />
               </li>

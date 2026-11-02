@@ -56,6 +56,8 @@ Vision : « Toute la vie de votre animal, partagée avec les bonnes personnes »
    - [x] Notifications liées au cercle (en production le 2026-10-28)
 3. [x] Carnet de garde (repas, promenade, médicament, dépôt/récupération, photo ou commentaire) — en production le 2026-10-28
 4. [ ] Moteur de planning sous contraintes avec proposition à valider
+   - [ ] Planning de vacances, livraison 1 : rôle « Professionnel » et préférences de garde par personne (lieu, nuits max, note) — implémentée et testée en local, à déployer
+   - [ ] Planning de vacances, livraison 2 : moteur alimenté par les dispos, propositions ciblées, parcours « Planifier une absence »
    - [x] Une demande à la fois : nuits d'affilée max, tranche minimale, conflits, confirmation tout ou rien (en production le 2026-10-29)
    - [ ] Plusieurs demandes ou chiens à la fois ; lieux et incompatibilités entre chiens
 5. [ ] Routines (désactivées par défaut)

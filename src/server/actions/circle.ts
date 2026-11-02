@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import { circleInviteSchema, circleMemberSchema, uuid } from "@/lib/validation";
+import { circleInviteSchema, circleMemberSchema, helperPrefSchema, uuid } from "@/lib/validation";
 import { requireUserId } from "@/server/session";
 import { toUserMessage } from "@/server/errors";
 import { schedulePushDispatch } from "@/server/push";
@@ -100,5 +100,23 @@ export async function leaveDogCircle(dogId: string): Promise<ActionResult> {
   if (error) return { ok: false, error: toUserMessage(error) };
   schedulePushDispatch();
   revalidatePath("/", "layout");
+  return { ok: true, data: undefined };
+}
+
+/** Where the dog stays with this person, nights in a row there (0 = never at night), and a note. */
+export async function setHelperPref(dogId: string, userId: string, input: z.input<typeof helperPrefSchema>): Promise<ActionResult> {
+  const parsed = helperPrefSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message };
+  if (!uuid.safeParse(dogId).success || !uuid.safeParse(userId).success) return { ok: false, error: "Paramètres invalides." };
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("set_helper_pref", {
+    p_dog_id: dogId,
+    p_user_id: userId,
+    p_place: parsed.data.place,
+    p_max_nights: parsed.data.maxNights,
+    p_note: parsed.data.note || null,
+  });
+  if (error) return { ok: false, error: toUserMessage(error) };
+  revalidatePath(`/dogs/${dogId}`);
   return { ok: true, data: undefined };
 }

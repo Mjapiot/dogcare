@@ -2,7 +2,7 @@
  * Row types mirroring the SQL schema (supabase/migrations). Kept by hand for
  * now; regenerate with `supabase gen types` once the CLI is linked.
  */
-import type { CircleKind, SectionAccess } from "@/domain/circle";
+import type { CircleKind, DirectRole, SectionAccess } from "@/domain/circle";
 import type { SlotKey } from "@/domain/config";
 import type { DeclaredStatus } from "@/domain/availability";
 import type { LifecycleStatus, NecessityLevel, RequestType, ResponseStatus } from "@/domain/status";
@@ -90,9 +90,9 @@ export type CircleMemberRow = {
 
 export type CircleInvitationRow = {
   id: string;
-  role: "close" | "guest";
-  health_access: "always" | "never";
-  emergency_access: "always" | "never";
+  role: DirectRole;
+  health_access: SectionAccess;
+  emergency_access: SectionAccess;
   starts_at: string | null;
   ends_at: string | null;
   expires_at: string;
@@ -117,14 +117,14 @@ export type CareLogEntryRow = {
 };
 
 /** A circle person asked on a request (see public.request_invitees_of). */
-export type RequestInviteeRow = { request_id: string; user_id: string; display_name: string; role: "close" | "guest" };
+export type RequestInviteeRow = { request_id: string; user_id: string; display_name: string; role: DirectRole };
 
 /** A circle person a caretaker may ask on a request of a group (see public.request_invitee_candidates). */
 export type InviteeCandidateRow = {
   dog_id: string;
   user_id: string;
   display_name: string;
-  role: "close" | "guest";
+  role: DirectRole;
   starts_at: string | null;
   ends_at: string | null;
 };

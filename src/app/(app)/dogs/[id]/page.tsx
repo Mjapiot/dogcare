@@ -10,6 +10,7 @@ import {
   getDogPassportPrivate,
   getDogShareLinks,
   getMyCircleDogs,
+  getHelperPrefs,
   getPendingCircleInvitations,
   signDogPhotos,
 } from "@/server/data";
@@ -42,7 +43,7 @@ export default async function DogPage({ params }: PageProps<"/dogs/[id]">) {
   if (!data) notFound();
   const { dog, caretakers, groupIds } = data;
   const isCaretaker = caretakers.some((c) => c.user_id === userId);
-  const [photos, myGroups, priv, links, circle, invitations, h, circleDogs] = await Promise.all([
+  const [photos, myGroups, priv, links, circle, invitations, h, circleDogs, helperPrefs] = await Promise.all([
     signDogPhotos([dog]),
     getMyGroups(),
     getDogPassportPrivate(dog.id),
@@ -51,6 +52,7 @@ export default async function DogPage({ params }: PageProps<"/dogs/[id]">) {
     isCaretaker ? getPendingCircleInvitations(dog.id) : Promise.resolve([]),
     headers(),
     isCaretaker ? Promise.resolve([]) : getMyCircleDogs(),
+    isCaretaker ? getHelperPrefs(dog.id) : Promise.resolve([]),
   ]);
   const origin = `${h.get("x-forwarded-proto") ?? "https"}://${h.get("x-forwarded-host") ?? h.get("host")}`;
   const visibleGroups = myGroups.filter((g) => groupIds.includes(g.id));
@@ -207,7 +209,16 @@ export default async function DogPage({ params }: PageProps<"/dogs/[id]">) {
 
       {editable && (
         <Rise>
-          <CircleCard dogId={dog.id} dogName={dog.name} origin={origin} me={userId} members={circle} invitations={invitations} />
+          <CircleCard
+            dogId={dog.id}
+            dogName={dog.name}
+            origin={origin}
+            me={userId}
+            members={circle}
+            invitations={invitations}
+            prefs={helperPrefs}
+            defaultMaxNights={dog.plan_max_nights}
+          />
         </Rise>
       )}
 
