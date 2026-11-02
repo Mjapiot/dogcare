@@ -58,7 +58,7 @@ test("plan an absence: proposal sent, accepted, then confirmed", async ({ browse
     await page.waitForURL(/\/requests\/[0-9a-f-]{36}$/, { timeout: 15_000 });
     const requestId = page.url().split("/").at(-1)!;
     const sent = page.getByRole("region", { name: "Propositions envoyées" });
-    await expect(sent.getByText("En attente")).toBeVisible({ timeout: 15_000 });
+    await expect(sent.getByText("En attente", { exact: true })).toBeVisible({ timeout: 15_000 });
 
     // Emma gets the proposal instead of the generic notice, and accepts
     const { data: notes } = await admin.from("notifications").select("notification_type").eq("user_id", emma.id).eq("request_id", requestId);
@@ -74,7 +74,7 @@ test("plan an absence: proposal sent, accepted, then confirmed", async ({ browse
 
     // the owner confirms the plan, with where the dog stays
     await gotoStable(page, `/requests/${requestId}`);
-    await expect(sent.getByText("Acceptée")).toBeVisible({ timeout: 15_000 });
+    await expect(sent.getByText("Acceptée", { exact: true })).toBeVisible({ timeout: 15_000 });
     const card = page.getByRole("region", { name: "Proposition de planning" });
     await card.getByRole("button", { name: "Confirmer ce planning" }).click();
     await expect(page.getByText(/Planning confirmé : 1 garde/)).toBeVisible({ timeout: 15_000 });
