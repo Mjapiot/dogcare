@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
-import { ArrowLeft, HeartPulse, IdCard, Lock, Phone, Utensils } from "lucide-react";
+import { ArrowLeft, CalendarRange, HeartPulse, IdCard, Lock, Phone, Utensils } from "lucide-react";
+import { PillLink } from "@/components/ui/kit";
 import { getMyGroups, requireAppContext } from "@/server/session";
 import {
   getDog,
@@ -219,6 +220,14 @@ export default async function DogPage({ params }: PageProps<"/dogs/[id]">) {
             prefs={helperPrefs}
             defaultMaxNights={dog.plan_max_nights}
           />
+        </Rise>
+      )}
+
+      {editable && (
+        <Rise>
+          <PillLink href={`/plan?dog=${dog.id}`} variant="soft" className="w-full">
+            <CalendarRange className="size-4" aria-hidden /> Planifier une absence
+          </PillLink>
         </Rise>
       )}
 

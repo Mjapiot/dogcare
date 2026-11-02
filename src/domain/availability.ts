@@ -82,3 +82,21 @@ export const PERIOD_AVAILABILITY_LABELS: Record<PeriodAvailability, string> = {
   unavailable: "Indisponible",
   unknown: "Disponibilité inconnue",
 };
+
+/**
+ * The parts of a period a member declared themselves available for, merged
+ * (a one-off entry wins over a habit; undeclared slots are not counted).
+ */
+export function availableIntervals(
+  period: Interval,
+  entries: readonly AvailabilityEntry[],
+  rules: readonly AvailabilityRule[],
+  timeZone = APP_TIME_ZONE,
+): Interval[] {
+  return mergeIntervals(
+    slotInstancesOverlapping(period, timeZone)
+      .filter((si) => resolveSlot(si.date, si.slot, entries, rules).status === "available")
+      .map((si) => intersect(si.interval, period))
+      .filter((i): i is Interval => i !== null),
+  );
+}

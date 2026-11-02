@@ -208,7 +208,7 @@ export async function confirmPlan(requestId: string, slices: z.input<typeof plan
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("confirm_plan", {
     p_request_id: requestId,
-    p_slices: parsed.data.map((s) => ({ user_id: s.userId, starts_at: s.start, ends_at: s.end })),
+    p_slices: parsed.data.map((s) => ({ user_id: s.userId, starts_at: s.start, ends_at: s.end, place: s.place ?? "helper" })),
   });
   if (error) return { ok: false, error: toUserMessage(error) };
   schedulePushDispatch();

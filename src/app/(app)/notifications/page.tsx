@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { AlarmClock, BellOff, CircleAlert, CircleCheck, Clock, Flag, HeartHandshake, Inbox, NotebookPen, Pencil, UserCheck, UserPlus, XCircle, type LucideIcon } from "lucide-react";
+import { AlarmClock, BellOff, CalendarRange, CircleAlert, CircleCheck, Clock, Flag, HeartHandshake, Inbox, NotebookPen, Pencil, UserCheck, UserPlus, XCircle, type LucideIcon } from "lucide-react";
 import { requireAppContext } from "@/server/session";
 import { getNotifications } from "@/server/data";
 import { formatRelative } from "@/lib/format";
@@ -26,6 +26,7 @@ const ICONS: Record<NotificationType, LucideIcon> = {
   care_log: NotebookPen,
   circle_update: HeartHandshake,
   care_reminder: AlarmClock,
+  care_proposal: CalendarRange,
 };
 
 export default async function NotificationsPage() {

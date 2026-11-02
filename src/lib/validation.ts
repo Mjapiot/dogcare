@@ -159,10 +159,34 @@ export const planningRulesSchema = z.object({
   minSliceHours: z.number().int().min(1).max(12),
 });
 
+const placeSchema = z.enum(["helper", "owner"]);
+
 export const planSliceSchema = z.object({
   userId: uuid,
   start: z.iso.datetime({ offset: true }),
   end: z.iso.datetime({ offset: true }),
+  place: placeSchema.optional(),
+});
+
+/** One person's part of an absence: where, and when (sorted, disjoint — checked in base). */
+export const proposalSchema = z.object({
+  userId: uuid,
+  place: placeSchema,
+  slices: z
+    .array(z.object({ start: z.iso.datetime({ offset: true }), end: z.iso.datetime({ offset: true }) }))
+    .min(1)
+    .max(20),
+});
+
+export const absenceSchema = z.object({
+  groupId: uuid,
+  dogId: uuid,
+  startDate: localDate,
+  startTime: localTime,
+  endDate: localDate,
+  endTime: localTime,
+  description: z.string().trim().max(1000, "1000 caractères maximum.").optional().default(""),
+  proposals: z.array(proposalSchema).max(20, "20 personnes au plus."),
 });
 
 export const careLogKindSchema = z.enum(["meal", "walk", "medication", "drop_off", "pick_up", "photo", "note"]);

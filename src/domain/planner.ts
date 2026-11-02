@@ -3,8 +3,10 @@
  * people who said "Oui", for the owner to validate. Pure and deterministic.
  *
  * Rules, in order:
- * 1. only someone whose "Oui" (minus their other gardes) covers a slice gets it;
- * 2. no one gets more consecutive nights than the owner allows (hard rule);
+ * 1. only someone whose offer (their "Oui", or what they declared available,
+ *    minus their other gardes) covers a slice gets it;
+ * 2. no one gets more consecutive nights than their own limit, or else the
+ *    dog's rule (hard rule; 0 = never at night);
  * 3. cover as much time as possible, with as few handoffs as possible
  *    (greedy "farthest reach", optimal for the number of slices);
  * 4. ties: the person with the least time so far, then who answered first;
@@ -16,18 +18,27 @@ import { addDays, toLocalDate, zonedInstant } from "./time";
 export type PlanOffer = {
   userId: string;
   name: string;
-  /** What their "Oui" covers (whole request or part of it). */
-  offer: Interval;
+  /** What they can take: their "Oui" (one interval), or what their availability says (several). */
+  offer: Interval | readonly Interval[];
   /** Their other live gardes at that time (conflicts). */
   busy: readonly Interval[];
   respondedAt: string;
+  /** Their own maximum of consecutive nights (0 = never at night); otherwise the dog's rule. */
+  maxNights?: number | null;
+  /** Where the dog stays with them. */
+  place?: "helper" | "owner";
 };
+
+/** The intervals an offer covers. */
+export function offerIntervals(o: Pick<PlanOffer, "offer">): readonly Interval[] {
+  return "start" in o.offer ? [o.offer] : o.offer;
+}
 
 export type PlanRules = { maxConsecutiveNights: number; minSliceMs: number };
 
 export const DEFAULT_PLAN_RULES: PlanRules = { maxConsecutiveNights: 3, minSliceMs: 3 * 3_600_000 };
 
-export type PlanSlice = { userId: string; name: string; start: number; end: number; reason: string };
+export type PlanSlice = { userId: string; name: string; start: number; end: number; reason: string; place?: "helper" | "owner" };
 export type PlanHole = { start: number; end: number; reason: string };
 
 export type Plan = {
@@ -103,10 +114,20 @@ export function proposePlan(input: {
   const anchors = nightAnchors(input.period);
   const available = new Map(
     input.offers.map((o) => {
-      const inside = intersect(o.offer, input.period);
-      return [o.userId, inside ? subtractIntervals(inside, mergeIntervals(o.busy)) : []] as const;
+      const busy = mergeIntervals(o.busy);
+      const pieces = mergeIntervals(
+        offerIntervals(o).flatMap((i) => {
+          const inside = intersect(i, input.period);
+          return inside ? subtractIntervals(inside, busy) : [];
+        }),
+      );
+      return [o.userId, pieces] as const;
     }),
   );
+  // each person's own limit of consecutive nights, or the dog's rule
+  const capOf = new Map(input.offers.map((o) => [o.userId, o.maxNights ?? rules.maxConsecutiveNights] as const));
+  const cap = (userId: string) => capOf.get(userId) ?? rules.maxConsecutiveNights;
+  const nightsText = (n: number) => `${n} nuit${n > 1 ? "s" : ""} d'affilée`;
   const assignedMs = new Map<string, number>();
   // who holds each night: gardes already confirmed, then the slices given by the plan
   const holder: Array<string | undefined> = anchors.map((a) => input.taken.find((t) => t.userId && t.start <= a && a < t.end)?.userId);
@@ -123,9 +144,9 @@ export function proposePlan(input: {
   const slices: PlanSlice[] = [];
   const holes: PlanHole[] = [];
 
-  const candidatesAt = (t: number, gapEnd: number): { eligible: Candidate[]; blockedByNights: string[] } => {
+  const candidatesAt = (t: number, gapEnd: number): { eligible: Candidate[]; blockedByNights: PlanOffer[] } => {
     const eligible: Candidate[] = [];
-    const blockedByNights: string[] = [];
+    const blockedByNights: PlanOffer[] = [];
     for (const o of input.offers) {
       const piece = available.get(o.userId)!.find((i) => i.start <= t && t < i.end);
       if (!piece) continue;
@@ -135,8 +156,9 @@ export function proposePlan(input: {
       if (inRange.length) {
         // nights already held just before, and confirmed ones right after, extend the run
         const base = runBefore(o.userId, inRange[0].idx);
-        let allowed = rules.maxConsecutiveNights - base;
-        if (inRange.length <= allowed && base + inRange.length + runAfter(o.userId, inRange.at(-1)!.idx) > rules.maxConsecutiveNights) {
+        const max = cap(o.userId);
+        let allowed = max - base;
+        if (inRange.length <= allowed && base + inRange.length + runAfter(o.userId, inRange.at(-1)!.idx) > max) {
           allowed = inRange.length - 1; // leave the night before their next garde to someone else
         }
         if (inRange.length > allowed) {
@@ -145,7 +167,7 @@ export function proposePlan(input: {
         }
       }
       if (reach > t) eligible.push({ offer: o, reach, capped });
-      else blockedByNights.push(o.name);
+      else blockedByNights.push(o);
     }
     return { eligible, blockedByNights };
   };
@@ -164,10 +186,12 @@ export function proposePlan(input: {
           ...(blockedByNights.length && nextNight !== undefined ? [morningAfter(nextNight)] : []),
         );
         const busyNames = input.offers
-          .filter((o) => o.busy.some((b) => b.start <= t && t < b.end) && o.offer.start <= t && t < o.offer.end)
+          .filter((o) => o.busy.some((b) => b.start <= t && t < b.end) && offerIntervals(o).some((i) => i.start <= t && t < i.end))
           .map((o) => o.name);
         const reason = blockedByNights.length
-          ? `${blockedByNights.join(", ")} dépasserai${blockedByNights.length > 1 ? "ent" : "t"} ${rules.maxConsecutiveNights} nuit${rules.maxConsecutiveNights > 1 ? "s" : ""} d'affilée`
+          ? blockedByNights
+              .map((o) => (cap(o.userId) === 0 ? `${o.name} ne garde jamais la nuit` : `${o.name} dépasserait ${nightsText(cap(o.userId))}`))
+              .join(" · ")
           : busyNames.length
             ? `${busyNames.join(", ")} ${busyNames.length > 1 ? "ont" : "a"} déjà une autre garde à ce moment-là`
             : "Personne n'a proposé ce créneau";
@@ -185,10 +209,10 @@ export function proposePlan(input: {
       const best = eligible[0];
       const reason =
         (eligible.length === 1 ? "Seule personne disponible à ce moment-là" : "Sa proposition va le plus loin : moins de relais") +
-        (best.capped ? ` · limité à ${rules.maxConsecutiveNights} nuit${rules.maxConsecutiveNights > 1 ? "s" : ""} d'affilée` : "");
+        (best.capped ? (cap(best.offer.userId) === 0 ? " · jamais la nuit" : ` · limité à ${nightsText(cap(best.offer.userId))}`) : "");
       const last = slices.at(-1);
       if (last && last.userId === best.offer.userId && last.end === t) last.end = best.reach;
-      else slices.push({ userId: best.offer.userId, name: best.offer.name, start: t, end: best.reach, reason });
+      else slices.push({ userId: best.offer.userId, name: best.offer.name, start: t, end: best.reach, reason, place: best.offer.place });
       assignedMs.set(best.offer.userId, (assignedMs.get(best.offer.userId) ?? 0) + (best.reach - t));
       anchors.forEach((a, idx) => {
         if (a >= t && a < best.reach) holder[idx] = best.offer.userId;
@@ -197,7 +221,7 @@ export function proposePlan(input: {
     }
   }
 
-  const finalSlices = absorbShortSlices(slices, available, rules, input.period);
+  const finalSlices = absorbShortSlices(slices, available, rules, input.period, cap);
   const coveredMs = finalSlices.reduce((sum, s) => sum + (s.end - s.start), 0);
   return {
     slices: finalSlices,
@@ -215,6 +239,7 @@ function absorbShortSlices(
   available: Map<string, Interval[]>,
   rules: PlanRules,
   period: Interval,
+  cap: (userId: string) => number,
 ): PlanSlice[] {
   let current = slices.map((s) => ({ ...s }));
   for (let changed = true; changed; ) {
@@ -228,7 +253,7 @@ function absorbShortSlices(
         const canTake = available.get(n.userId)?.some((a) => a.start <= s.start && s.end <= a.end);
         if (!canTake) continue;
         const merged = current.filter((_, k) => k !== i).map((x) => (x === n ? { ...x, start: Math.min(x.start, s.start), end: Math.max(x.end, s.end) } : x));
-        if ((consecutiveNights(merged, period)[n.userId] ?? 0) > rules.maxConsecutiveNights) continue;
+        if ((consecutiveNights(merged, period)[n.userId] ?? 0) > cap(n.userId)) continue;
         current = merged;
         changed = true;
         break;

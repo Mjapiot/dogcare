@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, BellRing, CalendarPlus, CircleAlert, CircleCheck, CircleDashed, Clock, Inbox, NotebookPen, PawPrint, UserCheck } from "lucide-react";
+import { ArrowRight, BellRing, CalendarPlus, CalendarRange, CircleAlert, CircleCheck, CircleDashed, Clock, Inbox, NotebookPen, PawPrint, UserCheck } from "lucide-react";
 import { requireAppContext } from "@/server/session";
 import { getGroupSnapshot, getLatestCareNews, signDogPhotos } from "@/server/data";
 import { CARE_LOG_LABELS, isOngoing } from "@/domain/care-log";
@@ -39,6 +39,7 @@ export default async function TodayPage() {
     .flatMap((v) => v.assignments.filter((a) => isOngoing(a, now)).map((a) => ({ view: v, assignment: a })))
     .slice(0, 3);
   const news = await getLatestCareNews(ongoing.map((o) => o.assignment.id));
+  const ownsADog = snapshot.dogs.some((d) => !d.archived_at && snapshot.caretakers.some((c) => c.dog_id === d.id && c.user_id === userId));
   const [dd, mm] = [today.slice(8, 10), today.slice(5, 7)];
 
   const tiles = [
@@ -133,6 +134,17 @@ export default async function TodayPage() {
           <Inbox className="size-5 shrink-0 text-ink" aria-hidden />
           <span className="flex-1 text-[15px] font-medium text-ink">
             {counts.toAnswer} demande{counts.toAnswer > 1 ? "s attendent" : " attend"} votre réponse
+          </span>
+          <ArrowRight className="size-5 text-ink-2" aria-hidden />
+        </Link>
+      )}
+
+      {ownsADog && (
+        <Link href="/plan" className="glass flex items-center gap-3 rounded-2xl p-4">
+          <CalendarRange className="size-5 shrink-0 text-sage" aria-hidden />
+          <span className="min-w-0 flex-1">
+            <span className="block text-[15px] font-semibold text-ink">Planifier une absence</span>
+            <span className="block text-[14px] text-ink-2">L&apos;app propose qui garde quand, d&apos;après les dispos</span>
           </span>
           <ArrowRight className="size-5 text-ink-2" aria-hidden />
         </Link>

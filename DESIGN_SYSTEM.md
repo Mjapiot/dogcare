@@ -67,12 +67,19 @@ Marges latérales 16 px, espacement vertical 20–28 px entre sections.
 | ResponseButtons | `components/domain/response-buttons.tsx` |
 | MemberAvailabilityList (réponses des membres) | `components/domain/helper-list.tsx` |
 | ConfirmationDialog | `components/domain/confirmation-dialog.tsx` |
+| PlanCard, AbsenceForm, AbsencePlanner (planning) | `components/planning/*` |
+| ProposalsSection, ProposalCard (propositions de garde) | `components/planning/proposals.tsx` |
 | NotificationCenter | `app/(app)/notifications/page.tsx` |
 | EmptyState, LoadingSkeleton, ErrorState, PillButton, Field… | `components/ui/kit.tsx`, `app/(app)/error.tsx` |
 
 Écran « Demandes » : cartes `rounded-[28px]` avec `shadow-soft` et anneau blanc, photo du chien, statut en pastille
 (icône + libellé), onglets-liens à pouce glissant (`ScreenTabs`), listes animées (`AnimatedList` : entrée, sortie
 et resserrement). Compteurs seulement sur les onglets qui attendent une action.
+
+Planning : une teinte par personne sur la frise, toujours doublée du nom ; trous hachurés avec icône d'alerte et
+libellé « Sans solution pour l'instant » ; lieu avec l'icône maison (« Chez Emma » / « Chez moi ») ; statut d'une
+proposition en pastille icône + libellé (En attente, Acceptée, Refusée, Retirée) ; personnes du cercle à solliciter
+en puces à bascule (`aria-pressed`) avec icône et rôle.
 
 ## Principes UX
 

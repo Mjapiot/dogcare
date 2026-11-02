@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, HeartHandshake, Info, Users } from "lucide-react";
 import { getMyGroups, requireAppContext } from "@/server/session";
-import { getBusyAssignments, getGroupSnapshot, getRequestGroupId, signDogPhotos } from "@/server/data";
+import { getBusyAssignments, getGroupSnapshot, getHelperPrefs, getMyPendingProposals, getRequestGroupId, getRequestProposals, signDogPhotos } from "@/server/data";
 import { buildRequestViews } from "@/domain/views";
 import { NECESSITY_LABELS, REQUEST_TYPE_LABELS } from "@/domain/status";
 import { formatDuration, formatPeriod } from "@/lib/format";
@@ -17,8 +17,9 @@ import { OwnerActions } from "@/components/domain/owner-actions";
 import { ReportButton } from "@/components/domain/report-button";
 import { CareLogSection } from "@/components/care-log/care-log-section";
 import { PlanCard } from "@/components/planning/plan-card";
+import { ProposalCard, ProposalsSection } from "@/components/planning/proposals";
 import { canPlan, holeSuggestions, planOffers, planRules, takenIntervals } from "@/domain/plan-inputs";
-import { proposePlan } from "@/domain/planner";
+import { offerIntervals, proposePlan } from "@/domain/planner";
 import { uuid } from "@/lib/validation";
 import { requestNow } from "@/server/clock";
 
@@ -39,14 +40,18 @@ export default async function RequestDetailPage({ params }: PageProps<"/requests
   const now = requestNow();
   const planning = canPlan(view, now);
   const yesIds = view.helpers.filter((h) => h.response === "yes").map((h) => h.userId);
-  const [photos, busy] = await Promise.all([
+  const [photos, busy, prefs, proposals, mine] = await Promise.all([
     signDogPhotos(view.dog ? [view.dog] : []),
     planning ? getBusyAssignments(yesIds, view.period, id) : Promise.resolve([]),
+    planning && view.dog ? getHelperPrefs(view.dog.id) : Promise.resolve([]),
+    view.iAmCaretaker ? getRequestProposals(id) : Promise.resolve([]),
+    view.iAmCaretaker ? Promise.resolve([]) : getMyPendingProposals(userId),
   ]);
+  const myProposal = mine.find((p) => p.request_id === id);
   // planning engine: same inputs on the server (suggestions for holes) and in the card
   const plan = planning
     ? (() => {
-        const offers = planOffers(view, snapshot, busy);
+        const offers = planOffers(view, snapshot, busy, prefs, proposals.filter((p) => p.status === "accepted"));
         const rules = planRules(view.dog);
         const taken = takenIntervals(view);
         const holes = proposePlan({ period: view.period, taken, offers, rules }).holes;
@@ -147,6 +152,8 @@ export default async function RequestDetailPage({ params }: PageProps<"/requests
         names={Object.fromEntries(view.helpers.map((h) => [h.userId, h.name]))}
       />
 
+      {myProposal && <ProposalCard proposal={myProposal} />}
+
       {!cancelled && view.iAmEligible && view.myAssignments.length === 0 && r.necessity !== "info" && !view.status.isPast && (
         <section className="flex flex-col gap-3 rounded-[24px] bg-surface p-4">
           <h2 className="flex items-center gap-2 text-[17px] font-semibold text-ink">
@@ -168,7 +175,7 @@ export default async function RequestDetailPage({ params }: PageProps<"/requests
 
       {plan && (
         <PlanCard
-          key={`${r.revision}-${view.assignments.length}-${plan.offers.map((o) => `${o.userId}:${o.offer.start}-${o.offer.end}`).join(",")}`}
+          key={`${r.revision}-${view.assignments.length}-${plan.offers.map((o) => `${o.userId}:${offerIntervals(o).map((i) => `${i.start}-${i.end}`).join("+")}`).join(",")}`}
           requestId={r.id}
           dogName={view.dog?.name ?? "mon chien"}
           period={view.period}
@@ -178,6 +185,8 @@ export default async function RequestDetailPage({ params }: PageProps<"/requests
           suggestions={plan.suggestions}
         />
       )}
+
+      {view.iAmCaretaker && <ProposalsSection proposals={proposals} names={Object.fromEntries(view.helpers.map((h) => [h.userId, h.name]))} />}
 
       {r.necessity !== "info" && (
         <HelperList

@@ -65,7 +65,7 @@ toujours, pendant ses gardes, jamais) :
 
 - **Pour les gardes**, réglé par les responsables pour chaque personne : où le chien est gardé (chez elle ou
   chez moi), nuits d'affilée maximum (« jamais la nuit » possible ; sinon la règle du chien) et une note
-  (« ils ont un chat »). Le futur planning de vacances s'en servira.
+  (« ils ont un chat »). Le planning de vacances s'en sert : le plafond propre à une personne prime sur la règle du chien.
 - On invite un proche, un invité ou un professionnel par un **lien à usage unique** (7 jours, révocable, empreinte seule
   stockée). La personne crée son compte avec le lien e-mail habituel, sans rejoindre de groupe.
 - Une personne invitée hors des groupes voit le passeport et **les demandes sur lesquelles on la sollicite**
@@ -167,6 +167,31 @@ planning** : l'app répartit ce qui reste entre les volontaires, il ajuste si be
   quand c'est possible. Chaque tranche et chaque trou est expliqué.
 - Pour un trou, les membres sans réponse qui se sont déclarés disponibles sont suggérés ; « Relancer » passe par
   la feuille de partage.
+- Les préférences de garde comptent : nuits d'affilée max propres à chacun (« jamais la nuit » = jamais de nuit),
+  lieu affiché sur chaque tranche (« chez Emma » / « chez moi ») et conservé sur la garde confirmée.
+- Une proposition acceptée ne compte que pour ses créneaux (pas toute la plage du « Oui »).
+
+### Planifier une absence (`/plan`)
+
+Depuis l'accueil ou la fiche du chien, le responsable indique quand il part et quand il rentre. L'app propose
+**qui garde quand, et où**, d'après les **dispos partagées** des membres du groupe (une saisie ponctuelle prime sur
+une habitude ; une absence de saisie n'est pas une dispo), leurs autres gardes, la règle du chien et les
+préférences de chacun. Rien n'est envoyé sans lui.
+
+- Chaque trou est expliqué, avec trois issues : **solliciter quelqu'un du cercle de confiance** (professionnels
+  d'abord, puis proches, puis invités dont les dates couvrent le trou), **modifier la répartition** (« Sans
+  Emma » recalcule sans elle ; « Changer les dates ») et **prestation professionnelle** (s'il n'y a pas de pet-sitter
+  dans le cercle, lien pour en inviter un comme « Professionnel » ; pas de place de marché).
+- « Envoyer les propositions » publie une demande partageable (garde, nécessaire) dans le groupe et envoie à chacun
+  **sa part** (créneaux et lieu). Les personnes du cercle hors du groupe sont sollicitées sur la demande en même
+  temps. Un membre qui reçoit une proposition n'a pas en plus l'avis « Nouvelle demande ».
+- **Accepter une proposition = un « Oui » sur ces créneaux**, jamais une garde confirmée : le responsable confirme
+  ensuite la proposition de planning (tout ou rien). **Refuser** prévient le responsable et n'est pas un « Non » à
+  toute la demande.
+- Le responsable voit les propositions envoyées (en attente, acceptée, refusée, retirée) et peut retirer une
+  proposition sans réponse (la personne est prévenue). Changer les dates de la demande ou l'annuler retire les
+  propositions ouvertes.
+- Pas encore : contraintes de transport, plusieurs chiens à la fois, incompatibilités entre animaux.
 
 ### Modification et annulation (jamais silencieuses)
 

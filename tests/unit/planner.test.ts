@@ -144,3 +144,41 @@ describe("proposePlan with gardes already confirmed", () => {
     expect(p.holes[0]).toMatchObject({ start: at(11, "20:00"), end: at(12, "10:00") });
   });
 });
+
+describe("proposePlan with per-person rules", () => {
+  it("takes several pieces of availability for one person", () => {
+    const p = proposePlan({
+      period: { start: at(9, "09:00"), end: at(9, "22:00") },
+      taken: [],
+      offers: [{ ...offer("emma", 0, 0), offer: [{ start: at(9, "09:00"), end: at(9, "12:00") }, { start: at(9, "18:00"), end: at(9, "22:00") }] }],
+    });
+    expect(p.slices.map((x) => [x.userId, x.start, x.end])).toEqual([
+      ["emma", at(9, "09:00"), at(9, "12:00")],
+      ["emma", at(9, "18:00"), at(9, "22:00")],
+    ]);
+    expect(p.holes[0]).toMatchObject({ start: at(9, "12:00"), end: at(9, "18:00"), reason: "Personne n'a proposé ce créneau" });
+  });
+
+  it("a person's own limit wins over the dog's rule, and is kept with the place", () => {
+    const p = proposePlan({
+      period,
+      taken: [],
+      offers: [{ ...offer("parents", period.start, period.end), maxNights: 2, place: "helper" }],
+      rules: { maxConsecutiveNights: 5, minSliceMs: 3 * H },
+    });
+    expect(p.slices[0]).toMatchObject({ userId: "parents", end: at(11, "20:00"), place: "helper" });
+    expect(p.nights.parents).toBe(2);
+    expect(p.slices[0].reason).toContain("limité à 2 nuits d'affilée");
+    expect(p.holes[0].reason).toBe("parents dépasserait 2 nuits d'affilée");
+  });
+
+  it("never at night: only days, and the holes say why", () => {
+    const p = proposePlan({ period: { start: at(9, "09:00"), end: at(10, "18:00") }, taken: [], offers: [{ ...offer("lea", at(9, "09:00"), at(10, "18:00")), maxNights: 0 }] });
+    expect(p.slices.map((x) => [x.start, x.end])).toEqual([
+      [at(9, "09:00"), at(9, "20:00")],
+      [at(10, "10:00"), at(10, "18:00")],
+    ]);
+    expect(p.nights.lea ?? 0).toBe(0);
+    expect(p.holes[0].reason).toBe("lea ne garde jamais la nuit");
+  });
+});

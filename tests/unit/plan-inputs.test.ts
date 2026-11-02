@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canPlan, holeSuggestions, planOffers, planRules, takenIntervals } from "@/domain/plan-inputs";
+import { availabilityOffers, canPlan, holeSuggestions, planOffers, planRules, takenIntervals, type PlanPerson } from "@/domain/plan-inputs";
 import { proposePlan } from "@/domain/planner";
 import { buildRequestViews, type GroupSnapshot } from "@/domain/views";
 import { zonedInstant } from "@/domain/time";
@@ -76,8 +76,17 @@ describe("planning inputs", () => {
         offer: { start: at(9, "09:00"), end: at(10, "12:00") },
         busy: [{ start: at(9, "12:00"), end: at(9, "13:00") }],
         respondedAt: "2026-11-02T10:00:00Z",
+        maxNights: null,
+        place: "helper",
       },
     ]);
+    // their garde preferences go with the offer
+    const [withPref] = planOffers(v, s, [], [{ user_id: "emma", place: "owner", max_nights: 1 }]);
+    expect(withPref).toMatchObject({ maxNights: 1, place: "owner" });
+    // an accepted proposal limits the offer to its parts, at its place
+    const part = { starts_at: iso(at(9, "18:00")), ends_at: iso(at(10, "09:00")) };
+    const [fromProposal] = planOffers(v, s, [], [], [{ user_id: "emma", place: "helper", slices: [part] }]);
+    expect(fromProposal).toMatchObject({ offer: [{ start: at(9, "18:00"), end: at(10, "09:00") }], place: "helper" });
     expect(planRules(v.dog)).toEqual({ maxConsecutiveNights: 2, minSliceMs: 4 * 3_600_000 });
     expect(planRules(undefined)).toEqual({ maxConsecutiveNights: 3, minSliceMs: 3 * 3_600_000 });
     expect(takenIntervals(v)).toEqual([]);
@@ -89,5 +98,40 @@ describe("planning inputs", () => {
     const plan = proposePlan({ period: v.period, taken: [], offers: planOffers(v, s, []), rules: planRules(v.dog) });
     expect(plan.holes).toHaveLength(1);
     expect(holeSuggestions(plan.holes, v, s)).toEqual({ [String(plan.holes[0].start)]: ["Max"] });
+  });
+});
+
+describe("availabilityOffers", () => {
+  const z = (d: string, t: string) => zonedInstant(d, t);
+  // Friday 13 → Monday 16 November 2026
+  const holiday = { start: z("2026-11-13", "18:00"), end: z("2026-11-16", "09:00") };
+  const person = (over: Partial<PlanPerson> = {}): PlanPerson => ({ userId: "u", name: "Emma", entries: [], rules: [], busy: [], ...over });
+
+  it("turns declared availability into pieces of the period; a one-off entry beats a habit", () => {
+    const [o] = availabilityOffers(holiday, [
+      person({
+        // every Saturday and Sunday, all day (ISO weekdays 6 and 7)
+        rules: (["morning", "afternoon", "evening", "night"] as const).flatMap((slot) => [6, 7].map((weekday) => ({ weekday, slot, status: "available" as const }))),
+        // ...except this Sunday afternoon
+        entries: [{ date: "2026-11-15", slot: "afternoon", status: "unavailable" }],
+      }),
+    ]);
+    // the Friday night slot (22:00 → 06:00) is not declared: starts Saturday 06:00
+    expect(o.offer).toEqual([
+      { start: z("2026-11-14", "06:00"), end: z("2026-11-15", "12:00") },
+      { start: z("2026-11-15", "18:00"), end: z("2026-11-16", "06:00") },
+    ]);
+    expect(o).toMatchObject({ maxNights: null, place: "helper", respondedAt: "" });
+  });
+
+  it("keeps the person's preferences and leaves out who has nothing available", () => {
+    const allNight = { date: "2026-11-13", slot: "night" as const, status: "available" as const };
+    const offers = availabilityOffers(holiday, [
+      person({ userId: "a", entries: [allNight], pref: { place: "owner", maxNights: 0 } }),
+      person({ userId: "b" }),
+      person({ userId: "c", entries: [{ ...allNight, status: "unavailable" }] }),
+    ]);
+    expect(offers.map((o) => [o.userId, o.place, o.maxNights])).toEqual([["a", "owner", 0]]);
+    expect(offers[0].offer).toEqual([{ start: z("2026-11-13", "22:00"), end: z("2026-11-14", "06:00") }]);
   });
 });

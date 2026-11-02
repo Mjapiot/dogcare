@@ -84,7 +84,18 @@ les relais, nuits d'affilée plafonnées avec repère à 01:00 heure de Paris, a
 explications) ; entrées construites par `domain/plan-inputs.ts` (offres = « Oui » moins les autres gardes via
 `getBusyAssignments`, réglages du chien, suggestions pour les trous d'après les dispos). Carte
 `components/planning/plan-card.tsx` (frise, ajustement, confirmation par `confirmPlan` → `confirm_plan`) sur
-`/requests/[id]` ; réglages `components/planning/planning-rules.tsx` sur la fiche du chien.
+`/requests/[id]` ; réglages `components/planning/planning-rules.tsx` sur la fiche du chien. Une offre peut avoir
+plusieurs plages (`offerIntervals`), un plafond de nuits propre (`maxNights`, 0 = jamais la nuit) et un lieu
+(`place`) ; `planOffers` y joint les préférences (`getHelperPrefs`) et limite une proposition acceptée à ses
+créneaux.
+
+« Planifier une absence » : page `/plan` (serveur) → `domain/absence.ts` (`planAbsence` : offres tirées des dispos
+par `availabilityOffers` / `availableIntervals`, plan, propositions par personne, candidats du cercle pour les
+trous) ; `components/planning/absence-form.tsx` (dates dans l'URL) et `absence-planner.tsx` (trous et trois
+issues, « Sans X », envoi par `planAbsence` dans `server/actions/proposals.ts` → insertion de la demande puis
+`send_proposals`). Propositions : `components/planning/proposals.tsx` (`ProposalsSection` sur la demande côté
+responsable ; `ProposalCard` dans « Demandes », « Chiens confiés » et sur la demande côté personne sollicitée),
+données `getRequestProposals` / `getMyPendingProposals`.
 
 ## Carnet de garde
 

@@ -2,7 +2,7 @@
  * Builds the planning engine's inputs from a request view, and who to ask
  * for the holes it leaves. Pure.
  */
-import { evaluatePeriodAvailability } from "./availability";
+import { availableIntervals, evaluatePeriodAvailability, type AvailabilityEntry, type AvailabilityRule } from "./availability";
 import { toInterval, type Interval } from "./intervals";
 import { DEFAULT_PLAN_RULES, type PlanHole, type PlanOffer, type PlanRules } from "./planner";
 import type { GroupSnapshot, RequestView } from "./views";
@@ -20,21 +20,58 @@ export function canPlan(view: RequestView, now: number): boolean {
   );
 }
 
-/** The "Oui" of the request, each minus the person's other gardes at that time. */
+type Place = "helper" | "owner";
+
+/**
+ * The "Oui" of the request, each minus the person's other gardes at that time,
+ * with their garde preferences. A proposal they accepted limits their offer to
+ * its parts, at its place.
+ */
 export function planOffers(
   view: RequestView,
   snapshot: Pick<GroupSnapshot, "responses">,
   busy: ReadonlyArray<{ assigned_user_id: string; starts_at: string; ends_at: string }>,
+  prefs: ReadonlyArray<{ user_id: string; place: Place; max_nights: number | null }> = [],
+  accepted: ReadonlyArray<{ user_id: string; place: Place; slices: ReadonlyArray<{ starts_at: string; ends_at: string }> }> = [],
 ): PlanOffer[] {
   return view.helpers
     .filter((h) => h.response === "yes")
-    .map((h) => ({
-      userId: h.userId,
-      name: h.name,
-      offer: h.proposed ?? view.period,
-      busy: busy.filter((b) => b.assigned_user_id === h.userId).map((b) => toInterval(b.starts_at, b.ends_at)),
-      respondedAt: snapshot.responses.find((r) => r.request_id === view.request.id && r.user_id === h.userId)?.responded_at ?? "",
-    }));
+    .map((h) => {
+      const proposal = accepted.find((p) => p.user_id === h.userId);
+      const pref = prefs.find((p) => p.user_id === h.userId);
+      return {
+        userId: h.userId,
+        name: h.name,
+        offer: proposal ? proposal.slices.map((s) => toInterval(s.starts_at, s.ends_at)) : (h.proposed ?? view.period),
+        busy: busy.filter((b) => b.assigned_user_id === h.userId).map((b) => toInterval(b.starts_at, b.ends_at)),
+        respondedAt: snapshot.responses.find((r) => r.request_id === view.request.id && r.user_id === h.userId)?.responded_at ?? "",
+        maxNights: pref?.max_nights ?? null,
+        place: proposal?.place ?? pref?.place ?? "helper",
+      };
+    });
+}
+
+/** Someone around the dog, with what they declared and how they keep it. */
+export type PlanPerson = {
+  userId: string;
+  name: string;
+  entries: readonly AvailabilityEntry[];
+  rules: readonly AvailabilityRule[];
+  busy: readonly Interval[];
+  pref?: { place: Place; maxNights: number | null } | null;
+};
+
+/**
+ * Offers built from declared availability (no answer needed): each person can
+ * take what they said they are available for, with their own rules.
+ * People with nothing available in the period are left out.
+ */
+export function availabilityOffers(period: Interval, people: readonly PlanPerson[]): PlanOffer[] {
+  return people.flatMap((p) => {
+    const offer = availableIntervals(period, p.entries, p.rules);
+    if (!offer.length) return [];
+    return [{ userId: p.userId, name: p.name, offer, busy: p.busy, respondedAt: "", maxNights: p.pref?.maxNights ?? null, place: p.pref?.place ?? "helper" }];
+  });
 }
 
 export function planRules(dog: { plan_max_nights?: number; plan_min_slice_hours?: number } | undefined): PlanRules {

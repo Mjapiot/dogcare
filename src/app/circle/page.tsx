@@ -6,13 +6,14 @@ import { buildInvitedView } from "@/domain/invited";
 import { formatPeriod } from "@/lib/format";
 import { requestNow } from "@/server/clock";
 import { getMyGroups, getProfile, getUserEmail, requireUserId } from "@/server/session";
-import { getMyCircleDogs, getMyInvitedRequests, signDogPhotos } from "@/server/data";
+import { getMyCircleDogs, getMyInvitedRequests, getMyPendingProposals, signDogPhotos } from "@/server/data";
 import { CIRCLE_KIND_LABELS, guestState, lastGuestDay } from "@/domain/circle";
 import { toLocalDate } from "@/domain/time";
 import { Card, EmptyState, PillLink } from "@/components/ui/kit";
 import { DogAvatar, ToneBadge } from "@/components/domain/request-bits";
 import { AccountActions } from "@/components/profile/account-actions";
 import { Rise, Stagger } from "@/components/ui/motion";
+import { ProposalCard } from "@/components/planning/proposals";
 
 export const metadata: Metadata = { title: "Chiens confiés" };
 
@@ -24,10 +25,16 @@ const dayLabel = (date: string) => DAY.format(new Date(`${date}T00:00:00Z`));
  * are asked on, the dogs they can see, and (without a group) their account.
  */
 export default async function CirclePage() {
-  await requireUserId();
+  const userId = await requireUserId();
   const profile = await getProfile();
   if (!profile?.display_name.trim()) redirect("/onboarding?next=/circle");
-  const [dogs, groups, email, invited] = await Promise.all([getMyCircleDogs(), getMyGroups(), getUserEmail(), getMyInvitedRequests()]);
+  const [dogs, groups, email, invited, proposals] = await Promise.all([
+    getMyCircleDogs(),
+    getMyGroups(),
+    getUserEmail(),
+    getMyInvitedRequests(),
+    getMyPendingProposals(userId),
+  ]);
   const photos = await signDogPhotos(dogs.map((d) => ({ id: d.dog_id, photo_path: d.photo_path })));
   const now = new Date();
   // waiting for my answer first, then by date
@@ -45,6 +52,23 @@ export default async function CirclePage() {
           <h1 className="mt-2 text-[36px] font-semibold leading-[1.05] tracking-[-0.03em] text-ink">Chiens confiés</h1>
           {email && <p className="mt-1 text-[14px] text-ink-3">{email}</p>}
         </Rise>
+
+        {proposals.length > 0 && (
+          <Rise>
+            <section className="flex flex-col gap-3" aria-labelledby="my-proposals">
+              <h2 id="my-proposals" className="px-1 text-[17px] font-semibold text-ink">
+                Propositions pour vous
+              </h2>
+              <ul className="flex flex-col gap-3">
+                {proposals.map((p) => (
+                  <li key={p.id}>
+                    <ProposalCard proposal={p} />
+                  </li>
+                ))}
+              </ul>
+            </section>
+          </Rise>
+        )}
 
         {requests.length > 0 && (
           <Rise>

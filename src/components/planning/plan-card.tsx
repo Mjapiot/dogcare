@@ -3,12 +3,13 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { AlertTriangle, CalendarCheck, Moon, RotateCcw, Sparkles, UserRound } from "lucide-react";
+import { AlertTriangle, CalendarCheck, Home, Moon, RotateCcw, Sparkles, UserRound } from "lucide-react";
 import { confirmPlan } from "@/server/actions/requests";
 import {
   consecutiveNights,
   countHandoffs,
   nightAnchors,
+  offerIntervals,
   proposePlan,
   type PlanOffer,
   type PlanRules,
@@ -24,7 +25,7 @@ import { RelaunchButton } from "@/components/domain/owner-actions";
 /** One hue per helper on the timeline; names are always written next to it. */
 const HUES = ["bg-[#7d9a7e]", "bg-[#c9a27e]", "bg-[#8f8bb8]", "bg-[#d08b74]", "bg-[#6f9fb0]", "bg-[#b59a5a]"];
 
-type Piece = { userId: string | null; start: number; end: number; reason: string };
+type Piece = { userId: string | null; start: number; end: number; reason: string; place?: "helper" | "owner" };
 
 /**
  * "Proposition de planning": the app proposes how to split what is left of
@@ -54,7 +55,7 @@ export function PlanCard({
   const proposal = useMemo(() => proposePlan({ period, taken, offers, rules }), [period, taken, offers, rules]);
   const initial = useMemo<Piece[]>(
     () =>
-      [...proposal.slices.map((s) => ({ userId: s.userId, start: s.start, end: s.end, reason: s.reason })), ...proposal.holes.map((h) => ({ userId: null, start: h.start, end: h.end, reason: h.reason }))].sort(
+      [...proposal.slices.map((s) => ({ userId: s.userId, start: s.start, end: s.end, reason: s.reason, place: s.place })), ...proposal.holes.map((h) => ({ userId: null, start: h.start, end: h.end, reason: h.reason }))].sort(
         (a, b) => a.start - b.start,
       ),
     [proposal],
@@ -66,13 +67,21 @@ export function PlanCard({
   const adjusted = pieces !== initial;
 
   const names = useMemo(() => new Map(offers.map((o) => [o.userId, o.name])), [offers]);
+  const byUser = useMemo(() => new Map(offers.map((o) => [o.userId, o])), [offers]);
+  const capOf = (userId: string) => byUser.get(userId)?.maxNights ?? rules.maxConsecutiveNights;
   const hue = useMemo(() => new Map(offers.map((o, i) => [o.userId, HUES[i % HUES.length]])), [offers]);
   const available = useMemo(
     () =>
       new Map(
         offers.map((o) => {
-          const inside = intersect(o.offer, period);
-          return [o.userId, inside ? subtractIntervals(inside, mergeIntervals(o.busy)) : []];
+          const busy = mergeIntervals(o.busy);
+          return [
+            o.userId,
+            offerIntervals(o).flatMap((i) => {
+              const inside = intersect(i, period);
+              return inside ? subtractIntervals(inside, busy) : [];
+            }),
+          ];
         }),
       ),
     [offers, period],
@@ -82,7 +91,7 @@ export function PlanCard({
   const openMs = proposal.openMs;
   const coveredMs = slices.reduce((s, p) => s + (p.end - p.start), 0);
   const nights = consecutiveNights(slices, period);
-  const overNights = Object.entries(nights).filter(([, n]) => n > rules.maxConsecutiveNights);
+  const overNights = Object.entries(nights).filter(([u, n]) => n > capOf(u));
   const helpers = new Set(slices.map((s) => s.userId)).size;
   const handoffs = countHandoffs(slices);
   const anchors = nightAnchors(period);
@@ -91,7 +100,9 @@ export function PlanCard({
 
   const reassign = (index: number, userId: string | null) => {
     setPieces((prev) => {
-      const next = prev.map((p, i) => (i === index ? { ...p, userId, reason: userId ? "Choisi par vous" : "Laissé à couvrir" } : p));
+      const next = prev.map((p, i) =>
+        i === index ? { ...p, userId, place: userId ? byUser.get(userId)?.place : undefined, reason: userId ? "Choisi par vous" : "Laissé à couvrir" } : p,
+      );
       // contiguous pieces of the same person become one slice
       const merged: Piece[] = [];
       for (const p of next) {
@@ -110,7 +121,7 @@ export function PlanCard({
     startTransition(async () => {
       const r = await confirmPlan(
         requestId,
-        slices.map((s) => ({ userId: s.userId, start: new Date(s.start).toISOString(), end: new Date(s.end).toISOString() })),
+        slices.map((s) => ({ userId: s.userId, start: new Date(s.start).toISOString(), end: new Date(s.end).toISOString(), place: s.place })),
       );
       if (!r.ok) {
         toast.error(`${r.error} La proposition est recalculée.`);
@@ -138,7 +149,7 @@ export function PlanCard({
             Proposition de planning
           </h2>
           <p className="text-[14px] text-ink-3">
-            Parmi les « Oui » reçus. Rien n&apos;est confirmé tant que vous ne validez pas.
+            Parmi les « Oui » reçus et les propositions acceptées. Rien n&apos;est confirmé tant que vous ne validez pas.
           </p>
         </div>
       </div>
@@ -179,7 +190,15 @@ export function PlanCard({
                   </span>
                 )}
               </p>
-              <p className="text-[14px] text-ink-2">{formatPeriod(p.start, p.end)}</p>
+              <p className="text-[14px] text-ink-2">
+                {formatPeriod(p.start, p.end)}
+                {p.userId && (
+                  <span className="inline-flex items-center gap-1 text-ink-3">
+                    {" · "}
+                    <Home className="size-3.5" aria-hidden /> {p.place === "owner" ? "chez moi" : `chez ${names.get(p.userId)}`}
+                  </span>
+                )}
+              </p>
               <p className="text-[13px] text-ink-3">{p.reason}</p>
               {!p.userId && (suggestions[String(p.start)]?.length ?? 0) > 0 && (
                 <p className="mt-1 text-[13px] text-ink-2">
@@ -204,7 +223,7 @@ export function PlanCard({
       {overNights.length > 0 && (
         <p className="flex items-start gap-2 rounded-2xl bg-[var(--tone-pending)] px-4 py-3 text-[14px] text-[var(--tone-pending-ink)]">
           <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
-          {overNights.map(([u, n]) => `${names.get(u)} : ${n} nuits d'affilée`).join(" · ")} (votre limite : {rules.maxConsecutiveNights}).
+          {overNights.map(([u, n]) => `${names.get(u)} : ${n} nuits d'affilée (limite : ${capOf(u)})`).join(" · ")}.
         </p>
       )}
 

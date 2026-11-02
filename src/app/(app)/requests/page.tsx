@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { CheckCheck, ChevronDown, Inbox, PawPrint, Plus } from "lucide-react";
 import { requireAppContext } from "@/server/session";
-import { getMyInvitedRequests, getUpcomingSnapshot, signDogPhotos } from "@/server/data";
+import { getMyInvitedRequests, getMyPendingProposals, getUpcomingSnapshot, signDogPhotos } from "@/server/data";
 import { buildRequestViews } from "@/domain/views";
 import { buildInvitedView } from "@/domain/invited";
 import { HORIZON_LABELS, fromGroupView, fromInvitedView, groupByHorizon, splitScreenItems } from "@/domain/requests-screen";
@@ -12,6 +12,7 @@ import { ScreenTabs } from "@/components/requests/screen-tabs";
 import { AnimatedList } from "@/components/requests/animated-list";
 import { RequestCard } from "@/components/requests/request-card";
 import { OwnerRequestCard } from "@/components/requests/owner-request-card";
+import { ProposalCard } from "@/components/planning/proposals";
 
 export const metadata: Metadata = { title: "Demandes" };
 
@@ -24,7 +25,7 @@ export default async function RequestsPage({ searchParams }: PageProps<"/request
   const now = requestNow();
 
   // my groups' requests (current group) and those of the circles I am in
-  const [snapshot, invited] = await Promise.all([getUpcomingSnapshot(group.id, userId), getMyInvitedRequests()]);
+  const [snapshot, invited, proposals] = await Promise.all([getUpcomingSnapshot(group.id, userId), getMyInvitedRequests(), getMyPendingProposals(userId)]);
   const views = buildRequestViews(snapshot, now).filter((v) => v.request.lifecycle_status === "active");
   const items = [
     ...views.map((v) => fromGroupView(v, now)),
@@ -60,7 +61,7 @@ export default async function RequestsPage({ searchParams }: PageProps<"/request
         <ScreenTabs
           active={tab}
           tabs={[
-            { key: "todo", label: "À répondre", href: "/requests", count: lists.todo.length },
+            { key: "todo", label: "À répondre", href: "/requests", count: lists.todo.length + proposals.length },
             { key: "guards", label: "Mes gardes", href: "/requests?tab=guards", count: lists.guards.length },
             // counters only where something is expected from me (and it fits a phone)
             { key: "mine", label: "Mes demandes", href: "/requests?tab=mine", count: 0 },
@@ -68,9 +69,26 @@ export default async function RequestsPage({ searchParams }: PageProps<"/request
         />
       </Rise>
 
+      {tab === "todo" && proposals.length > 0 && (
+        <Rise>
+          <section className="flex flex-col gap-3" aria-labelledby="my-proposals">
+            <h2 id="my-proposals" className="px-1 text-[13px] font-semibold tracking-wide text-ink-3 uppercase">
+              Propositions pour vous
+            </h2>
+            <ul className="flex flex-col gap-3">
+              {proposals.map((p) => (
+                <li key={p.id}>
+                  <ProposalCard proposal={p} />
+                </li>
+              ))}
+            </ul>
+          </section>
+        </Rise>
+      )}
+
       {tab === "todo" && (
         <Rise className="flex flex-col gap-5">
-          {lists.todo.length === 0 ? (
+          {lists.todo.length === 0 && proposals.length === 0 ? (
             <EmptyState icon={CheckCheck} title="Vous êtes à jour" description="Aucune demande n'attend votre réponse." />
           ) : (
             groupByHorizon(lists.todo, now).map((g) => (

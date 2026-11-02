@@ -9,6 +9,7 @@ import type {
   AvailabilityEntryRow,
   AvailabilityRuleRow,
   CareAssignmentRow,
+  CareProposalRow,
   CareLogEntryRow,
   CareRequestRow,
   DogCaretakerRow,
@@ -29,7 +30,7 @@ import type {
 const REQUEST_COLUMNS =
   "id, group_id, dog_id, created_by, request_type, necessity, starts_at, ends_at, description, splittable, lifecycle_status, cancelled_at, cancellation_reason, revision, created_at, updated_at";
 const ASSIGNMENT_COLUMNS =
-  "id, request_id, assigned_user_id, starts_at, ends_at, status, confirmed_by, confirmed_at, cancelled_at, cancellation_reason, previous_starts_at, previous_ends_at";
+  "id, request_id, assigned_user_id, starts_at, ends_at, status, confirmed_by, confirmed_at, cancelled_at, cancellation_reason, previous_starts_at, previous_ends_at, place";
 const DOG_COLUMNS =
   "id, name, breed, birth_date, photo_path, care_notes, sex, sterilized, weight_kg, identification, distinctive_marks, meals, walks, sleep, behavior, plan_max_nights, plan_min_slice_hours, created_by, archived_at";
 
@@ -478,16 +479,17 @@ export async function getLatestCareNews(assignmentIds: string[]): Promise<Record
 export async function getBusyAssignments(
   userIds: string[],
   period: { start: number; end: number },
-  excludeRequestId: string,
+  excludeRequestId?: string,
 ): Promise<Array<Pick<CareAssignmentRow, "assigned_user_id" | "starts_at" | "ends_at">>> {
   if (userIds.length === 0) return [];
   const supabase = await createClient();
+  let query = supabase
+    .from("care_assignments")
+    .select("assigned_user_id, starts_at, ends_at")
+    .in("assigned_user_id", userIds.slice(0, ID_CHUNK));
+  if (excludeRequestId) query = query.neq("request_id", excludeRequestId);
   return must(
-    await supabase
-      .from("care_assignments")
-      .select("assigned_user_id, starts_at, ends_at")
-      .in("assigned_user_id", userIds.slice(0, ID_CHUNK))
-      .neq("request_id", excludeRequestId)
+    await query
       .neq("status", "cancelled")
       .lt("starts_at", new Date(period.end).toISOString())
       .gt("ends_at", new Date(period.start).toISOString())
@@ -540,4 +542,36 @@ export type HelperPref = { user_id: string; place: "helper" | "owner"; max_night
 export async function getHelperPrefs(dogId: string): Promise<HelperPref[]> {
   const supabase = await createClient();
   return must<HelperPref[]>(await supabase.from("dog_helper_prefs").select("user_id, place, max_nights, note").eq("dog_id", dogId));
+}
+
+const PROPOSAL_COLUMNS = "id, request_id, user_id, slices, starts_at, ends_at, place, status, sent_at, answered_at";
+
+/** Proposals sent on a request (the dog's caretakers see them all). */
+export async function getRequestProposals(requestId: string): Promise<CareProposalRow[]> {
+  const supabase = await createClient();
+  return must<CareProposalRow[]>(
+    await supabase.from("care_proposals").select(PROPOSAL_COLUMNS).eq("request_id", requestId).order("starts_at"),
+  );
+}
+
+export type MyProposal = CareProposalRow & { dogName: string; groupId: string; requestEndsAt: string };
+
+/** Proposals waiting for my answer, on live requests. */
+export async function getMyPendingProposals(userId: string): Promise<MyProposal[]> {
+  const supabase = await createClient();
+  type Row = CareProposalRow & { care_requests: { group_id: string; ends_at: string; lifecycle_status: string; dogs: { name: string } | null } | null };
+  // to-one embeds: PostgREST returns objects, its inferred types say arrays
+  const rows = must<Row[]>(
+    (await supabase
+      .from("care_proposals")
+      .select(`${PROPOSAL_COLUMNS}, care_requests(group_id, ends_at, lifecycle_status, dogs(name))`)
+      .eq("user_id", userId)
+      .eq("status", "pending")
+      .order("starts_at")
+      .limit(50)) as unknown as { data: Row[] | null; error: unknown },
+  );
+  const now = Date.now();
+  return rows
+    .filter((r) => r.care_requests && r.care_requests.lifecycle_status === "active" && Date.parse(r.care_requests.ends_at) > now)
+    .map(({ care_requests: req, ...p }) => ({ ...p, dogName: req!.dogs?.name ?? "le chien", groupId: req!.group_id, requestEndsAt: req!.ends_at }));
 }

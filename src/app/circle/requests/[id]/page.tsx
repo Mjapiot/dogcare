@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, HeartHandshake, IdCard } from "lucide-react";
 import { getProfile, requireUserId } from "@/server/session";
-import { getDog, getMyInvitedRequests, signDogPhotos } from "@/server/data";
+import { getDog, getMyInvitedRequests, getMyPendingProposals, signDogPhotos } from "@/server/data";
 import { buildInvitedView } from "@/domain/invited";
 import { NECESSITY_LABELS, REQUEST_TYPE_LABELS } from "@/domain/status";
 import { uuid } from "@/lib/validation";
@@ -16,6 +16,7 @@ import { ResponseButtons } from "@/components/domain/response-buttons";
 import { AssignmentActions } from "@/components/domain/assignment-actions";
 import { ReportButton } from "@/components/domain/report-button";
 import { CareLogSection } from "@/components/care-log/care-log-section";
+import { ProposalCard } from "@/components/planning/proposals";
 
 export const metadata: Metadata = { title: "Demande" };
 
@@ -33,11 +34,13 @@ export default async function CircleRequestPage({ params }: PageProps<"/circle/r
   const [row] = await getMyInvitedRequests(id);
   if (!row) notFound();
   const view = buildInvitedView(row, requestNow());
-  const [photos, dogData] = await Promise.all([
+  const [photos, dogData, mine] = await Promise.all([
     signDogPhotos([{ id: row.dog_id, photo_path: row.dog_photo_path }]),
     // habits for the care log's reminder (visible within the guest's dates)
     row.my_assignments.length ? getDog(row.dog_id) : Promise.resolve(null),
+    getMyPendingProposals(userId),
   ]);
+  const myProposal = mine.find((p) => p.request_id === id);
   const r = view.request;
 
   return (
@@ -98,6 +101,8 @@ export default async function CircleRequestPage({ params }: PageProps<"/circle/r
           iAmCaretaker={false}
           names={{}}
         />
+
+        {myProposal && <ProposalCard proposal={myProposal} />}
 
         {!view.cancelled && r.my_assignments.length === 0 && r.necessity !== "info" && !view.isPast && (
           <section className="flex flex-col gap-3 rounded-[24px] bg-surface p-4">

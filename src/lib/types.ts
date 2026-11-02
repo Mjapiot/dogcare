@@ -22,7 +22,8 @@ export type NotificationType =
   | "content_reported"
   | "care_log"
   | "circle_update"
-  | "care_reminder";
+  | "care_reminder"
+  | "care_proposal";
 
 export type ProfileRow = {
   id: string;
@@ -228,6 +229,8 @@ export type CareAssignmentRow = {
   cancellation_reason: string | null;
   previous_starts_at: string | null;
   previous_ends_at: string | null;
+  /** Where the dog stays (planned gardes). */
+  place?: "helper" | "owner" | null;
 };
 
 export type NotificationRow = {
@@ -253,3 +256,18 @@ export type NotificationPreferencesRow = {
 };
 
 export type ActionResult<T = undefined> = { ok: true; data: T } | { ok: false; error: string };
+
+export type ProposalStatus = "pending" | "accepted" | "declined" | "withdrawn";
+
+export type CareProposalRow = {
+  id: string;
+  request_id: string;
+  user_id: string;
+  slices: Array<{ starts_at: string; ends_at: string }>;
+  starts_at: string;
+  ends_at: string;
+  place: "helper" | "owner";
+  status: ProposalStatus;
+  sent_at: string;
+  answered_at: string | null;
+};
