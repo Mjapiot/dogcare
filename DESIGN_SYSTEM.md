@@ -59,7 +59,7 @@ Marges latérales 16 px, espacement vertical 20–28 px entre sections.
 | AppShell (en-tête + onglets) | `app/(app)/layout.tsx`, `components/app/*` |
 | BottomNavigation (flottante, givrée) | `components/app/bottom-navigation.tsx` |
 | PassportHero, PassportSection, PassportShare | `components/dogs/passport-*.tsx` |
-| Stagger / Rise (animations d'apparition) | `components/ui/motion.tsx` |
+| Stagger / Rise (apparition, jouée une seule fois par session : changer d'onglet ne « recharge » pas) | `components/ui/motion.tsx` |
 | CalendarHeader / CalendarGrid / CalendarDay | `components/calendar/calendar-view.tsx` |
 | AvailabilityMatrix / AvailabilitySelector | `components/availability/*` |
 | DogAvatar, CareRequestCard, CoverageIndicator, RequestStatusBadge | `components/domain/request-bits.tsx` |
@@ -70,7 +70,7 @@ Marges latérales 16 px, espacement vertical 20–28 px entre sections.
 | PlanCard, AbsenceForm, AbsencePlanner (planning) | `components/planning/*` |
 | ProposalsSection, ProposalCard (propositions de garde) | `components/planning/proposals.tsx` |
 | NotificationCenter | `app/(app)/notifications/page.tsx` |
-| EmptyState, LoadingSkeleton, ErrorState, PillButton, Field… | `components/ui/kit.tsx`, `app/(app)/error.tsx` |
+| EmptyState, ScreenSkeleton (squelette à la forme d'un onglet), ErrorState, PillButton, Field… | `components/ui/kit.tsx`, `app/(app)/error.tsx` |
 
 Écran « Demandes » : cartes `rounded-[28px]` avec `shadow-soft` et anneau blanc, photo du chien, statut en pastille
 (icône + libellé), onglets-liens à pouce glissant (`ScreenTabs`), listes animées (`AnimatedList` : entrée, sortie

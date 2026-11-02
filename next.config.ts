@@ -11,6 +11,12 @@ const nextConfig: NextConfig = {
   // Every screen depends on the signed-in user, so pages are rendered per
   // request. Cache Components is left off on purpose to keep the model simple.
   cacheComponents: false,
+  experimental: {
+    // going back to a tab seen in the last 30 s is instant; Realtime, coming
+    // back to the app and every action still refresh it (router.refresh /
+    // revalidatePath), so no stale engagement is shown
+    staleTimes: { dynamic: 30 },
+  },
   turbopack: {
     rules: {
       "*.css": {

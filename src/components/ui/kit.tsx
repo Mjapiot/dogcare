@@ -261,17 +261,6 @@ export function Skeleton({ className }: { className?: string }) {
   return <div className={cn("animate-pulse rounded-3xl bg-surface/70", className)} aria-hidden />;
 }
 
-export function LoadingSkeleton({ rows = 3 }: { rows?: number }) {
-  return (
-    <div className="flex flex-col gap-3" role="status" aria-label="Chargement">
-      <Skeleton className="h-28" />
-      {Array.from({ length: rows }, (_, i) => (
-        <Skeleton key={i} className="h-36" />
-      ))}
-    </div>
-  );
-}
-
 export function Avatar({ name, className, tone = "beige" }: { name: string; className?: string; tone?: "beige" | "ink" }) {
   const initials = name
     .trim()
@@ -291,5 +280,24 @@ export function Avatar({ name, className, tone = "beige" }: { name: string; clas
     >
       {initials || "?"}
     </span>
+  );
+}
+
+/** Placeholder shaped like a tab screen (title, tabs, cards), so switching tabs never flashes a blank block. */
+export function ScreenSkeleton({ title, subtitle, tabs = 0, cards = 3 }: { title?: string; subtitle?: string; tabs?: number; cards?: number }) {
+  return (
+    <div className="flex flex-col gap-5 pt-2" role="status" aria-label="Chargement">
+      {title ? <PageTitle title={title} subtitle={subtitle} /> : <Skeleton className="h-12 w-48 rounded-2xl" />}
+      {tabs > 0 && (
+        <div className="flex h-11 gap-1 rounded-full bg-surface/60 p-1" aria-hidden>
+          {Array.from({ length: tabs }, (_, i) => (
+            <Skeleton key={i} className="flex-1 rounded-full" />
+          ))}
+        </div>
+      )}
+      {Array.from({ length: cards }, (_, i) => (
+        <Skeleton key={i} className="h-32 rounded-[28px]" />
+      ))}
+    </div>
   );
 }

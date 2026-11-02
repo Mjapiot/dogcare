@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { MotionConfig, motion, type Variants } from "motion/react";
 
 /** Honors the system "Reduce motion" setting for every animation below it. */
@@ -19,10 +20,17 @@ const item: Variants = {
   show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: EASE } },
 };
 
-/** Children marked with <Rise> fade and rise one after the other on first render. */
+// the entrance plays once per app session: switching tabs must not look like a reload
+let entrancePlayed = false;
+
+/** Children marked with <Rise> fade and rise one after the other, on the first screen of the session. */
 export function Stagger({ className, children }: { className?: string; children: React.ReactNode }) {
+  const [animate] = useState(() => !entrancePlayed);
+  useEffect(() => {
+    entrancePlayed = true;
+  }, []);
   return (
-    <motion.div className={className} variants={list} initial="hidden" animate="show">
+    <motion.div className={className} variants={list} initial={animate ? "hidden" : false} animate="show">
       {children}
     </motion.div>
   );

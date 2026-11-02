@@ -70,9 +70,9 @@ export const getCurrentGroup = cache(async (): Promise<MyGroup | null> => {
  */
 export async function requireAppContext() {
   const userId = await requireUserId();
-  const profile = await getProfile();
+  // independent reads: one round trip instead of two
+  const [profile, group] = await Promise.all([getProfile(), getCurrentGroup()]);
   if (!profile || !profile.display_name.trim()) redirect("/onboarding");
-  const group = await getCurrentGroup();
   // a person only invited to a dog's circle has no group: their space is /circle
   if (!group) redirect((await getMyCircleDogs()).length ? "/circle" : "/onboarding/group");
   return { userId, profile, group };

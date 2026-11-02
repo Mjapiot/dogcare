@@ -213,3 +213,13 @@ partage, haptique, barre d'état. Sans réseau, l'app affiche `native-shell/offl
 Chargement (`loading.tsx`, squelettes), vide (`EmptyState`), erreur (`error.tsx`, messages FR non
 révélateurs), non autorisé (redirection `/login`, 404 pour une ressource inaccessible), hors ligne
 (bandeau + page `/offline`).
+
+## Performance de navigation
+
+- Fonctions Vercel à Dublin (`vercel.json` → `regions: ["dub1"]`), à côté de la base Supabase (`eu-west-1`) :
+  chaque page enchaîne plusieurs lectures, l'aller-retour serveur ↔ base doit rester court.
+- Cache client des pages dynamiques 30 s (`experimental.staleTimes.dynamic`) : revenir sur un onglet est immédiat ;
+  Realtime, le retour dans l'app (`LiveUpdates` → `router.refresh`) et chaque action (`revalidatePath`) rafraîchissent.
+- Squelettes à la forme de chaque onglet (`loading.tsx` + `ScreenSkeleton`) ; animation d'entrée une fois par session.
+- Lectures indépendantes en parallèle (`requireAppContext`, `getGroupSnapshot` : membres, chiens et demandes
+  ensemble ; demandes à venir en une seule requête).

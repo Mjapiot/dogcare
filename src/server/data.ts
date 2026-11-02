@@ -97,19 +97,31 @@ export const getGroupDogs = cache(async (groupId: string) => {
 export async function getGroupSnapshot(
   groupId: string,
   me: string,
-  range: { from: LocalDate; to: LocalDate } | { requestIds: string[] },
+  range: { from: LocalDate; to: LocalDate } | { requestIds: string[] } | { upcoming: true },
   options: { availability?: boolean } = {},
 ): Promise<GroupSnapshot> {
   const withAvailability = options.availability ?? true;
   const supabase = await createClient();
-  const [members, { dogs, caretakers }] = await Promise.all([getGroupMembers(groupId), getGroupDogs(groupId)]);
-
-  const requests =
-    "requestIds" in range
-      ? await fetchAllByIds<CareRequestRow>(range.requestIds, (chunk, from, to) =>
+  // members, dogs and requests do not depend on each other: fetched together
+  const [members, { dogs, caretakers }, requests] = await Promise.all([
+    getGroupMembers(groupId),
+    getGroupDogs(groupId),
+    "upcoming" in range
+      ? // active and not over yet, most imminent first (300 at most)
+        supabase
+          .from("care_requests")
+          .select(REQUEST_COLUMNS)
+          .eq("group_id", groupId)
+          .eq("lifecycle_status", "active")
+          .gt("ends_at", new Date().toISOString())
+          .order("starts_at")
+          .limit(300)
+          .then((r) => must<CareRequestRow[]>(r))
+      : "requestIds" in range
+      ? fetchAllByIds<CareRequestRow>(range.requestIds, (chunk, from, to) =>
           supabase.from("care_requests").select(REQUEST_COLUMNS).eq("group_id", groupId).in("id", chunk).order("starts_at").range(from, to),
         )
-      : await fetchAll<CareRequestRow>((from, to) =>
+      : fetchAll<CareRequestRow>((from, to) =>
           supabase
             .from("care_requests")
             .select(REQUEST_COLUMNS)
@@ -118,7 +130,8 @@ export async function getGroupSnapshot(
             .gt("ends_at", new Date(zonedInstant(range.from, "00:00")).toISOString())
             .order("starts_at")
             .range(from, to),
-        );
+        ),
+  ]);
   requests.sort((a, b) => Date.parse(a.starts_at) - Date.parse(b.starts_at));
   const ids = requests.map((r) => r.id);
 
@@ -208,25 +221,9 @@ export async function getMyInvitedRequests(requestId?: string): Promise<InvitedR
   return must<InvitedRequestRow[]>(await supabase.rpc("my_invited_requests", requestId ? { p_request_id: requestId } : {}));
 }
 
-/** Active requests of the group that are not over yet (most imminent first). */
-export async function getUpcomingRequestIds(groupId: string): Promise<string[]> {
-  const supabase = await createClient();
-  const rows = must<{ id: string }[]>(
-    await supabase
-      .from("care_requests")
-      .select("id")
-      .eq("group_id", groupId)
-      .eq("lifecycle_status", "active")
-      .gt("ends_at", new Date().toISOString())
-      .order("starts_at")
-      .limit(300),
-  );
-  return rows.map((r) => r.id);
-}
-
 /** Snapshot of upcoming requests, for the Demandes screen. */
 export const getUpcomingSnapshot = cache(async (groupId: string, me: string): Promise<GroupSnapshot> => {
-  return getGroupSnapshot(groupId, me, { requestIds: await getUpcomingRequestIds(groupId) });
+  return getGroupSnapshot(groupId, me, { upcoming: true });
 });
 
 /**
@@ -235,7 +232,7 @@ export const getUpcomingSnapshot = cache(async (groupId: string, me: string): Pr
  * still to organise). Used by the nav badge on every screen.
  */
 export const getUpcomingStatusSnapshot = cache(async (groupId: string, me: string): Promise<GroupSnapshot> => {
-  return getGroupSnapshot(groupId, me, { requestIds: await getUpcomingRequestIds(groupId) }, { availability: false });
+  return getGroupSnapshot(groupId, me, { upcoming: true }, { availability: false });
 });
 
 export async function getMyAvailability(userId: string, from: LocalDate, to: LocalDate) {
