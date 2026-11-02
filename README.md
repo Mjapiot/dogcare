@@ -74,6 +74,11 @@ Rappels de la veille (tâche quotidienne, `vercel.json` → `/api/cron/daily` à
 - `CRON_SECRET` — **secret**, 16 caractères au moins (par exemple `openssl rand -hex 32`). Vercel l'envoie dans
   l'en-tête `Authorization` ; sans lui, la route répond 401 et aucun rappel n'est envoyé.
 
+Assistant « Décrivez votre absence » (facultatif) :
+
+- `GEMINI_API_KEY` — **secret**, clé Google AI Studio (offre gratuite). Sans elle, la zone de texte est masquée et
+  « Planifier une absence » fonctionne avec le formulaire. `GEMINI_MODEL` (facultatif) change le modèle.
+
 ### Réglages Supabase à faire une fois (tableau de bord)
 
 1. **Authentication → Emails → Templates → Magic Link** : garder le modèle par défaut. La connexion se fait

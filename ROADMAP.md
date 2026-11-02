@@ -58,6 +58,7 @@ Vision : « Toute la vie de votre animal, partagée avec les bonnes personnes »
 4. [ ] Moteur de planning sous contraintes avec proposition à valider
    - [x] Planning de vacances, livraison 1 : rôle « Professionnel » et préférences de garde par personne (lieu, nuits max, note) — en production le 2026-11-02
    - [x] Planning de vacances, livraison 2 : moteur alimenté par les dispos, propositions ciblées, parcours « Planifier une absence » — en production le 2026-11-02
+   - [ ] Assistant « Décrivez votre absence » (langage naturel → dates et règles, Gemini gratuit) — implémenté et testé ; à activer avec `GEMINI_API_KEY` sur Vercel
    - [x] Une demande à la fois : nuits d'affilée max, tranche minimale, conflits, confirmation tout ou rien (en production le 2026-10-29)
    - [ ] Plusieurs demandes ou chiens à la fois ; lieux et incompatibilités entre chiens
 5. [ ] Routines (désactivées par défaut)

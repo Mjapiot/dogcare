@@ -70,8 +70,19 @@ export default function PrivacyPage() {
             <strong>Apple, Google ou Mozilla</strong> : acheminement des notifications push vers votre appareil,
             uniquement si vous les activez.
           </li>
+          <li>
+            <strong>Google (Gemini)</strong> : uniquement si vous utilisez « Décrivez votre absence ». La phrase saisie,
+            la date du jour et les prénoms de votre groupe et du cercle du chien sont envoyés à Google pour être
+            transformés en dates et en règles. Dogcare n&apos;enregistre pas la phrase. Dogcare utilise l&apos;offre gratuite
+            de Gemini : Google peut conserver ces textes et s&apos;en servir pour améliorer ses services, et ils peuvent être
+            relus par des personnes. N&apos;y mettez ni adresse ni information sensible ; le formulaire classique fonctionne
+            sans cet envoi.
+          </li>
         </ul>
-        <p>Ces prestataires traitent les données pour notre compte et uniquement pour faire fonctionner Dogcare.</p>
+        <p>
+          Ces prestataires traitent les données pour faire fonctionner Dogcare (et, pour Gemini, dans les conditions de
+          son offre gratuite décrites ci-dessus).
+        </p>
       </section>
 
       <section>

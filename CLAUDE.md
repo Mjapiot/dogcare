@@ -43,6 +43,8 @@ shadcn/ui (radix), Lucide, Zod 4, Supabase (`@supabase/ssr`), Vitest, Playwright
 - Fonctions `SECURITY DEFINER` : `set search_path = ''`, noms qualifiés, `revoke` pour `public`/`anon`.
 - Aucun secret dans le dépôt (public). Jamais de clé secrète dans une variable `NEXT_PUBLIC_`.
   La clé secrète Supabase n'est utilisée que dans `src/server/push.ts` (distribution des push) et les tests E2E.
+  La clé Gemini (`GEMINI_API_KEY`) n'est lue que dans `src/server/ai.ts` ; l'IA ne fait que traduire une phrase en
+  données, toujours validées et vérifiées par `src/domain/absence-intent.ts`.
 - Aucune donnée privée mise en cache par le service worker ; aucune action possible hors ligne.
 
 ## App iOS (Capacitor)

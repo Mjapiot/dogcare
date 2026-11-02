@@ -38,6 +38,7 @@ export function AbsencePlanner({
   placeOf,
   maxNights,
   hasPro,
+  rulesParam,
 }: {
   groupId: string;
   dog: { id: string; name: string };
@@ -48,6 +49,8 @@ export function AbsencePlanner({
   placeOf: Record<string, Place>;
   maxNights: number;
   hasPro: boolean;
+  /** Rules for this absence, kept when the split is changed. */
+  rulesParam?: string;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -65,6 +68,7 @@ export function AbsencePlanner({
   const hrefSkipping = (ids: string[]) => {
     const q = new URLSearchParams(baseQuery);
     if (ids.length) q.set("skip", ids.join(","));
+    if (rulesParam) q.set("rules", rulesParam);
     return `/plan?${q}`;
   };
 

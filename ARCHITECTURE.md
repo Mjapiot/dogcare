@@ -97,6 +97,13 @@ issues, « Sans X », envoi par `planAbsence` dans `server/actions/proposals.ts`
 responsable ; `ProposalCard` dans « Demandes », « Chiens confiés » et sur la demande côté personne sollicitée),
 données `getRequestProposals` / `getMyPendingProposals`.
 
+Assistant « Décrivez votre absence » : `server/actions/assistant.ts` (`understandAbsence` : contexte = mes chiens du
+groupe, membres et cercle) → `server/ai.ts` (seul lecteur de `GEMINI_API_KEY`, `server-only`) → `lib/gemini.ts`
+(`generateContent`, sortie JSON imposée par schéma, réponse validée par Zod ; quota/panne = indisponible) →
+`domain/absence-intent.ts` (`resolveAbsenceIntent` : chien, dates, règles par personne connue, suppositions et
+problèmes). Les règles passent dans l'URL de `/plan` (`encodeRules` / `decodeRules`) et priment sur les préférences
+pour ce calcul seulement.
+
 ## Carnet de garde
 
 `components/care-log/care-log-section.tsx` (serveur) charge le carnet d'une demande (`getCareLog`, photos signées

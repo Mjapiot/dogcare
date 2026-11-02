@@ -191,6 +191,15 @@ préférences de chacun. Rien n'est envoyé sans lui.
 - Le responsable voit les propositions envoyées (en attente, acceptée, refusée, retirée) et peut retirer une
   proposition sans réponse (la personne est prévenue). Changer les dates de la demande ou l'annuler retire les
   propositions ouvertes.
+- **Décrivez votre absence** (si l'assistant est configuré) : une phrase (« Je pars vendredi 18 h, retour lundi
+  matin, pas plus de 2 nuits chez mes parents, Léa jamais la nuit ») est comprise par Gemini (Google), qui ne fait
+  que la traduire en chien, dates et règles. L'app vérifie tout : dates jamais devinées (sinon « je n'ai pas
+  compris »), heure par défaut annoncée, retour après le départ, période future, 31 jours max ; une règle ne vaut
+  que pour une personne connue du groupe ou du cercle (nom inconnu ou ambigu : signalé et ignoré). Les
+  suppositions sont affichées, tout reste modifiable et rien n'est calculé ni envoyé avant « Proposer une
+  répartition ». Les règles valent **pour cette absence seulement** (elles priment sur les préférences enregistrées,
+  sans les modifier). La phrase n'est pas enregistrée ; l'écran prévient qu'elle est envoyée à Google. Quota
+  atteint ou panne : « Assistant indisponible », le formulaire reste là.
 - Pas encore : contraintes de transport, plusieurs chiens à la fois, incompatibilités entre animaux.
 
 ### Modification et annulation (jamais silencieuses)

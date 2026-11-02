@@ -11,6 +11,8 @@ import { requestNow } from "@/server/clock";
 import { EmptyState, PageTitle, PillLink } from "@/components/ui/kit";
 import { AbsenceForm } from "@/components/planning/absence-form";
 import { AbsencePlanner } from "@/components/planning/absence-planner";
+import { decodeRules, encodeRules, type AbsenceRule } from "@/domain/absence-intent";
+import { assistantEnabled } from "@/server/ai";
 
 export const metadata: Metadata = { title: "Planifier une absence" };
 
@@ -65,6 +67,8 @@ export default async function PlanAbsencePage({ searchParams }: PageProps<"/plan
           : null;
   const skip = (param(params.skip) ?? "").split(",").filter((s) => uuid.safeParse(s).success);
 
+  const overrides = decodeRules(param(params.rules));
+  let rules: AbsenceRule[] = [];
   let result: React.ReactNode = null;
   if (dog && submitted && !error) {
     const period = { start, end };
@@ -80,20 +84,27 @@ export default async function PlanAbsencePage({ searchParams }: PageProps<"/plan
       members.map((m) => m.user_id),
       period,
     );
+    const circleOfDog = candidates.filter((c) => c.dog_id === dog.id && !blocked.includes(c.user_id));
+    const nameOf = new Map<string, string>([...members.map((m) => [m.user_id, m.display_name] as const), ...circleOfDog.map((c) => [c.user_id, c.display_name] as const)]);
+    // rules said for this absence win over the saved preferences
+    rules = overrides.filter((o) => nameOf.has(o.userId)).map((o) => ({ ...o, name: nameOf.get(o.userId)! }));
     const people: PlanPerson[] = members.map((m) => {
-      const pref = prefs.find((p) => p.user_id === m.user_id);
+      const saved = prefs.find((p) => p.user_id === m.user_id);
+      const rule = rules.find((r) => r.userId === m.user_id);
+      const pref =
+        saved || rule
+          ? { place: rule?.place ?? saved?.place ?? ("helper" as const), maxNights: rule && rule.maxNights !== null ? rule.maxNights : (saved?.max_nights ?? null) }
+          : null;
       return {
         userId: m.user_id,
         name: m.display_name,
         entries: snapshot.availabilityEntries.filter((e) => e.user_id === m.user_id),
         rules: snapshot.availabilityRules.filter((r) => r.user_id === m.user_id),
         busy: busy.filter((b) => b.assigned_user_id === m.user_id).map((b) => toInterval(b.starts_at, b.ends_at)),
-        pref: pref ? { place: pref.place, maxNights: pref.max_nights } : null,
+        pref,
       };
     });
-    const circle: CircleCandidate[] = candidates
-      .filter((c) => c.dog_id === dog.id && !blocked.includes(c.user_id))
-      .map((c) => ({
+    const circle: CircleCandidate[] = circleOfDog.map((c) => ({
         userId: c.user_id,
         name: c.display_name,
         role: c.role,
@@ -101,10 +112,14 @@ export default async function PlanAbsencePage({ searchParams }: PageProps<"/plan
         endsAt: c.ends_at ? Date.parse(c.ends_at) : null,
       }));
     const absence = planAbsence({ period, people, rules: planRules(dog), candidates: circle, skip });
-    const placeOf = Object.fromEntries(prefs.map((p) => [p.user_id, p.place]));
+    const placeOf = Object.fromEntries([
+      ...prefs.map((p) => [p.user_id, p.place] as const),
+      ...rules.filter((r) => r.place).map((r) => [r.userId, r.place!] as const),
+    ]);
     result = (
       <AbsencePlanner
-        key={`${start}-${end}-${skip.join(",")}`}
+        key={`${start}-${end}-${skip.join(",")}-${param(params.rules) ?? ""}`}
+        rulesParam={rules.length ? encodeRules(rules) : undefined}
         groupId={group.id}
         dog={{ id: dog.id, name: dog.name }}
         form={form}
@@ -121,7 +136,15 @@ export default async function PlanAbsencePage({ searchParams }: PageProps<"/plan
   return (
     <div className="flex flex-col gap-6 pt-2">
       <PageTitle title="Planifier une absence" subtitle="L'app propose qui garde quand, d'après les dispos de chacun. Rien n'est envoyé sans vous." />
-      <AbsenceForm dogs={myDogs.map((d) => ({ id: d.id, name: d.name }))} initial={form} error={error} />
+      <AbsenceForm
+        key={`${form.dogId}-${form.startDate}-${form.endDate}-${param(params.rules) ?? ""}`}
+        groupId={group.id}
+        dogs={myDogs.map((d) => ({ id: d.id, name: d.name }))}
+        initial={form}
+        initialRules={rules}
+        error={error}
+        assistant={assistantEnabled()}
+      />
       {result}
     </div>
   );
