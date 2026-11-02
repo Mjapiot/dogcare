@@ -559,19 +559,26 @@ export type MyProposal = CareProposalRow & { dogName: string; groupId: string; r
 /** Proposals waiting for my answer, on live requests. */
 export async function getMyPendingProposals(userId: string): Promise<MyProposal[]> {
   const supabase = await createClient();
-  type Row = CareProposalRow & { care_requests: { group_id: string; ends_at: string; lifecycle_status: string; dogs: { name: string } | null } | null };
-  // to-one embeds: PostgREST returns objects, its inferred types say arrays
+  type Row = CareProposalRow & { care_requests: { group_id: string; dog_id: string; ends_at: string; lifecycle_status: string } | null };
+  // to-one embed: PostgREST returns an object, its inferred type says an array
   const rows = must<Row[]>(
     (await supabase
       .from("care_proposals")
-      .select(`${PROPOSAL_COLUMNS}, care_requests(group_id, ends_at, lifecycle_status, dogs(name))`)
+      .select(`${PROPOSAL_COLUMNS}, care_requests(group_id, dog_id, ends_at, lifecycle_status)`)
       .eq("user_id", userId)
       .eq("status", "pending")
       .order("starts_at")
       .limit(50)) as unknown as { data: Row[] | null; error: unknown },
   );
   const now = Date.now();
-  return rows
-    .filter((r) => r.care_requests && r.care_requests.lifecycle_status === "active" && Date.parse(r.care_requests.ends_at) > now)
-    .map(({ care_requests: req, ...p }) => ({ ...p, dogName: req!.dogs?.name ?? "le chien", groupId: req!.group_id, requestEndsAt: req!.ends_at }));
+  const live = rows.filter((r) => r.care_requests && r.care_requests.lifecycle_status === "active" && Date.parse(r.care_requests.ends_at) > now);
+  // care_requests.dog_id references group_dogs, not dogs: names are read apart
+  const dogIds = [...new Set(live.map((r) => r.care_requests!.dog_id))];
+  const dogs = dogIds.length ? must<Array<{ id: string; name: string }>>(await supabase.from("dogs").select("id, name").in("id", dogIds)) : [];
+  return live.map(({ care_requests: req, ...p }) => ({
+    ...p,
+    dogName: dogs.find((d) => d.id === req!.dog_id)?.name ?? "le chien",
+    groupId: req!.group_id,
+    requestEndsAt: req!.ends_at,
+  }));
 }
