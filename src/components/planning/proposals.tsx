@@ -63,7 +63,7 @@ export function ProposalsSection({ proposals, names }: { proposals: CareProposal
                   <div className="min-w-0">
                     <p className="text-[15px] font-semibold text-ink">{name}</p>
                     <p className="inline-flex items-center gap-1 text-[13px] text-ink-3">
-                      <Home className="size-3.5" aria-hidden /> {p.place === "owner" ? "Chez moi" : `Chez ${name}`}
+                      <Home className="size-3.5" aria-hidden /> {p.place === "owner" ? "Chez le propriétaire" : `Chez ${name}`}
                     </p>
                   </div>
                   <span className={cn("inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[13px] font-medium", s.tone)}>

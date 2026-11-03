@@ -44,6 +44,10 @@ export function LiveUpdates({ groupId, userId }: { groupId: string; userId: stri
       .on("postgres_changes", { event: "*", schema: "public", table: "care_requests", filter: `group_id=eq.${groupId}` }, refresh)
       .on("postgres_changes", { event: "*", schema: "public", table: "request_responses" }, refresh)
       .on("postgres_changes", { event: "*", schema: "public", table: "care_assignments" }, refresh)
+      // proposals answered, routines checked, the care log: otherwise the 30 s client cache could show them late
+      .on("postgres_changes", { event: "*", schema: "public", table: "care_proposals" }, refresh)
+      .on("postgres_changes", { event: "*", schema: "public", table: "care_log_entries" }, refresh)
+      .on("postgres_changes", { event: "*", schema: "public", table: "dog_routines" }, refresh)
       // read on another device, or replaced by a proposal: the bell and the list follow
       .on("postgres_changes", { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${userId}` }, refresh)
       .subscribe();

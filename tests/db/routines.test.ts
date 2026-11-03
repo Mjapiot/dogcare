@@ -72,7 +72,12 @@ describe("routines", () => {
     const id = await setRoutine(s.owner, s, "medication", "Médicament", ["20:00", "08:00", "20:00"], [1, 2, 3, 4, 5, 6, 7]);
     // times sorted and deduplicated, "every day" stored as null
     expect(await rows(db, "select times, weekdays from dog_routines where id = $1", [id])).toEqual([{ times: ["08:00", "20:00"], weekdays: null }]);
-    expect(await asUser(db, s.member, (tx) => rows(tx, "select label from dog_routines where dog_id = $1", [s.dogId]))).toEqual([{ label: "Médicament" }]);
+    // a medication follows the health access: a member without a garde does not see it, the helper does
+    await setRoutine(s.owner, s, "meal", "Repas", ["08:00"]);
+    const labels = (user: string) =>
+      asUser(db, user, (tx) => rows<{ label: string }>(tx, "select label from dog_routines where dog_id = $1 order by label", [s.dogId])).then((r) => r.map((x) => x.label));
+    expect(await labels(s.member)).toEqual(["Repas"]);
+    expect(await labels(s.helper)).toEqual(["Médicament", "Repas"]);
     expect(await asUser(db, s.outsider, (tx) => rows(tx, "select label from dog_routines where dog_id = $1", [s.dogId]))).toEqual([]);
     await expect(setRoutine(s.member, s, "meal", "Repas", ["08:00"])).rejects.toThrow(/Seul un responsable/);
     await expect(setRoutine(s.owner, s, "meal", "Repas", ["8h"])).rejects.toThrow(/HH:MM/);
@@ -103,6 +108,17 @@ describe("routines", () => {
     // unchecking = deleting the entry; the routine can then be checked again
     await asUser(db, s.helper, (tx) => tx.query("select public.delete_care_log($1)", [entry]));
     await check(s.helper, s, id, at);
+  });
+
+  it("an occurrence is a whole minute; at most 12 routines per dog", async () => {
+    const s = await scenario();
+    await enable(s);
+    const today = await parisToday();
+    const id = await setRoutine(s.owner, s, "meal", "Repas", ["00:00"]);
+    const at = await paris(`${today} 00:00`);
+    await expect(check(s.helper, s, id, new Date(Date.parse(at) + 30_000).toISOString())).rejects.toThrow(/ne correspond pas/);
+    for (let i = 1; i < 12; i++) await setRoutine(s.owner, s, "other", `R${i}`, [`0${i % 10}:15`]);
+    await expect(setRoutine(s.owner, s, "other", "R12", ["09:45"])).rejects.toThrow(/12 routines au plus/);
   });
 
   it("deleting a routine keeps what the care log already says", async () => {
@@ -143,6 +159,7 @@ describe("routines", () => {
     ]);
     await db.query("select public.run_daily_reminders($1)", [await paris(`${today} 18:00`)]);
     const [n] = await rows<{ body: string }>(db, "select body from notifications where user_id = $1 and request_id = $2 and notification_type = 'care_reminder'", [helper, requestId]);
-    expect(n.body).toMatch(/ · routines : repas 08:00 et 19:00, médicament 20:00$/);
+    // from the start of the garde (10:00): not the 08:00 meal
+    expect(n.body).toMatch(/ · routines : repas 19:00, médicament 20:00$/);
   });
 });

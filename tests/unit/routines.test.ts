@@ -29,6 +29,14 @@ describe("routineOccurrences", () => {
   });
 });
 
+describe("routineOccurrences across the spring change", () => {
+  it("skips a time that does not exist that night (02:30 on 28 March 2027)", () => {
+    const night: Routine = { id: "n", kind: "other", label: "Veille", times: ["02:30"], weekdays: null, instructions: null };
+    const o = routineOccurrences([night], { start: zonedInstant("2027-03-27", "12:00"), end: zonedInstant("2027-03-29", "12:00") });
+    expect(o.map((x) => x.date)).toEqual(["2027-03-29"]);
+  });
+});
+
 describe("routineChecklist", () => {
   const occ = routineOccurrences([meal, pill], period);
   const at = (d: number, t: string) => zonedInstant(`2026-11-${d}`, t);

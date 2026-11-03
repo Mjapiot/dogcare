@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   addDays,
+  isValidLocalDate,
   isoWeekday,
   localDatesTouched,
   localDayInterval,
@@ -13,6 +14,13 @@ import {
 } from "@/domain/time";
 
 const HOUR = 3_600_000;
+
+describe("isValidLocalDate", () => {
+  it("accepts real dates only", () => {
+    expect(["2026-11-03", "2028-02-29"].map(isValidLocalDate)).toEqual([true, true]);
+    expect(["2026-02-29", "2026-02-31", "2026-13-01", "2026-1-01", ""].map(isValidLocalDate)).toEqual([false, false, false, false, false]);
+  });
+});
 
 describe("calendar arithmetic", () => {
   it("adds days across months and years", () => {

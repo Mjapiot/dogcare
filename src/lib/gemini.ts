@@ -90,11 +90,15 @@ export async function extractAbsenceIntent(
       }),
       signal: AbortSignal.timeout(opts.timeoutMs ?? 15_000),
     });
-  } catch {
+  } catch (error) {
+    console.error("[dogcare] gemini unreachable", error instanceof Error ? error.name : "unknown");
     return { ok: false, reason: "unavailable" };
   }
-  // quota reached (429), bad key, outage: the form stays available
-  if (!res.ok) return { ok: false, reason: "unavailable" };
+  // quota reached (429), bad key, outage: the form stays available; the status only is logged (never the key nor the text)
+  if (!res.ok) {
+    console.error("[dogcare] gemini error", res.status);
+    return { ok: false, reason: "unavailable" };
+  }
   let body: unknown;
   try {
     body = await res.json();

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { planAbsence, type CircleCandidate } from "@/domain/absence";
+import { holePartFor, planAbsence, type CircleCandidate } from "@/domain/absence";
 import type { PlanPerson } from "@/domain/plan-inputs";
 import { DEFAULT_PLAN_RULES } from "@/domain/planner";
 import { zonedInstant } from "@/domain/time";
@@ -65,5 +65,14 @@ describe("planAbsence", () => {
     const a = planAbsence({ period, rules: DEFAULT_PLAN_RULES, people, candidates: [], skip: ["emma"] });
     expect(a.proposals).toEqual([]);
     expect(a.skipped).toEqual(["emma"]);
+  });
+});
+
+describe("holePartFor", () => {
+  it("asks a circle person for the whole hole, or what fits their limit of nights for this absence", () => {
+    const zoe = { userId: "zoe", name: "Zoé" };
+    expect(holePartFor(period, { ...zoe, maxNights: null }, DEFAULT_PLAN_RULES)).toEqual([period]);
+    // Friday 18:00 → Monday 09:00 with 2 nights max: until Sunday morning, then the Sunday day (no third night)
+    expect(holePartFor(period, { ...zoe, maxNights: 2 }, DEFAULT_PLAN_RULES)).toEqual([{ start: period.start, end: z(15, "20:00") }]);
   });
 });

@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { AlertTriangle, BriefcaseBusiness, CalendarRange, Home, Moon, Send, Sparkles, UserMinus, UserPlus, Users } from "lucide-react";
 import { planAbsence as sendAbsence } from "@/server/actions/proposals";
 import { nightAnchors } from "@/domain/planner";
-import type { AbsencePlan, CircleCandidate } from "@/domain/absence";
+import { holePartFor, type AbsencePlan, type CircleCandidate } from "@/domain/absence";
 import type { Interval } from "@/domain/intervals";
 import { CIRCLE_KIND_LABELS } from "@/domain/circle";
 import { formatPeriod } from "@/lib/format";
@@ -36,6 +36,7 @@ export function AbsencePlanner({
   absence,
   names,
   placeOf,
+  nightsOf = {},
   maxNights,
   hasPro,
   rulesParam,
@@ -47,6 +48,8 @@ export function AbsencePlanner({
   absence: AbsencePlan;
   names: Record<string, string>;
   placeOf: Record<string, Place>;
+  /** Limits of consecutive nights said for this absence (circle people asked for a hole). */
+  nightsOf?: Record<string, number | null>;
   maxNights: number;
   hasPro: boolean;
   /** Rules for this absence, kept when the split is changed. */
@@ -85,12 +88,13 @@ export function AbsencePlanner({
     for (const h of plan.holes) {
       for (const userId of asked[String(h.start)] ?? []) {
         const entry = byUser.get(userId) ?? { userId, place: placeOf[userId] ?? "helper", slices: [] };
-        entry.slices.push({ start: h.start, end: h.end });
+        // their own limit of nights, said for this absence, cuts the part they are asked for
+        entry.slices.push(...holePartFor(h, { userId, name: names[userId] ?? "", maxNights: nightsOf[userId] ?? null }, { maxConsecutiveNights: maxNights, minSliceMs: 0 }));
         byUser.set(userId, entry);
       }
     }
     return [...byUser.values()].map((e) => ({ ...e, slices: e.slices.sort((a, b) => a.start - b.start) }));
-  }, [proposals, plan.holes, asked, placeOf]);
+  }, [proposals, plan.holes, asked, placeOf, nightsOf, names, maxNights]);
 
   const send = () =>
     startTransition(async () => {
@@ -146,7 +150,7 @@ export function AbsencePlanner({
         <p className="text-[14px] font-medium text-ink-2">
           {plan.slices.length === 0
             ? "Personne n'a déclaré de dispo sur cette période"
-            : `Couvre ${coverage} % de l'absence · ${proposals.length} personne${proposals.length > 1 ? "s" : ""} · ${plan.handoffs} relais`}
+            : `Couvre ${coverage}\u202f% de l'absence · ${proposals.length} personne${proposals.length > 1 ? "s" : ""} · ${plan.handoffs} relais`}
         </p>
 
         <ul className="flex flex-col divide-y divide-line rounded-2xl bg-surface-2">

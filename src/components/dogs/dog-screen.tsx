@@ -160,7 +160,7 @@ export async function DogScreen({
 
       {editable ? (
         <Rise>
-          <RoutinesCard dogId={dog.id} dogName={dog.name} enabled={dog.routines_enabled} routines={routines} />
+          <RoutinesCard key={String(dog.routines_enabled)} dogId={dog.id} dogName={dog.name} enabled={dog.routines_enabled} routines={routines} />
         </Rise>
       ) : (
         dog.routines_enabled &&

@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Footprints, ListChecks, NotebookPen, Pencil, Pill, Plus, Trash2, Utensils, X, type LucideIcon } from "lucide-react";
+import { Check, Footprints, ListChecks, NotebookPen, Pencil, Pill, Plus, Trash2, Utensils, X, type LucideIcon } from "lucide-react";
 import { deleteRoutine, saveRoutine, setRoutinesEnabled } from "@/server/actions/dogs";
 import { ROUTINE_KIND_LABELS, ROUTINE_KINDS, WEEKDAY_SHORT, describeRoutine, spokenTime, type Routine, type RoutineKind } from "@/domain/routines";
 import { cn } from "@/lib/utils";
@@ -202,7 +202,7 @@ function RoutineSheet({
                     type="button"
                     onClick={() => setTimes((prev) => prev.filter((x) => x !== t))}
                     className="flex size-11 items-center justify-center rounded-full text-ink-2"
-                    aria-label={`Retirer ${t}`}
+                    aria-label={`Retirer ${spokenTime(t)}`}
                   >
                     <X className="size-4" aria-hidden />
                   </button>
@@ -244,9 +244,14 @@ function RoutineSheet({
                         return next.length === 7 ? [] : next;
                       })
                     }
-                    className={cn("min-h-11 rounded-full text-[15px] font-medium transition-colors", active ? "bg-ink text-surface" : "bg-surface-2 text-ink-3")}
+                    className={cn(
+                      "relative min-h-11 rounded-full text-[15px] font-medium transition-colors",
+                      active ? "bg-ink text-surface" : "bg-surface-2 text-ink-2 ring-1 ring-line",
+                    )}
                   >
                     {d}
+                    {/* never the colour alone: a check marks the days of the routine */}
+                    {active && <Check className="absolute -top-0.5 -right-0.5 size-3.5 rounded-full bg-sage p-0.5 text-surface" aria-hidden />}
                   </button>
                 );
               })}

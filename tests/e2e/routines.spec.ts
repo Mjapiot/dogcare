@@ -63,7 +63,7 @@ test("routines: added by the owner, checked off by the helper, seen by the owner
     await julie.getByRole("button", { name: "Ajouter une routine" }).click();
     const sheet = julie.getByRole("dialog");
     await sheet.getByRole("radio", { name: "Médicament" }).click();
-    await sheet.getByRole("button", { name: "Retirer 08:00" }).click();
+    await sheet.getByRole("button", { name: "Retirer 8 h" }).click();
     const hour = parisHour();
     await sheet.getByLabel("Nouvelle heure").fill(hour);
     await sheet.getByRole("button", { name: "Ajouter l'heure" }).click();
@@ -76,8 +76,10 @@ test("routines: added by the owner, checked off by the helper, seen by the owner
     await emma.waitForURL(new RegExp(`/requests/${requestId}$`));
     const today = emma.getByRole("region", { name: "Routines du jour" });
     await expect(today.getByText("½ comprimé")).toBeVisible({ timeout: 15_000 });
-    await today.getByRole("button", { name: /Médicament de .* : cocher/ }).click();
-    await expect(today.getByRole("button", { name: /Médicament de .* : décocher/ })).toHaveAttribute("aria-pressed", "true", { timeout: 15_000 });
+    const pill = today.getByRole("button", { name: /Médicament/ });
+    await expect(pill).toHaveAttribute("aria-pressed", "false");
+    await pill.click();
+    await expect(pill).toHaveAttribute("aria-pressed", "true", { timeout: 15_000 });
 
     // Julie sees it done, by Emma
     await gotoStable(julie, `/requests/${requestId}`);

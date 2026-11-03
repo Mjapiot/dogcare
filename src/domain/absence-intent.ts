@@ -5,7 +5,7 @@
  * app knows (dogs, people, dates). Nothing is ever invented: an unknown name
  * or a missing date becomes an issue the owner sees. Pure.
  */
-import { zonedInstant, type LocalDate } from "./time";
+import { isValidLocalDate, zonedInstant, type LocalDate } from "./time";
 
 /** What the model returns (already validated in shape). */
 export type AbsenceIntent = {
@@ -38,7 +38,6 @@ export const DEFAULT_START_TIME = "09:00";
 export const DEFAULT_END_TIME = "18:00";
 const MAX_DAYS = 31;
 
-const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 /** Case, accents and spaces do not matter when matching names. */
@@ -69,7 +68,11 @@ export function resolveAbsenceIntent(
 
   // the dog: the only one, or the one named
   let dogId: string | null = null;
-  if (ctx.dogs.length === 1) dogId = ctx.dogs[0].id;
+  if (ctx.dogs.length === 1) {
+    dogId = ctx.dogs[0].id;
+    // a single dog is chosen, but say so when the sentence names another one
+    if (intent.dog && matchPeople(intent.dog, ctx.dogs).length === 0) assumptions.push(`Chien : ${ctx.dogs[0].name} (« ${intent.dog} » inconnu)`);
+  }
   else if (intent.dog) {
     const found = matchPeople(intent.dog, ctx.dogs);
     if (found.length === 1) dogId = found[0].id;
@@ -77,8 +80,8 @@ export function resolveAbsenceIntent(
   } else issues.push("Quel chien ? Choisissez-le.");
 
   // dates: never guessed here; times default with a visible assumption
-  const startDate = intent.startDate && DATE.test(intent.startDate) ? intent.startDate : null;
-  const endDate = intent.endDate && DATE.test(intent.endDate) ? intent.endDate : null;
+  const startDate = intent.startDate && isValidLocalDate(intent.startDate) ? intent.startDate : null;
+  const endDate = intent.endDate && isValidLocalDate(intent.endDate) ? intent.endDate : null;
   if (!startDate) issues.push("Je n'ai pas compris la date de départ.");
   if (!endDate) issues.push("Je n'ai pas compris la date de retour.");
   let startTime = intent.startTime && TIME.test(intent.startTime) ? intent.startTime : null;
@@ -150,4 +153,27 @@ export function decodeRules(param: string | undefined): Array<Pick<AbsenceRule, 
     out.push({ userId, maxNights: n, place: place === "helper" || place === "owner" ? place : null });
   }
   return out;
+}
+
+/**
+ * What the assistant may know: my dogs in the group, and the people around
+ * them (members who are not their caretakers, their circle), never someone I
+ * blocked. Only these names are sent to the model.
+ */
+export function assistantContext(input: {
+  me: string;
+  dogs: ReadonlyArray<{ id: string; name: string; archived_at: string | null }>;
+  caretakers: ReadonlyArray<{ dog_id: string; user_id: string }>;
+  members: ReadonlyArray<{ user_id: string; display_name: string }>;
+  circle: ReadonlyArray<{ dog_id: string; user_id: string; display_name: string }>;
+  blocked: readonly string[];
+}): { dogs: Array<{ id: string; name: string }>; people: Array<{ userId: string; name: string }> } {
+  const dogs = input.dogs.filter((d) => !d.archived_at && input.caretakers.some((c) => c.dog_id === d.id && c.user_id === input.me));
+  const dogIds = new Set(dogs.map((d) => d.id));
+  const careIds = new Set(input.caretakers.filter((c) => dogIds.has(c.dog_id)).map((c) => c.user_id));
+  const people = [
+    ...input.members.filter((m) => !careIds.has(m.user_id)).map((m) => ({ userId: m.user_id, name: m.display_name })),
+    ...input.circle.filter((c) => dogIds.has(c.dog_id)).map((c) => ({ userId: c.user_id, name: c.display_name })),
+  ].filter((p, i, all) => p.name.trim() && !input.blocked.includes(p.userId) && all.findIndex((q) => q.userId === p.userId) === i);
+  return { dogs: dogs.map((d) => ({ id: d.id, name: d.name })), people };
 }

@@ -120,7 +120,8 @@ Repas, Promenade, Médicament, Déposé (prise en charge), Récupéré, Photo, N
 
 - Sur la fiche du chien, un responsable **active les routines** puis les liste : type (repas, promenade,
   médicament, autre), nom, 1 à 6 heures (heure de Paris), tous les jours ou certains jours, consigne courte
-  (« ½ comprimé dans la pâtée »). 12 routines au plus. Qui voit le chien voit ses routines.
+  (« ½ comprimé dans la pâtée »). 12 routines au plus. Qui voit le chien voit ses routines, sauf les médicaments,
+  qui suivent le droit Santé du cercle.
 - Pendant une garde, le carnet du gardien commence par **« Routines du jour »** : chaque occurrence se coche d'un
   geste (une entrée du carnet du type de la routine) et se décoche ; une occurrence ne se coche qu'une fois, pendant
   la garde, jusqu'à 3 h avant son heure. Les responsables voient la même liste : « Fait à 08h12 par Emma »,
@@ -336,7 +337,7 @@ thème.
 | Vert sauge — Couvert | garde(s) confirmée(s) sur toute la période |
 | Abricot — À organiser | en attente de réponses ou de confirmation |
 | Rose-rouge — Sans solution | besoin indispensable, tout le monde a dit non |
-| Rose-rouge — Personne à solliciter | besoin indispensable, personne d'autre ne peut être sollicité (aucun autre membre, ou tous bloqués) : invitez quelqu'un ou demandez à votre cercle |
+| Rose-rouge — Personne à solliciter | besoin indispensable, personne d'autre ne peut être sollicité (aucun autre membre, ou tous bloqués) : invitez quelqu'un ou demandez à votre cercle ; compté « à organiser », pas « sans solution » |
 | Rose-rouge hachuré — Partiellement couvert | une partie d'un besoin indispensable reste sans gardien |
 | Lavande — Information | chien seul, pour information |
 | Gris — Aucun besoin / sans réponse positive (besoin non indispensable) | |

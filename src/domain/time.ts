@@ -126,3 +126,11 @@ export function localDatesTouched(interval: Interval, timeZone = APP_TIME_ZONE):
 export function startOfWeek(date: LocalDate): LocalDate {
   return addDays(date, 1 - isoWeekday(date));
 }
+
+/** A real calendar date "YYYY-MM-DD" (not "2026-02-31", which would silently become 3 March). */
+export function isValidLocalDate(date: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return false;
+  const { year, month, day } = parseLocalDate(date);
+  const d = new Date(Date.UTC(year, month - 1, day));
+  return d.getUTCFullYear() === year && d.getUTCMonth() === month - 1 && d.getUTCDate() === day;
+}

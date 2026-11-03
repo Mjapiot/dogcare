@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getMyCircleDogs } from "@/server/data";
+import { homeWithoutGroup } from "@/lib/onboarding";
 import type { GroupMemberRow, GroupRow, ProfileRow } from "@/lib/types";
 
 export const CURRENT_GROUP_COOKIE = "dc_group";
@@ -85,5 +86,5 @@ async function hasDogsWithoutGroup(userId: string): Promise<boolean> {
     supabase.from("dog_caretakers").select("dog_id", { count: "exact", head: true }).eq("user_id", userId),
     getMyCircleDogs(),
   ]);
-  return (own.count ?? 0) > 0 || circle.length > 0;
+  return homeWithoutGroup(own.count ?? 0, circle.length) === "/circle";
 }

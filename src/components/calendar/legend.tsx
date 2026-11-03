@@ -5,7 +5,7 @@ import { TONE_CLASSES, TONE_ICONS } from "@/components/domain/tone";
 const MEANINGS = {
   covered: "toute la période a un gardien confirmé",
   pending: "en attente de réponses ou de confirmation",
-  uncovered: "indispensable et tout le monde a répondu non",
+  uncovered: "indispensable : tout le monde a répondu non, ou personne à solliciter",
   partial: "une partie du besoin reste sans gardien",
   info: "le chien sera seul, pour information",
 } as const;

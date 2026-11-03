@@ -227,7 +227,8 @@ export function dashboardCounts(views: RequestView[], now: number): DashboardCou
     upcoming: upcoming.length,
     confirmed: upcoming.filter((v) => v.status.status === "confirmed").length,
     toConfirm: upcoming.filter((v) => v.status.status === "volunteer_found").length,
-    uncovered: upcoming.filter((v) => v.status.tone === "uncovered").length,
+    // "Sans solution" only when everyone said no; "Personne à solliciter" is still to organise
+    uncovered: upcoming.filter((v) => v.status.tone === "uncovered" && v.status.status !== "nobody_to_ask").length,
     partial: upcoming.filter((v) => v.status.status === "partially_covered").length,
     toOrganize: upcoming.filter((v) => needsOrganizing(v.status.status)).length,
     toAnswer: upcoming.filter(needsMyAnswer).length,

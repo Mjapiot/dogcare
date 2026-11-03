@@ -123,7 +123,7 @@ export function CalendarView({ view, anchor, from, to, today, items, summary, sc
                 setDirection(0);
                 setParams({ start: null });
               }}
-              className="min-h-6 text-[13px] font-medium text-ink-3 underline underline-offset-2"
+              className="inline-flex min-h-11 items-center text-[13px] font-medium text-ink-3 underline underline-offset-2"
             >
               Revenir à aujourd&apos;hui
             </button>

@@ -168,7 +168,7 @@ export function PlanCard({
       </div>
 
       <p className="text-[14px] font-medium text-ink-2">
-        {openMs > 0 ? `Couvre ${Math.round((coveredMs / openMs) * 100)} % de ce qui reste` : "Tout est déjà couvert"}
+        {openMs > 0 ? `Couvre ${Math.round((coveredMs / openMs) * 100)}\u202f% de ce qui reste` : "Tout est déjà couvert"}
         {" · "}
         {helpers} gardien{helpers > 1 ? "s" : ""} · {handoffs} relais
       </p>

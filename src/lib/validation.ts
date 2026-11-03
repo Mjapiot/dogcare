@@ -1,8 +1,9 @@
 import { z } from "zod";
+import { isValidLocalDate } from "@/domain/time";
 import { SLOT_KEYS } from "@/domain/config";
 
 export const uuid = z.uuid({ message: "Identifiant invalide." });
-export const localDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date invalide.");
+export const localDate = z.string().refine(isValidLocalDate, "Date invalide.");
 export const localTime = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Heure invalide.");
 
 export const emailSchema = z.object({

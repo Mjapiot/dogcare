@@ -15,8 +15,9 @@ const list: Variants = {
   show: { transition: { staggerChildren: 0.06, delayChildren: 0.02 } },
 };
 
+// starts readable: the first screen is rendered on the server, before any script runs
 const item: Variants = {
-  hidden: { opacity: 0, y: 12 },
+  hidden: { opacity: 0.35, y: 10 },
   show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: EASE } },
 };
 

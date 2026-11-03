@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { safeRedirectPath } from "@/lib/safe-redirect";
 import { uuid } from "@/lib/validation";
 import { ShareDogsForm } from "./share-dogs-form";
+import { afterSharingDogs, dogsToShare } from "@/lib/onboarding";
 
 export const metadata: Metadata = { title: "Partager vos chiens" };
 
@@ -28,17 +29,17 @@ export default async function ShareDogsPage({ searchParams }: PageProps<"/onboar
     supabase.from("group_dogs").select("dog_id").eq("group_id", group.id),
   ]);
   const inGroup = new Set((links ?? []).map((l) => l.dog_id as string));
-  const toShare = dogs.filter((d) => !d.archived_at && !inGroup.has(d.id));
+  const toShare = dogsToShare(dogs, inGroup);
   if (toShare.length === 0) redirect(next);
   const photos = await signDogPhotos(toShare);
   // they already have a dog: no "add your dog" step after this one
-  const after = next.startsWith("/dogs/new") ? "/onboarding/habits?dog=1" : next;
+  const after = afterSharingDogs(next);
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col px-5 pt-safe pb-safe">
       <div className="flex flex-1 flex-col justify-center gap-8 py-10">
         <div>
-          <h1 className="text-[40px] font-semibold leading-[1] tracking-[-0.04em] text-ink">Vos chiens dans « {group.name} »</h1>
+          <h1 className="text-[40px] font-semibold leading-[1] tracking-[-0.04em] text-ink">{`Vos chiens dans «\u00a0${group.name}\u00a0»`}</h1>
           <p className="mt-3 text-[17px] text-ink-2">
             Partagez-les pour demander de l&apos;aide au groupe. Leur santé et leurs urgences restent réglées par leur cercle de confiance.
           </p>

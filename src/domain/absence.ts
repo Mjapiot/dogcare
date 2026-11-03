@@ -66,3 +66,19 @@ export function planAbsence(input: {
 
   return { plan, proposals, holeCandidates, skipped: input.people.filter((p) => skip.has(p.userId)).map((p) => p.userId) };
 }
+
+/**
+ * The part of a hole a circle person is asked for: the whole hole, or, with
+ * their own limit of consecutive nights (a rule of this absence), only what
+ * fits it (the rest stays a hole).
+ */
+export function holePartFor(hole: Interval, person: { userId: string; name: string; maxNights: number | null }, rules: PlanRules): Interval[] {
+  if (person.maxNights === null) return [hole];
+  const plan = proposePlan({
+    period: hole,
+    taken: [],
+    offers: [{ userId: person.userId, name: person.name, offer: hole, busy: [], respondedAt: "", maxNights: person.maxNights }],
+    rules,
+  });
+  return plan.slices.map((s) => ({ start: s.start, end: s.end }));
+}

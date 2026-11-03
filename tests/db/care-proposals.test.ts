@@ -94,6 +94,15 @@ describe("send_proposals", () => {
     expect(await rows(db, "select 1 from request_responses where request_id = $1", [s.requestId])).toEqual([]);
   });
 
+  it("one line per person, slices stored as checked", async () => {
+    const s = await scenario();
+    const part = { starts_at: inHours(24), ends_at: inHours(36) };
+    await expect(send(s.owner, s, [{ user_id: s.emma, slices: [part] }, { user_id: s.emma, slices: [part] }])).rejects.toThrow(/deux fois/);
+    await send(s.owner, s, [{ user_id: s.emma, slices: [{ ...part, extra: "x" } as typeof part] }]);
+    const [p] = await rows<{ slices: Array<Record<string, string>> }>(db, "select slices from care_proposals where request_id = $1", [s.requestId]);
+    expect(Object.keys(p.slices[0]).sort()).toEqual(["ends_at", "starts_at"]);
+  });
+
   it("only the dog's caretakers send, to people around the dog, inside the request", async () => {
     const s = await scenario();
     const whole = [{ starts_at: inHours(24), ends_at: inHours(72) }];
@@ -148,6 +157,8 @@ describe("answer_proposal", () => {
     expect(await rows(db, "select 1 from request_responses where request_id = $1", [s.requestId])).toEqual([]);
     const toOwner = (await notes(s.owner, s.requestId)).filter((n) => n.notification_type === "care_proposal");
     expect(toOwner[0].title).toMatch(/^Emma\d+ ne peut pas garder Aston$/);
+    // the owners read where it was, not "chez vous"
+    expect(toOwner[0].body).toMatch(/ · chez Emma\d+$/);
   });
 });
 

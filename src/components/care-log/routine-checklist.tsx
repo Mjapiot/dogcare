@@ -1,13 +1,13 @@
 "use client";
 
-import { useTransition } from "react";
+import { useEffect, useId, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Check, Circle, CircleAlert, Clock } from "lucide-react";
 import { checkRoutine, deleteCareLog } from "@/server/actions/care-log";
 import { formatTime } from "@/lib/format";
 import { hapticSuccess } from "@/lib/native";
-import { spokenTime, type RoutineItem } from "@/domain/routines";
+import { ROUTINE_EARLY_MS, spokenTime, type RoutineItem } from "@/domain/routines";
 import { cn } from "@/lib/utils";
 import { ROUTINE_ICONS } from "@/components/dogs/routines-card";
 
@@ -28,6 +28,15 @@ export function RoutineChecklist({
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
+  const titleId = useId();
+
+  // an occurrence "à venir" becomes checkable 3 hours before: refresh then, even if the screen stays open
+  const nextChange = items.filter((i) => i.state === "upcoming").map((i) => i.at - ROUTINE_EARLY_MS)[0];
+  useEffect(() => {
+    if (nextChange === undefined) return;
+    const timer = setTimeout(() => router.refresh(), Math.max(1_000, nextChange - Date.now() + 1_000));
+    return () => clearTimeout(timer);
+  }, [nextChange, router]);
 
   const toggle = (item: RoutineItem) =>
     startTransition(async () => {
@@ -40,8 +49,10 @@ export function RoutineChecklist({
     });
 
   return (
-    <section className="flex flex-col gap-2" aria-label={title}>
-      <h3 className="px-1 text-[13px] font-semibold tracking-wide text-ink-3 uppercase">{title}</h3>
+    <section className="flex flex-col gap-2" aria-labelledby={titleId}>
+      <h3 id={titleId} className="px-1 text-[13px] font-semibold tracking-wide text-ink-3 uppercase">
+        {title}
+      </h3>
       <ul className="flex flex-col divide-y divide-line rounded-2xl bg-surface-2">
         {items.map((item) => {
           const Icon = ROUTINE_ICONS[item.kind];
@@ -86,8 +97,8 @@ export function RoutineChecklist({
                   type="button"
                   disabled={pending}
                   onClick={() => toggle(item)}
+                  // named by what is shown (time, routine, instructions, state); pressed = checked off
                   aria-pressed={Boolean(item.done)}
-                  aria-label={`${item.label} de ${spokenTime(item.time)} : ${item.done ? "décocher" : "cocher"}`}
                   className="flex min-h-14 w-full items-center gap-3 px-4 py-2 disabled:opacity-60"
                 >
                   {content}

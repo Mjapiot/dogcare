@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { decodeRules, describeRule, encodeRules, normalizeName, resolveAbsenceIntent, type AbsenceIntent } from "@/domain/absence-intent";
+import { assistantContext, decodeRules, describeRule, encodeRules, normalizeName, resolveAbsenceIntent, type AbsenceIntent } from "@/domain/absence-intent";
 import { buildPrompt, extractAbsenceIntent } from "@/lib/gemini";
 import { zonedInstant } from "@/domain/time";
 
@@ -28,6 +28,15 @@ describe("resolveAbsenceIntent", () => {
     const r = resolve(intent());
     expect(r).toMatchObject({ dogId: "dog-aston", startDate: "2026-11-13", startTime: "18:00", endDate: "2026-11-16", endTime: "09:00", issues: [] });
     expect(r.assumptions).toEqual(["vendredi = 13 novembre"]);
+  });
+
+  it("an impossible date is not understood (31 February would become 3 March)", () => {
+    expect(resolve(intent({ startDate: "2027-02-31" })).issues).toContain("Je n'ai pas compris la date de départ.");
+  });
+
+  it("with a single dog, says so when the sentence names another one", () => {
+    expect(resolve(intent({ dog: "Rex" })).assumptions).toContain("Chien : Aston (« Rex » inconnu)");
+    expect(resolve(intent({ dog: "aston" })).assumptions).toEqual(["vendredi = 13 novembre"]);
   });
 
   it("never guesses a date; a missing time defaults with a visible assumption", () => {
@@ -77,6 +86,39 @@ describe("resolveAbsenceIntent", () => {
     const amb = resolve(intent({ rules: [{ person: "emma b.", maxNights: 1, place: null }, { person: "Léa M", maxNights: 1, place: null }] }));
     expect(amb.rules.map((x) => x.name)).toEqual(["Emma B"]);
     expect(amb.issues[0]).toMatch(/« Léa M » ne fait pas partie/);
+  });
+});
+
+describe("assistantContext", () => {
+  it("sends only my dogs and the people around them, never their caretakers, never someone I blocked", () => {
+    const ctx = assistantContext({
+      me: "julie",
+      dogs: [
+        { id: "aston", name: "Aston", archived_at: null },
+        { id: "rex", name: "Rex", archived_at: null }, // Paul's dog
+        { id: "old", name: "Old", archived_at: "2026-01-01T00:00:00Z" },
+      ],
+      caretakers: [
+        { dog_id: "aston", user_id: "julie" },
+        { dog_id: "aston", user_id: "marc" },
+        { dog_id: "rex", user_id: "paul" },
+        { dog_id: "old", user_id: "julie" },
+      ],
+      members: [
+        { user_id: "julie", display_name: "Julie" },
+        { user_id: "marc", display_name: "Marc" },
+        { user_id: "paul", display_name: "Paul" },
+        { user_id: "emma", display_name: "Emma" },
+        { user_id: "troll", display_name: "Troll" },
+      ],
+      circle: [
+        { dog_id: "aston", user_id: "zoe", display_name: "Zoé" },
+        { dog_id: "rex", user_id: "lou", display_name: "Lou" },
+      ],
+      blocked: ["troll"],
+    });
+    expect(ctx.dogs).toEqual([{ id: "aston", name: "Aston" }]);
+    expect(ctx.people.map((p) => p.name)).toEqual(["Paul", "Emma", "Zoé"]);
   });
 });
 

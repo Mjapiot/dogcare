@@ -229,6 +229,8 @@ révélateurs), non autorisé (redirection `/login`, 404 pour une ressource inac
   chaque page enchaîne plusieurs lectures, l'aller-retour serveur ↔ base doit rester court.
 - Cache client des pages dynamiques 30 s (`experimental.staleTimes.dynamic`) : revenir sur un onglet est immédiat ;
   Realtime, le retour dans l'app (`LiveUpdates` → `router.refresh`) et chaque action (`revalidatePath`) rafraîchissent.
+- Realtime (`LiveUpdates`) : demandes, réponses, gardes, notifications, propositions, carnet et routines déclenchent
+  `router.refresh` ; la liste des routines se rafraîchit aussi d'elle-même quand une occurrence devient cochable.
 - Squelettes à la forme de chaque onglet (`loading.tsx` + `ScreenSkeleton`) ; animation d'entrée une fois par session.
 - Lectures indépendantes en parallèle (`requireAppContext`, `getGroupSnapshot` : membres, chiens et demandes
   ensemble ; demandes à venir en une seule requête).

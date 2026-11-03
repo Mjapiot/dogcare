@@ -127,6 +127,7 @@ export default async function PlanAbsencePage({ searchParams }: PageProps<"/plan
         absence={absence}
         names={Object.fromEntries([...people.map((p) => [p.userId, p.name]), ...circle.map((c) => [c.userId, c.name])])}
         placeOf={placeOf}
+        nightsOf={Object.fromEntries(rules.filter((r) => circleOfDog.some((c) => c.user_id === r.userId)).map((r) => [r.userId, r.maxNights]))}
         maxNights={planRules(dog).maxConsecutiveNights}
         hasPro={circle.some((c) => c.role === "pro")}
       />

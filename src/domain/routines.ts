@@ -4,7 +4,7 @@
  * same rules are checked by add_care_log in the database.
  */
 import type { Interval } from "./intervals";
-import { isoWeekday, localDatesTouched, toLocalDate, zonedInstant, type LocalDate } from "./time";
+import { isoWeekday, localDatesTouched, toLocalDate, toLocalTime, zonedInstant, type LocalDate } from "./time";
 
 export type RoutineKind = "meal" | "walk" | "medication" | "other";
 
@@ -51,6 +51,8 @@ export function routineOccurrences(routines: readonly Routine[], period: Interva
       if (r.weekdays && !r.weekdays.includes(weekday)) continue;
       for (const time of r.times) {
         const at = zonedInstant(date, time);
+        // 02:30 does not exist the night clocks go forward: no occurrence (the database agrees)
+        if (toLocalTime(at) !== time) continue;
         if (at >= period.start && at < period.end) {
           out.push({ routineId: r.id, kind: r.kind, label: r.label, instructions: r.instructions, at, date, time });
         }

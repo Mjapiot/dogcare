@@ -2,10 +2,10 @@
 
 import { z } from "zod";
 import { uuid } from "@/lib/validation";
-import { resolveAbsenceIntent, type ResolvedAbsence } from "@/domain/absence-intent";
+import { assistantContext, resolveAbsenceIntent, type ResolvedAbsence } from "@/domain/absence-intent";
 import { todayLocal } from "@/domain/time";
 import { requireUserId } from "@/server/session";
-import { getGroupDogs, getGroupMembers, getInviteeCandidates } from "@/server/data";
+import { getGroupDogs, getGroupMembers, getInviteeCandidates, getMyBlockedIds } from "@/server/data";
 import { understandWithGemini } from "@/server/ai";
 import type { ActionResult } from "@/lib/types";
 
@@ -22,19 +22,14 @@ export async function understandAbsence(groupId: string, text: string): Promise<
   const parsed = textSchema.safeParse(text);
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message };
   const userId = await requireUserId();
-  const [{ dogs, caretakers }, members, candidates] = await Promise.all([
+  const [{ dogs, caretakers }, members, candidates, blocked] = await Promise.all([
     getGroupDogs(groupId),
     getGroupMembers(groupId),
     getInviteeCandidates(groupId),
+    getMyBlockedIds(),
   ]);
-  const myDogs = dogs.filter((d) => !d.archived_at && caretakers.some((c) => c.dog_id === d.id && c.user_id === userId));
+  const { dogs: myDogs, people } = assistantContext({ me: userId, dogs, caretakers, members, circle: candidates, blocked });
   if (myDogs.length === 0) return { ok: false, error: "Aucun de vos chiens n'est dans ce groupe." };
-  const myDogIds = new Set(myDogs.map((d) => d.id));
-  const careIds = new Set(caretakers.filter((c) => myDogIds.has(c.dog_id)).map((c) => c.user_id));
-  const people = [
-    ...members.filter((m) => !careIds.has(m.user_id)).map((m) => ({ userId: m.user_id, name: m.display_name })),
-    ...candidates.filter((c) => myDogIds.has(c.dog_id)).map((c) => ({ userId: c.user_id, name: c.display_name })),
-  ].filter((p, i, all) => p.name.trim() && all.findIndex((q) => q.userId === p.userId) === i);
 
   const now = Date.now();
   const result = await understandWithGemini(parsed.data, {
