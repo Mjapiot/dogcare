@@ -29,11 +29,11 @@ import type {
 } from "@/lib/types";
 
 const REQUEST_COLUMNS =
-  "id, group_id, dog_id, created_by, request_type, necessity, starts_at, ends_at, description, splittable, lifecycle_status, cancelled_at, cancellation_reason, revision, created_at, updated_at";
+  "id, group_id, dog_id, created_by, request_type, necessity, starts_at, ends_at, description, splittable, lifecycle_status, cancelled_at, cancellation_reason, revision, absence_id, created_at, updated_at";
 const ASSIGNMENT_COLUMNS =
   "id, request_id, assigned_user_id, starts_at, ends_at, status, confirmed_by, confirmed_at, cancelled_at, cancellation_reason, previous_starts_at, previous_ends_at, place";
 const DOG_COLUMNS =
-  "id, name, breed, birth_date, photo_path, care_notes, sex, sterilized, weight_kg, identification, distinctive_marks, meals, walks, sleep, behavior, plan_max_nights, plan_min_slice_hours, routines_enabled, created_by, archived_at";
+  "id, name, breed, birth_date, photo_path, care_notes, sex, sterilized, weight_kg, identification, distinctive_marks, meals, walks, sleep, behavior, plan_max_nights, plan_min_slice_hours, routines_enabled, alone_only, created_by, archived_at";
 
 function must<T>(result: { data: T | null; error: unknown }): T {
   if (result.error) throw result.error;
@@ -475,25 +475,64 @@ export async function getLatestCareNews(assignmentIds: string[]): Promise<Record
 }
 
 /** Live gardes of these people that overlap a period, on other requests I can see (planning conflicts). */
-export async function getBusyAssignments(
+/**
+ * The live gardes of these people during a period (other requests than
+ * `excludeRequestId`), with whether their dog must be kept alone (null when
+ * we cannot see it): the planning engine decides from it who can take one
+ * more dog (src/domain/cumul.ts).
+ */
+export async function getOtherGardes(
   userIds: string[],
   period: { start: number; end: number },
   excludeRequestId?: string,
-): Promise<Array<Pick<CareAssignmentRow, "assigned_user_id" | "starts_at" | "ends_at">>> {
+): Promise<Array<Pick<CareAssignmentRow, "assigned_user_id" | "starts_at" | "ends_at"> & { alone_only: boolean | null }>> {
   if (userIds.length === 0) return [];
   const supabase = await createClient();
   let query = supabase
     .from("care_assignments")
-    .select("assigned_user_id, starts_at, ends_at")
+    .select("request_id, assigned_user_id, starts_at, ends_at")
     .in("assigned_user_id", userIds.slice(0, ID_CHUNK));
   if (excludeRequestId) query = query.neq("request_id", excludeRequestId);
-  return must(
+  const rows = must<Array<Pick<CareAssignmentRow, "request_id" | "assigned_user_id" | "starts_at" | "ends_at">>>(
     await query
       .neq("status", "cancelled")
       .lt("starts_at", new Date(period.end).toISOString())
       .gt("ends_at", new Date(period.start).toISOString())
       .limit(500),
   );
+  if (rows.length === 0) return [];
+  // care_requests.dog_id references group_dogs, not dogs: read apart
+  const requestIds = [...new Set(rows.map((r) => r.request_id))].slice(0, ID_CHUNK);
+  const requests = must<Array<{ id: string; dog_id: string }>>(await supabase.from("care_requests").select("id, dog_id").in("id", requestIds));
+  const dogIds = [...new Set(requests.map((r) => r.dog_id))];
+  const dogs = dogIds.length ? must<Array<{ id: string; alone_only: boolean }>>(await supabase.from("dogs").select("id, alone_only").in("id", dogIds)) : [];
+  return rows.map(({ request_id, ...r }) => {
+    const dogId = requests.find((q) => q.id === request_id)?.dog_id;
+    return { ...r, alone_only: dogs.find((d) => d.id === dogId)?.alone_only ?? null };
+  });
+}
+
+/** How many dogs each person keeps at once (null = no limit; people I cannot see are left out). */
+export async function getMaxDogs(userIds: string[]): Promise<Record<string, number | null>> {
+  if (userIds.length === 0) return {};
+  const supabase = await createClient();
+  const rows = must<Array<{ id: string; max_dogs_at_once: number | null }>>(
+    await supabase.from("profiles").select("id, max_dogs_at_once").in("id", userIds.slice(0, ID_CHUNK)),
+  );
+  return Object.fromEntries(rows.map((r) => [r.id, r.max_dogs_at_once]));
+}
+
+/** The other requests of an absence of several dogs, with their dog's name. */
+export async function getAbsenceSiblings(absenceId: string, requestId: string): Promise<Array<{ id: string; dogName: string }>> {
+  const supabase = await createClient();
+  const requests = must<Array<{ id: string; dog_id: string }>>(
+    await supabase.from("care_requests").select("id, dog_id").eq("absence_id", absenceId).neq("id", requestId).limit(5),
+  );
+  if (requests.length === 0) return [];
+  const dogs = must<Array<{ id: string; name: string }>>(await supabase.from("dogs").select("id, name").in("id", requests.map((r) => r.dog_id)));
+  return requests
+    .map((r) => ({ id: r.id, dogName: dogs.find((d) => d.id === r.dog_id)?.name ?? "un autre chien" }))
+    .sort((a, b) => a.dogName.localeCompare(b.dogName, "fr"));
 }
 
 /** Confirmed gardes ended this year: mine, and those on my dogs' requests (profile summary). */
@@ -553,17 +592,19 @@ export async function getRequestProposals(requestId: string): Promise<CarePropos
   );
 }
 
-export type MyProposal = CareProposalRow & { dogName: string; groupId: string; requestEndsAt: string };
+export type MyProposal = CareProposalRow & { dogName: string; groupId: string; requestEndsAt: string; absenceId: string | null };
 
 /** Proposals waiting for my answer, on live requests. */
 export async function getMyPendingProposals(userId: string): Promise<MyProposal[]> {
   const supabase = await createClient();
-  type Row = CareProposalRow & { care_requests: { group_id: string; dog_id: string; ends_at: string; lifecycle_status: string } | null };
+  type Row = CareProposalRow & {
+    care_requests: { group_id: string; dog_id: string; ends_at: string; lifecycle_status: string; absence_id: string | null } | null;
+  };
   // to-one embed: PostgREST returns an object, its inferred type says an array
   const rows = must<Row[]>(
     (await supabase
       .from("care_proposals")
-      .select(`${PROPOSAL_COLUMNS}, care_requests(group_id, dog_id, ends_at, lifecycle_status)`)
+      .select(`${PROPOSAL_COLUMNS}, care_requests(group_id, dog_id, ends_at, lifecycle_status, absence_id)`)
       .eq("user_id", userId)
       .eq("status", "pending")
       .order("starts_at")
@@ -579,6 +620,7 @@ export async function getMyPendingProposals(userId: string): Promise<MyProposal[
     dogName: dogs.find((d) => d.id === req!.dog_id)?.name ?? "le chien",
     groupId: req!.group_id,
     requestEndsAt: req!.ends_at,
+    absenceId: req!.absence_id,
   }));
 }
 

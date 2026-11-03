@@ -14,6 +14,7 @@ import { DogAvatar, ToneBadge } from "@/components/domain/request-bits";
 import { AccountActions } from "@/components/profile/account-actions";
 import { Rise, Stagger } from "@/components/ui/motion";
 import { ProposalCard } from "@/components/planning/proposals";
+import { groupProposals } from "@/domain/absence";
 
 export const metadata: Metadata = { title: "Mes chiens" };
 
@@ -34,7 +35,7 @@ export default async function CirclePage() {
     getMyGroups(),
     getUserEmail(),
     getMyInvitedRequests(),
-    getMyPendingProposals(userId),
+    getMyPendingProposals(userId).then(groupProposals),
     getMyDogs(userId),
   ]);
   const mine = ownDogs.filter((d) => !d.archived_at);

@@ -27,6 +27,18 @@ export async function updateDisplayName(name: string): Promise<ActionResult> {
   return { ok: true, data: undefined };
 }
 
+/** How many dogs I keep at once (1 to 5, null = no limit): the planning engine follows it. */
+export async function updateMaxDogs(max: number | null): Promise<ActionResult> {
+  const parsed = z.number().int().min(1).max(5).nullable().safeParse(max);
+  if (!parsed.success) return { ok: false, error: "Réglage invalide." };
+  const userId = await requireUserId();
+  const supabase = await createClient();
+  const { error } = await supabase.from("profiles").update({ max_dogs_at_once: parsed.data }).eq("id", userId);
+  if (error) return { ok: false, error: toUserMessage(error) };
+  revalidatePath("/", "layout");
+  return { ok: true, data: undefined };
+}
+
 export async function createGroup(name: string): Promise<ActionResult<{ groupId: string }>> {
   const parsed = groupNameSchema.safeParse(name);
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message };

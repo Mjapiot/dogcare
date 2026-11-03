@@ -10,6 +10,8 @@ import { hapticSuccess } from "@/lib/native";
 import { cn } from "@/lib/utils";
 import { Card, PillButton, SectionTitle } from "@/components/ui/kit";
 import type { CareProposalRow, ProposalStatus } from "@/lib/types";
+import type { IncomingGroup } from "@/domain/absence";
+import { joinNames } from "@/domain/absence-intent";
 
 const STATUS: Record<ProposalStatus, { label: string; icon: LucideIcon; tone: string }> = {
   pending: { label: "En attente", icon: Clock, tone: "bg-[var(--tone-pending)] text-[var(--tone-pending-ink)]" },
@@ -18,7 +20,7 @@ const STATUS: Record<ProposalStatus, { label: string; icon: LucideIcon; tone: st
   withdrawn: { label: "Retirée", icon: Undo2, tone: "bg-surface-2 text-ink-3" },
 };
 
-function Slices({ proposal }: { proposal: Pick<CareProposalRow, "slices"> }) {
+function Slices({ proposal }: { proposal: { slices: ReadonlyArray<{ starts_at: string; ends_at: string }> } }) {
   return (
     <ul className="flex flex-col">
       {proposal.slices.map((s) => (
@@ -85,12 +87,19 @@ export function ProposalsSection({ proposals, names }: { proposals: CareProposal
   );
 }
 
-export type IncomingProposal = Pick<CareProposalRow, "id" | "slices" | "place"> & { dogName: string; ownerName?: string };
+/** A proposal waiting for my answer: one card for all the dogs of an absence. */
+export type IncomingProposal = IncomingGroup & { ownerName?: string };
 
-/** A proposal waiting for my answer: accept (a "Oui" on that part) or decline. */
+const sameSlices = (parts: IncomingGroup["parts"]) => parts.every((p) => JSON.stringify(p.slices) === JSON.stringify(parts[0].slices));
+
+/** Accept (a "Oui" on those parts, for every dog) or decline. */
 export function ProposalCard({ proposal }: { proposal: IncomingProposal }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
+  const { parts } = proposal;
+  const several = parts.length > 1;
+  const dogs = joinNames(parts.map((p) => p.dogName));
+  const onePlace = parts.every((p) => p.place === parts[0].place);
   const answer = (accept: boolean) =>
     startTransition(async () => {
       const r = await answerProposal(proposal.id, accept);
@@ -108,12 +117,28 @@ export function ProposalCard({ proposal }: { proposal: IncomingProposal }) {
     <Card className="flex flex-col gap-3 p-4">
       <div>
         <p className="text-[13px] font-medium uppercase tracking-wide text-ink-3">Proposition de garde</p>
-        <p className="text-[17px] font-semibold tracking-tight text-ink">Pouvez-vous garder {proposal.dogName} ?</p>
-        <p className="inline-flex items-center gap-1 text-[14px] text-ink-2">
-          <Home className="size-3.5" aria-hidden /> {proposal.place === "owner" ? "Chez le propriétaire" : "Chez vous"}
-        </p>
+        <p className="text-[17px] font-semibold tracking-tight text-ink">Pouvez-vous garder {dogs} ?</p>
+        {onePlace && (
+          <p className="inline-flex items-center gap-1 text-[14px] text-ink-2">
+            <Home className="size-3.5" aria-hidden /> {parts[0].place === "owner" ? "Chez le propriétaire" : "Chez vous"}
+          </p>
+        )}
       </div>
-      <Slices proposal={proposal} />
+      {sameSlices(parts) && onePlace ? (
+        <Slices proposal={parts[0]} />
+      ) : (
+        <ul className="flex flex-col gap-2">
+          {parts.map((p) => (
+            <li key={p.dogName}>
+              <p className="text-[14px] font-semibold text-ink">
+                {p.dogName}
+                {!onePlace && <span className="font-normal text-ink-3"> · {p.place === "owner" ? "chez le propriétaire" : "chez vous"}</span>}
+              </p>
+              <Slices proposal={p} />
+            </li>
+          ))}
+        </ul>
+      )}
       <div className="grid grid-cols-2 gap-2">
         <PillButton loading={pending} onClick={() => answer(true)}>
           <Check className="size-4" aria-hidden /> Accepter
@@ -122,7 +147,9 @@ export function ProposalCard({ proposal }: { proposal: IncomingProposal }) {
           <X className="size-4" aria-hidden /> Refuser
         </PillButton>
       </div>
-      <p className="text-[13px] text-ink-3">Accepter n&apos;engage pas encore : le propriétaire confirme ensuite la garde.</p>
+      <p className="text-[13px] text-ink-3">
+        {several ? "Votre réponse vaut pour tous ces chiens. " : ""}Accepter n&apos;engage pas encore : le propriétaire confirme ensuite la garde.
+      </p>
     </Card>
   );
 }

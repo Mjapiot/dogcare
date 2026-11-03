@@ -4,9 +4,10 @@ import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { AlertTriangle, BriefcaseBusiness, CalendarRange, Home, Moon, Send, Sparkles, UserMinus, UserPlus, Users } from "lucide-react";
+import { AlertTriangle, BriefcaseBusiness, CalendarRange, Home, Moon, Send, ShieldAlert, Sparkles, Split, UserMinus, UserPlus, Users } from "lucide-react";
 import { planAbsence as sendAbsence } from "@/server/actions/proposals";
-import { nightAnchors } from "@/domain/planner";
+import { nightAnchors, type PlanHole, type PlanSlice } from "@/domain/planner";
+import { joinNames } from "@/domain/absence-intent";
 import { holePartFor, type AbsencePlan, type CircleCandidate } from "@/domain/absence";
 import type { Interval } from "@/domain/intervals";
 import { CIRCLE_KIND_LABELS } from "@/domain/circle";
@@ -16,7 +17,8 @@ import { cn } from "@/lib/utils";
 import { PillButton } from "@/components/ui/kit";
 
 type Place = "helper" | "owner";
-type Form = { dogId: string; startDate: string; startTime: string; endDate: string; endTime: string };
+type Form = { dogIds: string[]; startDate: string; startTime: string; endDate: string; endTime: string };
+type Dog = { id: string; name: string; aloneOnly: boolean; maxNights: number };
 
 /** One hue per person on the timeline; names are always written next to it. */
 const HUES = ["bg-[#7d9a7e]", "bg-[#c9a27e]", "bg-[#8f8bb8]", "bg-[#d08b74]", "bg-[#6f9fb0]", "bg-[#b59a5a]"];
@@ -24,50 +26,83 @@ const HUES = ["bg-[#7d9a7e]", "bg-[#c9a27e]", "bg-[#8f8bb8]", "bg-[#d08b74]", "b
 const ROLE_ICON: Record<CircleCandidate["role"], typeof Users> = { pro: BriefcaseBusiness, close: Users, guest: UserPlus };
 
 /**
- * The proposal for an absence: who keeps the dog when (and where), the holes
- * with the three ways out — ask someone else, change the split, a pet-sitter —
- * then "Envoyer les propositions" (each person gets their part).
+ * The proposal for an absence: who keeps which dog when (and where), the
+ * holes with the three ways out — ask someone else, change the split, a
+ * pet-sitter — then "Envoyer les propositions" (each person gets their part).
+ * Several dogs kept by the same person at the same time are shown together.
  */
 export function AbsencePlanner({
   groupId,
-  dog,
+  dogs,
   form,
   period,
   absence,
   names,
   placeOf,
   nightsOf = {},
-  maxNights,
   hasPro,
   rulesParam,
 }: {
   groupId: string;
-  dog: { id: string; name: string };
+  dogs: Dog[];
   form: Form;
   period: Interval;
   absence: AbsencePlan;
   names: Record<string, string>;
-  placeOf: Record<string, Place>;
+  /** Where each person keeps each dog (by dog, then person). */
+  placeOf: Record<string, Record<string, Place>>;
   /** Limits of consecutive nights said for this absence (circle people asked for a hole). */
   nightsOf?: Record<string, number | null>;
-  maxNights: number;
   hasPro: boolean;
   /** Rules for this absence, kept when the split is changed. */
   rulesParam?: string;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
-  // circle people asked for a hole, by hole start
+  // circle people asked for a hole, by hole key
   const [asked, setAsked] = useState<Record<string, string[]>>({});
-  const { plan, proposals, holeCandidates, skipped } = absence;
+  const { proposals, separated, skipped } = absence;
+  const several = dogs.length > 1;
+  const dogName = useMemo(() => new Map(dogs.map((d) => [d.id, d.name])), [dogs]);
+  const namesOf = (ids: readonly string[]) => joinNames(ids.map((id) => dogName.get(id) ?? ""));
+  const maxNights = Math.min(...dogs.map((d) => d.maxNights));
 
   const hue = useMemo(() => new Map(proposals.map((p, i) => [p.userId, HUES[i % HUES.length]])), [proposals]);
   const anchors = useMemo(() => nightAnchors(period), [period]);
   const nightsIn = (i: Interval) => anchors.filter((a) => a >= i.start && a < i.end).length;
   const total = period.end - period.start || 1;
-  const coverage = plan.openMs ? Math.round((plan.coveredMs / plan.openMs) * 100) : 0;
+  const openMs = absence.dogs.reduce((sum, d) => sum + d.plan.openMs, 0);
+  const coveredMs = absence.dogs.reduce((sum, d) => sum + d.plan.coveredMs, 0);
+  const coverage = openMs ? Math.round((coveredMs / openMs) * 100) : 0;
+  const handoffs = absence.dogs.reduce((sum, d) => sum + d.plan.handoffs, 0);
 
-  const baseQuery = { dog: form.dogId, from: form.startDate, fromTime: form.startTime, to: form.endDate, toTime: form.endTime };
+  // the same person with several dogs at the same time: one line; the same hole for several dogs: one line
+  const rows = useMemo(() => {
+    const slices = new Map<string, PlanSlice & { kind: "slice"; dogIds: string[] }>();
+    const holes = new Map<string, PlanHole & { kind: "hole"; key: string; dogIds: string[]; candidates: Map<string, CircleCandidate & { dogIds: string[] }> }>();
+    for (const d of absence.dogs) {
+      for (const s of d.plan.slices) {
+        const key = `${s.userId}-${s.start}-${s.end}`;
+        const row = slices.get(key) ?? { ...s, kind: "slice" as const, dogIds: [] as string[] };
+        row.dogIds.push(d.dogId);
+        slices.set(key, row);
+      }
+      for (const h of d.plan.holes) {
+        const key = `${h.start}-${h.end}`;
+        const row = holes.get(key) ?? { ...h, kind: "hole" as const, key, dogIds: [] as string[], candidates: new Map<string, CircleCandidate & { dogIds: string[] }>() };
+        row.dogIds.push(d.dogId);
+        for (const c of d.holeCandidates[String(h.start)] ?? []) {
+          const cand = row.candidates.get(c.userId) ?? { ...c, dogIds: [] as string[] };
+          cand.dogIds.push(d.dogId);
+          row.candidates.set(c.userId, cand);
+        }
+        holes.set(key, row);
+      }
+    }
+    return [...slices.values(), ...holes.values()].sort((a, b) => a.start - b.start || a.end - b.end);
+  }, [absence.dogs]);
+
+  const baseQuery = { dog: form.dogIds.join(","), from: form.startDate, fromTime: form.startTime, to: form.endDate, toTime: form.endTime };
   const hrefSkipping = (ids: string[]) => {
     const q = new URLSearchParams(baseQuery);
     if (ids.length) q.set("skip", ids.join(","));
@@ -81,28 +116,40 @@ export function AbsencePlanner({
       return { ...prev, [holeKey]: list.includes(userId) ? list.filter((u) => u !== userId) : [...list, userId] };
     });
 
-  // everything that will be sent: the plan's parts, plus the holes asked to circle people
+  // everything that will be sent: each person's part for each dog, plus the holes asked to circle people
   const outgoing = useMemo(() => {
-    const byUser = new Map<string, { userId: string; place: Place; slices: Interval[] }>();
-    for (const p of proposals) byUser.set(p.userId, { userId: p.userId, place: p.place, slices: [...p.slices] });
-    for (const h of plan.holes) {
-      for (const userId of asked[String(h.start)] ?? []) {
-        const entry = byUser.get(userId) ?? { userId, place: placeOf[userId] ?? "helper", slices: [] };
-        // their own limit of nights, said for this absence, cuts the part they are asked for
-        entry.slices.push(...holePartFor(h, { userId, name: names[userId] ?? "", maxNights: nightsOf[userId] ?? null }, { maxConsecutiveNights: maxNights, minSliceMs: 0 }));
-        byUser.set(userId, entry);
+    const parts = new Map<string, { userId: string; dogId: string; place: Place; slices: Interval[] }>();
+    const partOf = (userId: string, dogId: string, place: Place) => {
+      const key = `${userId}|${dogId}`;
+      const part = parts.get(key) ?? { userId, dogId, place, slices: [] };
+      parts.set(key, part);
+      return part;
+    };
+    for (const p of proposals) for (const x of p.parts) partOf(p.userId, x.dogId, x.place).slices.push(...x.slices);
+    for (const row of rows) {
+      if (row.kind !== "hole") continue;
+      for (const userId of asked[row.key] ?? []) {
+        // asked for the dogs of this hole whose circle they belong to
+        for (const dogId of row.candidates.get(userId)?.dogIds ?? []) {
+          const dog = dogs.find((d) => d.id === dogId)!;
+          // their own limit of nights, said for this absence, cuts the part they are asked for
+          partOf(userId, dogId, placeOf[dogId]?.[userId] ?? "helper").slices.push(
+            ...holePartFor(row, { userId, name: names[userId] ?? "", maxNights: nightsOf[userId] ?? null }, { maxConsecutiveNights: dog.maxNights, minSliceMs: 0 }),
+          );
+        }
       }
     }
-    return [...byUser.values()].map((e) => ({ ...e, slices: e.slices.sort((a, b) => a.start - b.start) }));
-  }, [proposals, plan.holes, asked, placeOf, nightsOf, names, maxNights]);
+    return [...parts.values()].map((e) => ({ ...e, slices: e.slices.sort((a, b) => a.start - b.start) }));
+  }, [proposals, rows, asked, placeOf, nightsOf, names, dogs]);
+  const people = new Set(outgoing.map((o) => o.userId)).size;
 
   const send = () =>
     startTransition(async () => {
       const r = await sendAbsence({
         groupId,
         ...form,
-        dogId: dog.id,
         proposals: outgoing.map((o) => ({
+          dogId: o.dogId,
           userId: o.userId,
           place: o.place,
           slices: o.slices.map((s) => ({ start: new Date(s.start).toISOString(), end: new Date(s.end).toISOString() })),
@@ -113,14 +160,9 @@ export function AbsencePlanner({
         return;
       }
       hapticSuccess();
-      toast.success(outgoing.length ? `Propositions envoyées à ${outgoing.length} personne${outgoing.length > 1 ? "s" : ""}` : "Demande publiée");
-      router.push(`/requests/${r.data.requestId}`);
+      toast.success(people ? `Propositions envoyées à ${people} personne${people > 1 ? "s" : ""}` : several ? "Demandes publiées" : "Demande publiée");
+      router.push(`/requests/${r.data.requestIds[0]}`);
     });
-
-  const pieces = [
-    ...plan.slices.map((s) => ({ kind: "slice" as const, ...s })),
-    ...plan.holes.map((h) => ({ kind: "hole" as const, ...h })),
-  ].sort((a, b) => a.start - b.start);
 
   return (
     <section className="flex flex-col gap-4" aria-labelledby="absence-plan">
@@ -131,36 +173,63 @@ export function AbsencePlanner({
           </span>
           <div>
             <h2 id="absence-plan" className="text-[17px] font-semibold tracking-tight text-ink">
-              Proposition pour {dog.name}
+              Proposition pour {namesOf(dogs.map((d) => d.id))}
             </h2>
             <p className="text-[14px] text-ink-3">{formatPeriod(period.start, period.end)}</p>
           </div>
         </div>
 
-        <div className="flex h-3 w-full overflow-hidden rounded-full bg-black/10" aria-hidden>
-          {pieces.map((p) => (
-            <div
-              key={`${p.kind}-${p.start}`}
-              className={cn(p.kind === "slice" ? hue.get(p.userId) : "hatch bg-[var(--tone-uncovered)]")}
-              style={{ width: `${((p.end - p.start) / total) * 100}%` }}
-            />
+        <div className="flex flex-col gap-1.5" aria-hidden>
+          {absence.dogs.map((d) => (
+            <div key={d.dogId} className="flex items-center gap-2">
+              {several && <span className="w-14 shrink-0 truncate text-[12px] font-medium text-ink-3">{d.name}</span>}
+              <div className="flex h-3 w-full overflow-hidden rounded-full bg-black/10">
+                {[...d.plan.slices.map((x) => ({ ...x, hole: false })), ...d.plan.holes.map((x) => ({ ...x, userId: "", hole: true }))]
+                  .sort((a, b) => a.start - b.start)
+                  .map((x) => (
+                    <div
+                      key={`${x.hole}-${x.start}`}
+                      className={cn(x.hole ? "hatch bg-[var(--tone-uncovered)]" : hue.get(x.userId))}
+                      style={{ width: `${((x.end - x.start) / total) * 100}%` }}
+                    />
+                  ))}
+              </div>
+            </div>
           ))}
         </div>
 
         <p className="text-[14px] font-medium text-ink-2">
-          {plan.slices.length === 0
+          {proposals.length === 0
             ? "Personne n'a déclaré de dispo sur cette période"
-            : `Couvre ${coverage}\u202f% de l'absence · ${proposals.length} personne${proposals.length > 1 ? "s" : ""} · ${plan.handoffs} relais`}
+            : `Couvre ${coverage}\u202f% de l'absence · ${proposals.length} personne${proposals.length > 1 ? "s" : ""} · ${handoffs} relais`}
         </p>
 
+        {separated.length > 0 && (
+          <div className="flex items-start gap-2 rounded-2xl bg-[var(--tone-pending)] px-3 py-2 text-[14px] text-[var(--tone-pending-ink)]" role="note">
+            <Split className="mt-0.5 size-4 shrink-0" aria-hidden />
+            <p>
+              Séparés {separated.length === 1 ? formatPeriod(separated[0].start, separated[0].end) : `sur ${separated.length} créneaux`} : personne ne peut
+              tous les garder à ce moment-là. Le détail est ci-dessous.
+            </p>
+          </div>
+        )}
+        {dogs.some((d) => d.aloneOnly) && several && (
+          <p className="flex items-start gap-1.5 text-[13px] text-ink-3">
+            <ShieldAlert className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+            {namesOf(dogs.filter((d) => d.aloneOnly).map((d) => d.id))} {dogs.filter((d) => d.aloneOnly).length > 1 ? "doivent être gardés seuls" : "doit être gardé seul"} :
+            jamais avec un autre chien.
+          </p>
+        )}
+
         <ul className="flex flex-col divide-y divide-line rounded-2xl bg-surface-2">
-          {pieces.map((p) =>
+          {rows.map((p) =>
             p.kind === "slice" ? (
-              <li key={`s-${p.start}`} className="flex items-start gap-3 px-4 py-3">
+              <li key={`s-${p.userId}-${p.start}-${p.end}`} className="flex items-start gap-3 px-4 py-3">
                 <span className={cn("mt-1 size-3 shrink-0 rounded-full", hue.get(p.userId))} aria-hidden />
                 <div className="min-w-0 flex-1">
                   <p className="text-[15px] font-semibold text-ink">
                     {p.name}
+                    {several && <span className="font-normal text-ink-2"> · {namesOf(p.dogIds)}</span>}
                     {nightsIn(p) > 0 && (
                       <span className="ml-1.5 inline-flex items-center gap-1 text-[13px] font-normal text-ink-3">
                         <Moon className="size-3.5" aria-hidden /> {nightsIn(p)} nuit{nightsIn(p) > 1 ? "s" : ""}
@@ -174,20 +243,22 @@ export function AbsencePlanner({
                 </div>
               </li>
             ) : (
-              <li key={`h-${p.start}`} className="flex flex-col gap-3 px-4 py-3">
+              <li key={`h-${p.key}`} className="flex flex-col gap-3 px-4 py-3">
                 <div className="flex items-start gap-3">
                   <AlertTriangle className="mt-0.5 size-4 shrink-0 text-[var(--tone-uncovered-ink)]" aria-hidden />
                   <div className="min-w-0 flex-1">
-                    <p className="text-[15px] font-semibold text-ink">Sans solution pour l&apos;instant</p>
+                    <p className="text-[15px] font-semibold text-ink">
+                      {several ? `${namesOf(p.dogIds)} : sans solution pour l'instant` : "Sans solution pour l'instant"}
+                    </p>
                     <p className="text-[14px] text-ink-2">{formatPeriod(p.start, p.end)}</p>
                     <p className="text-[13px] text-ink-3">{p.reason}</p>
                   </div>
                 </div>
                 <HoleOptions
-                  candidates={holeCandidates[String(p.start)] ?? []}
-                  asked={asked[String(p.start)] ?? []}
-                  onToggle={(userId) => toggleAsk(String(p.start), userId)}
-                  dogId={dog.id}
+                  candidates={[...p.candidates.values()]}
+                  asked={asked[p.key] ?? []}
+                  onToggle={(userId) => toggleAsk(p.key, userId)}
+                  dogId={p.dogIds[0]}
                   hasPro={hasPro}
                 />
               </li>
@@ -196,7 +267,7 @@ export function AbsencePlanner({
         </ul>
         <p className="text-[13px] text-ink-3">
           D&apos;après les dispos partagées, les autres gardes de chacun et vos règles (au plus {maxNights} nuit{maxNights > 1 ? "s" : ""} d&apos;affilée
-          par personne, sauf préférence propre).
+          par personne, sauf préférence propre{several ? " ; chacun garde au plus le nombre de chiens qu'il a choisi" : ""}).
         </p>
       </div>
 
@@ -234,12 +305,14 @@ export function AbsencePlanner({
 
       <div className="flex flex-col gap-2">
         <PillButton size="lg" loading={pending} onClick={send}>
-          <Send className="size-4" aria-hidden /> {outgoing.length ? "Envoyer les propositions" : "Publier la demande"}
+          <Send className="size-4" aria-hidden /> {outgoing.length ? "Envoyer les propositions" : several ? "Publier les demandes" : "Publier la demande"}
         </PillButton>
         <p className="text-center text-[13px] text-ink-3">
           {outgoing.length
             ? "Chacun reçoit sa part et accepte ou refuse. Vous confirmez ensuite le planning : rien n'est confirmé avant."
-            : "La demande est publiée dans le groupe, comme un besoin habituel."}
+            : several
+              ? "Une demande par chien est publiée dans le groupe, comme un besoin habituel."
+              : "La demande est publiée dans le groupe, comme un besoin habituel."}
         </p>
       </div>
     </section>

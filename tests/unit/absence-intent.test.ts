@@ -12,7 +12,7 @@ const PEOPLE = [
   { userId: "44444444-4444-4444-8444-444444444444", name: "Emma B" },
 ];
 const intent = (over: Partial<AbsenceIntent> = {}): AbsenceIntent => ({
-  dog: null,
+  dogs: [],
   startDate: "2026-11-13",
   startTime: "18:00",
   endDate: "2026-11-16",
@@ -26,7 +26,7 @@ const resolve = (i: AbsenceIntent, dogs = DOGS) => resolveAbsenceIntent(i, { dog
 describe("resolveAbsenceIntent", () => {
   it("keeps dates, the only dog, and the model's assumptions", () => {
     const r = resolve(intent());
-    expect(r).toMatchObject({ dogId: "dog-aston", startDate: "2026-11-13", startTime: "18:00", endDate: "2026-11-16", endTime: "09:00", issues: [] });
+    expect(r).toMatchObject({ dogIds: ["dog-aston"], startDate: "2026-11-13", startTime: "18:00", endDate: "2026-11-16", endTime: "09:00", issues: [] });
     expect(r.assumptions).toEqual(["vendredi = 13 novembre"]);
   });
 
@@ -35,8 +35,8 @@ describe("resolveAbsenceIntent", () => {
   });
 
   it("with a single dog, says so when the sentence names another one", () => {
-    expect(resolve(intent({ dog: "Rex" })).assumptions).toContain("Chien : Aston (« Rex » inconnu)");
-    expect(resolve(intent({ dog: "aston" })).assumptions).toEqual(["vendredi = 13 novembre"]);
+    expect(resolve(intent({ dogs: ["Rex"] })).assumptions).toContain("Chien : Aston (« Rex » inconnu)");
+    expect(resolve(intent({ dogs: ["aston"] })).assumptions).toEqual(["vendredi = 13 novembre"]);
   });
 
   it("never guesses a date; a missing time defaults with a visible assumption", () => {
@@ -55,11 +55,16 @@ describe("resolveAbsenceIntent", () => {
     expect(resolve(intent({ startDate: "2027-03-27", endDate: "2027-03-29" })).issues).toEqual([]);
   });
 
-  it("names a dog among several, or asks", () => {
-    const dogs = [...DOGS, { id: "dog-nala", name: "Nala" }];
-    expect(resolve(intent({ dog: "nala" }), dogs).dogId).toBe("dog-nala");
-    expect(resolve(intent({ dog: "Rex" }), dogs).issues[0]).toMatch(/Je ne sais pas de quel chien/);
-    expect(resolve(intent(), dogs).issues).toContain("Quel chien ? Choisissez-le.");
+  it("names dogs among several; none said: all of them, said so", () => {
+    const dogs = [...DOGS, { id: "dog-nala", name: "Nala" }, { id: "dog-rex", name: "Rex" }];
+    expect(resolve(intent({ dogs: ["nala"] }), dogs).dogIds).toEqual(["dog-nala"]);
+    expect(resolve(intent({ dogs: ["Aston", "nala", "Aston"] }), dogs).dogIds).toEqual(["dog-aston", "dog-nala"]);
+    const unknown = resolve(intent({ dogs: ["Milo"] }), dogs);
+    expect(unknown.issues).toEqual(["Je ne sais pas de quel chien il s'agit (« Milo ») : choisissez-le.", "Quels chiens ? Choisissez-les."]);
+    expect(unknown.dogIds).toEqual([]);
+    const all = resolve(intent(), dogs);
+    expect(all.dogIds).toEqual(["dog-aston", "dog-nala", "dog-rex"]);
+    expect(all.assumptions).toContain("Chiens non précisés : Aston, Nala et Rex");
   });
 
   it("rules only for known people: accents and first names match, ambiguity and strangers are reported", () => {
@@ -145,9 +150,9 @@ describe("Gemini", () => {
   const wrap = (text: string) => ({ candidates: [{ content: { parts: [{ text }] } }] });
 
   it("sends the date of the day, the known names and the sentence; reads a valid answer", async () => {
-    const fetchImpl = answer(wrap(JSON.stringify(intent({ dog: "Aston", rules: [{ person: "Mes parents", maxNights: 2, place: "helper" }] }))));
+    const fetchImpl = answer(wrap(JSON.stringify(intent({ dogs: ["Aston"], rules: [{ person: "Mes parents", maxNights: 2, place: "helper" }] }))));
     const r = await extractAbsenceIntent("Je pars vendredi", ctx, { apiKey: "k", fetchImpl });
-    expect(r).toEqual({ ok: true, intent: intent({ dog: "Aston", rules: [{ person: "Mes parents", maxNights: 2, place: "helper" }] }) });
+    expect(r).toEqual({ ok: true, intent: intent({ dogs: ["Aston"], rules: [{ person: "Mes parents", maxNights: 2, place: "helper" }] }) });
     const [url, init] = (fetchImpl as unknown as ReturnType<typeof vi.fn>).mock.calls[0] as [string, RequestInit];
     expect(url).toMatch(/models\/gemini-[^:]+:generateContent$/);
     expect((init.headers as Record<string, string>)["x-goog-api-key"]).toBe("k");
@@ -164,6 +169,6 @@ describe("Gemini", () => {
     }) as unknown as typeof fetch;
     expect(await extractAbsenceIntent("x", ctx, { apiKey: "k", fetchImpl: failing })).toEqual({ ok: false, reason: "unavailable" });
     expect(await extractAbsenceIntent("x", ctx, { apiKey: "k", fetchImpl: answer(wrap("pas du json")) })).toEqual({ ok: false, reason: "not_understood" });
-    expect(await extractAbsenceIntent("x", ctx, { apiKey: "k", fetchImpl: answer(wrap(JSON.stringify({ dog: 3 }))) })).toEqual({ ok: false, reason: "not_understood" });
+    expect(await extractAbsenceIntent("x", ctx, { apiKey: "k", fetchImpl: answer(wrap(JSON.stringify({ dogs: 3 }))) })).toEqual({ ok: false, reason: "not_understood" });
   });
 });

@@ -13,6 +13,7 @@ import { AnimatedList } from "@/components/requests/animated-list";
 import { RequestCard } from "@/components/requests/request-card";
 import { OwnerRequestCard } from "@/components/requests/owner-request-card";
 import { ProposalCard } from "@/components/planning/proposals";
+import { groupProposals } from "@/domain/absence";
 
 export const metadata: Metadata = { title: "Demandes" };
 
@@ -25,7 +26,7 @@ export default async function RequestsPage({ searchParams }: PageProps<"/request
   const now = requestNow();
 
   // my groups' requests (current group) and those of the circles I am in
-  const [snapshot, invited, proposals] = await Promise.all([getUpcomingSnapshot(group.id, userId), getMyInvitedRequests(), getMyPendingProposals(userId)]);
+  const [snapshot, invited, proposals] = await Promise.all([getUpcomingSnapshot(group.id, userId), getMyInvitedRequests(), getMyPendingProposals(userId).then(groupProposals)]);
   const views = buildRequestViews(snapshot, now).filter((v) => v.request.lifecycle_status === "active");
   const items = [
     ...views.map((v) => fromGroupView(v, now)),

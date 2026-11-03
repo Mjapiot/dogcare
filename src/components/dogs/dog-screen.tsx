@@ -263,7 +263,7 @@ export async function DogScreen({
 
       {editable && mode === "group" && (
         <Rise>
-          <PlanningRules dogId={dog.id} maxNights={dog.plan_max_nights} minSliceHours={dog.plan_min_slice_hours} />
+          <PlanningRules dogId={dog.id} maxNights={dog.plan_max_nights} minSliceHours={dog.plan_min_slice_hours} aloneOnly={dog.alone_only} />
         </Rise>
       )}
 

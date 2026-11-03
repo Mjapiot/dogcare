@@ -37,16 +37,16 @@ déjà appliquée : en créer une nouvelle (`YYYYMMDDHHMMSS_description.sql`).
 
 | Table | Rôle | Points clés |
 | --- | --- | --- |
-| `profiles` | prénom affiché, fuseau | créée par trigger à l'inscription ; l'e-mail reste dans `auth.users` |
+| `profiles` | prénom affiché, fuseau, `max_dogs_at_once` (chiens gardés à la fois : 1 à 5, 2 par défaut, `null` = sans limite ; modifiable par soi, lu par les membres des mêmes groupes) | créée par trigger à l'inscription ; l'e-mail reste dans `auth.users` |
 | `groups` | groupe privé | |
 | `group_members` | appartenance | PK `(group_id, user_id)`, `role` admin/member, `share_availability` |
 | `group_invitations` | liens d'invitation | **seule l'empreinte SHA-256 du jeton** est stockée ; expiration, `max_uses`, révocation |
-| `dogs` | fiche chien | `archived_at` (archivage sans perte d'historique) |
+| `dogs` | fiche chien | `archived_at` (archivage sans perte d'historique) ; `alone_only` (« Doit être gardé seul », modifiable par les responsables) |
 | `dog_caretakers` | responsables d'un chien | owner / caretaker ; au moins un responsable garanti |
 | `group_dogs` | chiens visibles dans un groupe | |
 | `availability_rules` | habitudes hebdomadaires | unique `(user, weekday, slot)` |
 | `availability_entries` | saisies ponctuelles (priment sur les habitudes) | unique `(user, date, slot)` ; date locale Europe/Paris |
-| `care_requests` | besoin de garde | FK composite `(group_id, dog_id) → group_dogs` (le chien doit être dans le groupe) ; `ends_at > starts_at` ; ≤ 31 jours ; `revision` |
+| `care_requests` | besoin de garde | FK composite `(group_id, dog_id) → group_dogs` (le chien doit être dans le groupe) ; `ends_at > starts_at` ; ≤ 31 jours ; `revision` ; `absence_id` (demandes d'une même absence de plusieurs chiens : fixé à la création, jamais modifiable par un client ; trigger `care_requests_absence` : même auteur, même groupe, mêmes dates, chiens différents, 5 max ; remis à `null` si les dates changent) |
 | `request_responses` | Oui / Non | unique `(request_id, user_id)` ; sous-période proposée optionnelle |
 | `care_assignments` | gardes confirmées | **contrainte d'exclusion** : deux gardes non annulées d'une même demande ne se chevauchent jamais (`tstzrange [)`) ; statut `confirmed` / `pending_reconfirmation` / `cancelled` |
 | `notifications` | notifications internes | écrites uniquement par la base |
@@ -106,6 +106,11 @@ Réservées au serveur (`service_role`) : `claim_push_batch` (réservation atomi
 envoyer, `FOR UPDATE SKIP LOCKED`, abandon au-delà de 30 min) et `complete_push_batch`. Toutes exigent un utilisateur connecté et vérifient ses
 droits ; les erreurs métier sont levées en français avec le code `P0001`.
 
+- `plan_absence_multi(group, dogs[], début, fin, description, propositions)` (*invoker*) : une demande par chien
+  (liées par `absence_id` dès 2 chiens), puis `send_proposals` par chien, dans une seule transaction.
+- `answer_proposal` : répond aussi aux autres propositions en attente de la même personne dans la même absence ;
+  un refus donne un seul avis par responsable, nommant les chiens.
+
 ## Triggers métier
 
 - Nouvelle demande → notification des membres éligibles (sauf « information »).
@@ -118,6 +123,10 @@ droits ; les erreurs métier sont levées en français avec le code `P0001`.
 - Supprimer un groupe supprime ses demandes (un chien ne peut toujours pas être retiré d'un groupe où il a des demandes).
 - Garde-fous : un groupe garde toujours un admin (promotion automatique si le dernier supprime son compte),
   un groupe vide est supprimé, un chien garde un responsable (archivé si le dernier supprime son compte).
+
+- `notifications_merge_absence` (après insertion d'un avis `new_request`, `care_proposal` du responsable ou
+  `new_volunteer`) : les avis non lus et pas encore poussés d'une même absence, pour une même personne et un même
+  auteur, deviennent un seul avis (« Pouvez-vous garder Aston et Nala ? »).
 
 ## Suppression de compte
 

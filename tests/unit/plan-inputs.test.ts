@@ -39,6 +39,7 @@ function snapshot(over: Partial<GroupSnapshot> = {}): GroupSnapshot {
         cancelled_at: null,
         cancellation_reason: null,
         revision: 1,
+        absence_id: null,
         created_at: "",
         updated_at: "",
       },

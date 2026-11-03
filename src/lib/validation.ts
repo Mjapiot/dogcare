@@ -181,13 +181,18 @@ export const proposalSchema = z.object({
 
 export const absenceSchema = z.object({
   groupId: uuid,
-  dogId: uuid,
+  dogIds: z
+    .array(uuid)
+    .min(1, "Choisissez au moins un chien.")
+    .max(5, "5 chiens au plus.")
+    .refine((ids) => new Set(ids).size === ids.length, "Un chien apparaît deux fois."),
   startDate: localDate,
   startTime: localTime,
   endDate: localDate,
   endTime: localTime,
   description: z.string().trim().max(1000, "1000 caractères maximum.").optional().default(""),
-  proposals: z.array(proposalSchema).max(20, "20 personnes au plus."),
+  /** Each person's part for each dog. */
+  proposals: z.array(proposalSchema.extend({ dogId: uuid })).max(100, "Trop de propositions."),
 });
 
 export const careLogKindSchema = z.enum(["meal", "walk", "medication", "drop_off", "pick_up", "photo", "note"]);

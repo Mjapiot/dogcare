@@ -17,6 +17,7 @@ import { AssignmentActions } from "@/components/domain/assignment-actions";
 import { ReportButton } from "@/components/domain/report-button";
 import { CareLogSection } from "@/components/care-log/care-log-section";
 import { ProposalCard } from "@/components/planning/proposals";
+import { groupProposals } from "@/domain/absence";
 
 export const metadata: Metadata = { title: "Demande" };
 
@@ -40,7 +41,7 @@ export default async function CircleRequestPage({ params }: PageProps<"/circle/r
     row.my_assignments.length ? getDog(row.dog_id) : Promise.resolve(null),
     getMyPendingProposals(userId),
   ]);
-  const myProposal = mine.find((p) => p.request_id === id);
+  const myProposal = groupProposals(mine).find((g) => g.requestIds.includes(id));
   const r = view.request;
 
   return (

@@ -31,6 +31,8 @@ export type ProfileRow = {
   avatar_path: string | null;
   timezone: string;
   onboarded_at: string | null;
+  /** Dogs kept at once (null = no limit). */
+  max_dogs_at_once: number | null;
 };
 
 export type GroupRow = { id: string; name: string; created_by: string | null; created_at: string };
@@ -74,6 +76,8 @@ export type DogRow = {
   plan_max_nights: number;
   plan_min_slice_hours: number;
   routines_enabled: boolean;
+  /** Never kept with another dog at the same time. */
+  alone_only: boolean;
   created_by: string | null;
   archived_at: string | null;
 };
@@ -205,6 +209,8 @@ export type CareRequestRow = {
   cancelled_at: string | null;
   cancellation_reason: string | null;
   revision: number;
+  /** Requests of one absence of several dogs share it (null: alone). */
+  absence_id: string | null;
   created_at: string;
   updated_at: string;
 };

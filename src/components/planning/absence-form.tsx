@@ -3,15 +3,16 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Info, MessageSquareText, Sparkles, X } from "lucide-react";
+import { Check, Info, MessageSquareText, Sparkles, X } from "lucide-react";
 import { understandAbsence } from "@/server/actions/assistant";
 import { describeRule, encodeRules, type AbsenceRule } from "@/domain/absence-intent";
-import { Field, PillButton, Select, TextArea, TextInput } from "@/components/ui/kit";
+import { Field, PillButton, TextArea, TextInput } from "@/components/ui/kit";
+import { cn } from "@/lib/utils";
 
-type Form = { dogId: string; startDate: string; startTime: string; endDate: string; endTime: string };
+type Form = { dogIds: string[]; startDate: string; startTime: string; endDate: string; endTime: string };
 
 /**
- * Which dog, from when to when, and rules for this absence. The assistant
+ * Which dogs, from when to when, and rules for this absence. The assistant
  * (when configured) fills it from a sentence; everything stays editable and
  * the proposal is computed by the page (URL parameters).
  */
@@ -48,7 +49,7 @@ export function AbsenceForm({
       }
       const a = r.data;
       setV((prev) => ({
-        dogId: a.dogId ?? prev.dogId,
+        dogIds: a.dogIds.length ? a.dogIds : prev.dogIds,
         startDate: a.startDate ?? prev.startDate,
         startTime: a.startTime,
         endDate: a.endDate ?? prev.endDate,
@@ -60,7 +61,7 @@ export function AbsenceForm({
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    const q = new URLSearchParams({ dog: v.dogId, from: v.startDate, fromTime: v.startTime, to: v.endDate, toTime: v.endTime });
+    const q = new URLSearchParams({ dog: v.dogIds.join(","), from: v.startDate, fromTime: v.startTime, to: v.endDate, toTime: v.endTime });
     if (rules.length) q.set("rules", encodeRules(rules));
     startTransition(() => router.push(`/plan?${q}`, { scroll: false }));
   };
@@ -108,18 +109,29 @@ export function AbsenceForm({
           </div>
         )}
         {dogs.length > 1 && (
-          <Field label="Chien" htmlFor="absence-dog">
-            <Select id="absence-dog" required value={v.dogId} onChange={(e) => set("dogId", e.target.value)}>
-              <option value="" disabled>
-                Choisir…
-              </option>
-              {dogs.map((d) => (
-                <option key={d.id} value={d.id}>
-                  {d.name}
-                </option>
-              ))}
-            </Select>
-          </Field>
+          <fieldset className="flex flex-col gap-2">
+            <legend className="mb-2 text-sm font-medium text-ink-2">Chiens</legend>
+            <div className="flex flex-wrap gap-2">
+              {dogs.map((d) => {
+                const on = v.dogIds.includes(d.id);
+                return (
+                  <button
+                    key={d.id}
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() => set("dogIds", on ? v.dogIds.filter((id) => id !== d.id) : dogs.filter((x) => x.id === d.id || v.dogIds.includes(x.id)).map((x) => x.id))}
+                    className={cn(
+                      "inline-flex min-h-11 items-center gap-1.5 rounded-full px-4 text-[15px] font-medium transition-colors",
+                      on ? "bg-ink text-surface" : "bg-surface-2 text-ink ring-1 ring-line",
+                    )}
+                  >
+                    {on && <Check className="size-4" aria-hidden />} {d.name}
+                  </button>
+                );
+              })}
+            </div>
+            {v.dogIds.length > 1 && <p className="text-[13px] text-ink-3">Gardés ensemble quand c&apos;est possible.</p>}
+          </fieldset>
         )}
         <div className="grid grid-cols-[1fr_auto] gap-x-2 gap-y-3">
           <Field label="Je pars le" htmlFor="absence-start-date">
@@ -169,7 +181,7 @@ export function AbsenceForm({
             {error}
           </p>
         )}
-        <PillButton type="submit" loading={pending} disabled={!v.dogId}>
+        <PillButton type="submit" loading={pending} disabled={v.dogIds.length === 0}>
           <Sparkles className="size-4" aria-hidden /> Proposer une répartition
         </PillButton>
       </form>

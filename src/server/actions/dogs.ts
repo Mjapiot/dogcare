@@ -95,6 +95,12 @@ export async function updatePlanningRules(dogId: string, input: z.input<typeof p
   return updateDogColumns(dogId, { plan_max_nights: parsed.data.maxNights, plan_min_slice_hours: parsed.data.minSliceHours });
 }
 
+/** "Doit être gardé seul": the planning engine never puts the dog with another one. */
+export async function updateAloneOnly(dogId: string, aloneOnly: boolean): Promise<ActionResult> {
+  if (typeof aloneOnly !== "boolean") return { ok: false, error: "Réglage invalide." };
+  return updateDogColumns(dogId, { alone_only: aloneOnly });
+}
+
 export async function saveDogHealth(dogId: string, input: z.input<typeof dogHealthSchema>): Promise<ActionResult> {
   const parsed = dogHealthSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message };

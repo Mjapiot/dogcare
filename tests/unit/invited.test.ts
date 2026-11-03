@@ -109,6 +109,7 @@ describe("invitees count as eligible for the group", () => {
         cancelled_at: null,
         cancellation_reason: null,
         revision: 1,
+        absence_id: null,
         created_at: iso(T0),
         updated_at: iso(T0),
       },

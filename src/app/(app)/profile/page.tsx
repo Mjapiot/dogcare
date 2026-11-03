@@ -15,6 +15,7 @@ import { AccountActions } from "@/components/profile/account-actions";
 import { SettingsRow } from "@/components/profile/settings-row";
 import { PushStatus } from "@/components/profile/push-status";
 import { InstallRow } from "@/components/profile/install-row";
+import { CareCapacity } from "@/components/profile/care-capacity";
 
 export const metadata: Metadata = { title: "Profil" };
 
@@ -164,6 +165,9 @@ export default async function ProfilePage() {
             </li>
             <li>
               <SettingsRow href="/profile/calendar" icon={CalendarPlus} label="Abonnement calendrier" status={feedToken ? "Abonné" : "Non"} />
+            </li>
+            <li>
+              <CareCapacity initial={profile.max_dogs_at_once} />
             </li>
             <InstallRow />
             <li>

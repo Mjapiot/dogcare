@@ -231,7 +231,31 @@ préférences de chacun. Rien n'est envoyé sans lui.
   répartition ». Les règles valent **pour cette absence seulement** (elles priment sur les préférences enregistrées,
   sans les modifier). La phrase n'est pas enregistrée ; l'écran prévient qu'elle est envoyée à Google. Quota
   atteint ou panne : « Assistant indisponible », le formulaire reste là.
-- Pas encore : contraintes de transport, plusieurs chiens à la fois, incompatibilités entre animaux.
+- Pas encore : contraintes de transport.
+
+### Plusieurs chiens à la fois
+
+- Une absence peut concerner **plusieurs de mes chiens** (tous cochés par défaut, 5 au plus). Le moteur cherche
+  d'abord quelqu'un qui les garde **tous ensemble** (règle de nuits la plus stricte des chiens, tranche minimale la
+  plus longue) ; ce que personne ne peut prendre pour tous est réparti **chien par chien**, et l'écran l'annonce
+  (« Séparés … : personne ne peut tous les garder à ce moment-là »). Chaque trou dit pour quel chien il vaut.
+- Il y a **une demande par chien**, liées entre elles (mêmes dates, même groupe, même auteur ; la base le vérifie) :
+  couverture, carnet, routines et calendrier restent par chien. Une demande dont on change les dates quitte
+  l'absence. La page d'une demande liée affiche « Même absence » avec les autres chiens.
+- Un ami reçoit **un seul avis** par absence (« Pouvez-vous garder Aston et Nala ? ») et **une seule carte** ;
+  **sa réponse vaut pour tous les chiens** (accepter = « Oui » sur chacun ; refuser = un seul avis au responsable,
+  « Emma ne peut pas garder Aston et Nala »). Les avis « Nouvelle demande » et « peut aider pour » d'une absence
+  sont aussi regroupés.
+- **Cumul** : quelqu'un qui garde déjà un chien peut en prendre un autre, dans la limite de son réglage
+  « Chiens gardés à la fois » (Profil : 1, 2, 3 ou sans limite ; 2 par défaut). Une garde dont l'app ne voit pas le
+  chien compte comme un conflit, par prudence.
+- **Doit être gardé seul** (réglage du chien, affiché dans ses habitudes avec une icône) : le chien n'est jamais
+  confié à quelqu'un qui garde un autre chien au même moment (dans l'absence ou ailleurs), ni chez quelqu'un qui a
+  lui-même un chien du groupe (seulement si la garde a lieu chez le propriétaire). Il est planifié après les autres.
+- L'assistant comprend « Aston et Nala », « les deux », « les chiens » ; aucun chien cité : tous, avec la
+  supposition affichée.
+- Pas encore : demande manuelle de plusieurs chiens (« Nouvelle demande » reste par chien) ; chiens d'un ami
+  invisibles dans le groupe ignorés pour « gardé seul ».
 
 ### Modification et annulation (jamais silencieuses)
 
@@ -326,7 +350,7 @@ on n'affiche jamais « sans solution » tant que quelqu'un n'a pas répondu.
 Une carte personnelle (initiales, prénom modifiable, e-mail, et pour soi seul « Cette année : N gardes assurées ·
 N reçues pour vos chiens », gardes confirmées et terminées de l'année civile), puis mes chiens et les chiens qui me
 sont confiés (rangées de photos), mes groupes (membres, rôle), des réglages en liste avec leur état
-(Notifications, Abonnement calendrier, Installer l'application seulement dans un navigateur, Confidentialité,
+(Notifications, Abonnement calendrier, Chiens gardés à la fois, Installer l'application seulement dans un navigateur, Confidentialité,
 Assistance) et le compte. La page Notifications réunit l'activation sur l'appareil et les préférences push par
 thème.
 

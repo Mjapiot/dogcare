@@ -9,7 +9,8 @@ import { isValidLocalDate, zonedInstant, type LocalDate } from "./time";
 
 /** What the model returns (already validated in shape). */
 export type AbsenceIntent = {
-  dog: string | null;
+  /** Dogs named (empty: not said). */
+  dogs: string[];
   startDate: string | null;
   startTime: string | null;
   endDate: string | null;
@@ -22,7 +23,7 @@ export type AbsenceIntent = {
 export type AbsenceRule = { userId: string; name: string; maxNights: number | null; place: "helper" | "owner" | null };
 
 export type ResolvedAbsence = {
-  dogId: string | null;
+  dogIds: string[];
   startDate: LocalDate | null;
   startTime: string;
   endDate: LocalDate | null;
@@ -66,18 +67,26 @@ export function resolveAbsenceIntent(
   const issues: string[] = [];
   const assumptions = intent.assumptions.map((a) => a.trim()).filter(Boolean).slice(0, 5);
 
-  // the dog: the only one, or the one named
-  let dogId: string | null = null;
+  // the dogs: the only one, those named, or all of them (said so)
+  let dogIds: string[] = [];
+  const named = intent.dogs.map((d) => d.trim()).filter(Boolean).slice(0, 10);
   if (ctx.dogs.length === 1) {
-    dogId = ctx.dogs[0].id;
+    dogIds = [ctx.dogs[0].id];
     // a single dog is chosen, but say so when the sentence names another one
-    if (intent.dog && matchPeople(intent.dog, ctx.dogs).length === 0) assumptions.push(`Chien : ${ctx.dogs[0].name} (« ${intent.dog} » inconnu)`);
+    const unknown = named.filter((n) => matchPeople(n, ctx.dogs).length === 0);
+    if (unknown.length) assumptions.push(`Chien : ${ctx.dogs[0].name} (« ${unknown.join(", ")} » inconnu)`);
+  } else if (named.length === 0) {
+    dogIds = ctx.dogs.map((d) => d.id);
+    assumptions.push(`Chiens non précisés : ${joinNames(ctx.dogs.map((d) => d.name))}`);
+  } else {
+    for (const n of named) {
+      const found = matchPeople(n, ctx.dogs);
+      if (found.length === 1) {
+        if (!dogIds.includes(found[0].id)) dogIds.push(found[0].id);
+      } else issues.push(`Je ne sais pas de quel chien il s'agit (« ${n} ») : choisissez-le.`);
+    }
+    if (dogIds.length === 0) issues.push("Quels chiens ? Choisissez-les.");
   }
-  else if (intent.dog) {
-    const found = matchPeople(intent.dog, ctx.dogs);
-    if (found.length === 1) dogId = found[0].id;
-    else issues.push(`Je ne sais pas de quel chien il s'agit (« ${intent.dog} ») : choisissez-le.`);
-  } else issues.push("Quel chien ? Choisissez-le.");
 
   // dates: never guessed here; times default with a visible assumption
   const startDate = intent.startDate && isValidLocalDate(intent.startDate) ? intent.startDate : null;
@@ -124,7 +133,13 @@ export function resolveAbsenceIntent(
     } else rules.push({ userId: person.userId, name: person.name, maxNights, place: r.place });
   }
 
-  return { dogId, startDate, startTime, endDate, endTime, rules, assumptions, issues };
+  return { dogIds, startDate, startTime, endDate, endTime, rules, assumptions, issues };
+}
+
+/** "Aston", "Aston et Nala", "Aston, Nala et Rex" */
+export function joinNames(names: readonly string[]): string {
+  if (names.length <= 1) return names[0] ?? "";
+  return `${names.slice(0, -1).join(", ")} et ${names.at(-1)}`;
 }
 
 /** "Mes parents : 2 nuits d'affilée max, chez eux" */

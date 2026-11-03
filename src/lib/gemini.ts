@@ -11,7 +11,7 @@ export const DEFAULT_GEMINI_MODEL = "gemini-3.5-flash-lite";
 const ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models";
 
 const intentSchema = z.object({
-  dog: z.string().max(80).nullable(),
+  dogs: z.array(z.string().max(80)).max(10),
   startDate: z.string().max(10).nullable(),
   startTime: z.string().max(5).nullable(),
   endDate: z.string().max(10).nullable(),
@@ -32,7 +32,7 @@ const intentSchema = z.object({
 const RESPONSE_SCHEMA = {
   type: "OBJECT",
   properties: {
-    dog: { type: "STRING", nullable: true },
+    dogs: { type: "ARRAY", items: { type: "STRING" } },
     startDate: { type: "STRING", nullable: true, description: "YYYY-MM-DD" },
     startTime: { type: "STRING", nullable: true, description: "HH:MM, 24 h" },
     endDate: { type: "STRING", nullable: true, description: "YYYY-MM-DD" },
@@ -51,7 +51,7 @@ const RESPONSE_SCHEMA = {
     },
     assumptions: { type: "ARRAY", items: { type: "STRING" } },
   },
-  required: ["dog", "startDate", "startTime", "endDate", "endTime", "rules", "assumptions"],
+  required: ["dogs", "startDate", "startTime", "endDate", "endTime", "rules", "assumptions"],
 } as const;
 
 export function buildPrompt(text: string, ctx: { today: string; weekday: string; dogs: string[]; people: string[] }): string {
@@ -61,7 +61,7 @@ export function buildPrompt(text: string, ctx: { today: string; weekday: string;
     `Chiens possibles : ${ctx.dogs.join(", ") || "aucun"}.`,
     `Personnes connues : ${ctx.people.join(", ") || "aucune"}.`,
     "Champs :",
-    "- dog : le nom du chien cité, sinon null.",
+    "- dogs : les noms des chiens concernés, tels qu'écrits (« les deux », « les chiens » = tous les chiens possibles) ; aucun chien cité : liste vide.",
     "- startDate/startTime : départ ; endDate/endTime : retour. Dates YYYY-MM-DD, heures HH:MM. Matin = 09:00, midi = 12:00, après-midi = 14:00, soir = 19:00. Heure non dite : null. Date non comprise : null.",
     "- rules : une entrée par personne citée avec une contrainte. maxNights = nuits d'affilée maximum (« jamais la nuit » = 0), sinon null. place = « helper » si le chien va chez cette personne, « owner » si elle vient chez le propriétaire, sinon null. person = le nom tel qu'écrit (« mes parents » → « Mes parents »).",
     "- assumptions : chaque supposition faite, en phrase courte en français correct avec tous ses accents (ex. « vendredi = 13 novembre »). Écris les dates en toutes lettres, jamais au format AAAA-MM-JJ.",

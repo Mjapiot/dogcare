@@ -1,9 +1,21 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { ArrowLeft, HeartHandshake, Info, Users } from "lucide-react";
+import { ArrowLeft, HeartHandshake, Info, PawPrint, Users } from "lucide-react";
 import { getMyGroups, requireAppContext } from "@/server/session";
-import { getBusyAssignments, getGroupSnapshot, getHelperPrefs, getMyPendingProposals, getRequestGroupId, getRequestProposals, signDogPhotos } from "@/server/data";
+import {
+  getAbsenceSiblings,
+  getGroupSnapshot,
+  getHelperPrefs,
+  getMaxDogs,
+  getMyPendingProposals,
+  getOtherGardes,
+  getRequestGroupId,
+  getRequestProposals,
+  signDogPhotos,
+} from "@/server/data";
+import { groupProposals } from "@/domain/absence";
+import { cumulBusyRows } from "@/domain/cumul";
 import { buildRequestViews } from "@/domain/views";
 import { NECESSITY_LABELS, REQUEST_TYPE_LABELS } from "@/domain/status";
 import { formatDuration, formatPeriod } from "@/lib/format";
@@ -40,14 +52,18 @@ export default async function RequestDetailPage({ params }: PageProps<"/requests
   const now = requestNow();
   const planning = canPlan(view, now);
   const yesIds = view.helpers.filter((h) => h.response === "yes").map((h) => h.userId);
-  const [photos, busy, prefs, proposals, mine] = await Promise.all([
+  const [photos, gardes, maxDogs, prefs, proposals, mine, siblings] = await Promise.all([
     signDogPhotos(view.dog ? [view.dog] : []),
-    planning ? getBusyAssignments(yesIds, view.period, id) : Promise.resolve([]),
+    planning ? getOtherGardes(yesIds, view.period, id) : Promise.resolve([]),
+    planning ? getMaxDogs(yesIds) : Promise.resolve({}),
     planning && view.dog ? getHelperPrefs(view.dog.id) : Promise.resolve([]),
     view.iAmCaretaker ? getRequestProposals(id) : Promise.resolve([]),
     view.iAmCaretaker ? Promise.resolve([]) : getMyPendingProposals(userId),
+    view.request.absence_id ? getAbsenceSiblings(view.request.absence_id, id) : Promise.resolve([]),
   ]);
-  const myProposal = mine.find((p) => p.request_id === id);
+  const myProposal = groupProposals(mine).find((g) => g.requestIds.includes(id));
+  // another garde takes a helper only when they could not keep one more dog (src/domain/cumul.ts)
+  const busy = cumulBusyRows(view.period, gardes, { count: 1, aloneOnly: view.dog?.alone_only ?? false }, maxDogs);
   // planning engine: same inputs on the server (suggestions for holes) and in the card
   const plan = planning
     ? (() => {
@@ -111,6 +127,24 @@ export default async function RequestDetailPage({ params }: PageProps<"/requests
         <p className="rounded-2xl bg-surface px-4 py-3 text-[15px] text-ink-2">
           Cette demande a été annulée{r.cancellation_reason ? ` : « ${r.cancellation_reason} »` : "."}
         </p>
+      )}
+
+      {siblings.length > 0 && (
+        <section className="flex flex-col gap-1 rounded-[24px] bg-surface p-4" aria-labelledby="same-absence">
+          <h2 id="same-absence" className="flex items-center gap-2 text-[15px] font-semibold text-ink">
+            <PawPrint className="size-4" aria-hidden /> Même absence
+          </h2>
+          <p className="text-[14px] text-ink-3">Une demande par chien, aux mêmes dates :</p>
+          <ul className="flex flex-wrap gap-2 pt-1">
+            {siblings.map((sib) => (
+              <li key={sib.id}>
+                <Link href={`/requests/${sib.id}`} className="inline-flex min-h-11 items-center rounded-full bg-surface-2 px-4 text-[15px] font-medium text-ink">
+                  {sib.dogName}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
 
       {r.description && (

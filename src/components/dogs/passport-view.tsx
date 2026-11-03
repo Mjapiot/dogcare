@@ -1,4 +1,4 @@
-import { Phone } from "lucide-react";
+import { Phone, ShieldAlert } from "lucide-react";
 import {
   hasEmergency,
   hasHabits,
@@ -44,18 +44,30 @@ export function IdentityView({ dog }: { dog: PassportDog }) {
   return rows.some((r) => r[1]) ? <Facts rows={rows} /> : <EmptySection>Ni puce ni signe particulier renseigné.</EmptySection>;
 }
 
-export function HabitsView({ dog }: { dog: PassportDog }) {
-  if (!hasHabits(dog)) return <EmptySection>Aucune habitude renseignée.</EmptySection>;
+/** Shown to everyone who sees the dog: whoever keeps it must not keep another dog then. */
+function AloneOnly() {
   return (
-    <Facts
-      rows={[
-        ["Repas", dog.meals],
-        ["Promenades", dog.walks],
-        ["Sommeil", dog.sleep],
-        ["Comportement", dog.behavior],
-        ["Autres consignes", dog.care_notes],
-      ]}
-    />
+    <p className="flex items-start gap-2 rounded-2xl bg-[var(--tone-pending)] px-3 py-2 text-[14px] font-medium text-[var(--tone-pending-ink)]">
+      <ShieldAlert className="mt-0.5 size-4 shrink-0" aria-hidden /> Doit être gardé seul : jamais avec un autre chien.
+    </p>
+  );
+}
+
+export function HabitsView({ dog }: { dog: PassportDog & { alone_only?: boolean } }) {
+  if (!hasHabits(dog)) return dog.alone_only ? <AloneOnly /> : <EmptySection>Aucune habitude renseignée.</EmptySection>;
+  return (
+    <div className="flex flex-col gap-3">
+      {dog.alone_only && <AloneOnly />}
+      <Facts
+        rows={[
+          ["Repas", dog.meals],
+          ["Promenades", dog.walks],
+          ["Sommeil", dog.sleep],
+          ["Comportement", dog.behavior],
+          ["Autres consignes", dog.care_notes],
+        ]}
+      />
+    </div>
   );
 }
 

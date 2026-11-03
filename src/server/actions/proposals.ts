@@ -26,12 +26,13 @@ async function rpcSend(requestId: string, proposals: Proposal[]): Promise<string
 }
 
 /**
- * "Planifier une absence": publishes a shareable request for the period and
- * sends each person their part, in one transaction (both or nothing).
+ * "Planifier une absence": publishes a shareable request per dog (linked when
+ * there are several) and sends each person their part, in one transaction
+ * (all or nothing).
  */
 export async function planAbsence(
   input: z.input<typeof absenceSchema>,
-): Promise<ActionResult<{ requestId: string }>> {
+): Promise<ActionResult<{ requestIds: string[] }>> {
   const parsed = absenceSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message };
   const v = parsed.data;
@@ -40,30 +41,31 @@ export async function planAbsence(
   if (end <= start) return { ok: false, error: "La fin doit être après le début." };
   if (end <= Date.now()) return { ok: false, error: "Cette période est déjà passée." };
   if (end - start > 31 * 24 * 3_600_000) return { ok: false, error: "Une absence ne peut pas dépasser 31 jours." };
+  if (v.proposals.some((p) => !v.dogIds.includes(p.dogId))) return { ok: false, error: "Une proposition concerne un autre chien." };
 
   await requireUserId();
   const supabase = await createClient();
-  // one transaction: the request and every proposal, or nothing
-  const { data, error } = await supabase.rpc("plan_absence", {
+  // one transaction: the requests and every proposal, or nothing
+  const { data, error } = await supabase.rpc("plan_absence_multi", {
     p_group_id: v.groupId,
-    p_dog_id: v.dogId,
+    p_dog_ids: v.dogIds,
     p_starts_at: new Date(start).toISOString(),
     p_ends_at: new Date(end).toISOString(),
     p_description: v.description || "",
     p_proposals: v.proposals.map((p) => ({
+      dog_id: p.dogId,
       user_id: p.userId,
       place: p.place,
       slices: p.slices.map((s) => ({ starts_at: s.start, ends_at: s.end })),
     })),
   });
   if (error) {
-    if (error.code === "42501") return { ok: false, error: "Seul un responsable de ce chien peut publier une demande." };
+    if (error.code === "42501") return { ok: false, error: "Seul un responsable de ces chiens peut publier une demande." };
     return { ok: false, error: toUserMessage(error) };
   }
-  const requestId = data as string;
   schedulePushDispatch();
   revalidatePath("/", "layout");
-  return { ok: true, data: { requestId } };
+  return { ok: true, data: { requestIds: data as string[] } };
 }
 
 /** Sends (or sends again) proposals on an existing request. */
@@ -79,7 +81,7 @@ export async function sendProposals(requestId: string, proposals: z.input<typeof
   return { ok: true, data: undefined };
 }
 
-/** Accepting is a "Oui" on that part; the owner confirms afterwards. */
+/** Accepting is a "Oui" on that part (for every dog of the absence); the owner confirms afterwards. */
 export async function answerProposal(proposalId: string, accept: boolean): Promise<ActionResult> {
   if (!uuid.safeParse(proposalId).success) return { ok: false, error: "Proposition introuvable." };
   await requireUserId();

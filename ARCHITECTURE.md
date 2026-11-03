@@ -85,18 +85,22 @@ animé), `agenda.tsx` (`agendaRows`), `month-grid.tsx` (`weekBars`), `day-sheet.
 Calcul pur et déterministe dans `domain/planner.ts` (`proposePlan` : glouton « va le plus loin » pour minimiser
 les relais, nuits d'affilée plafonnées avec repère à 01:00 heure de Paris, absorption des tranches courtes,
 explications) ; entrées construites par `domain/plan-inputs.ts` (offres = « Oui » moins les autres gardes via
-`getBusyAssignments`, réglages du chien, suggestions pour les trous d'après les dispos). Carte
+`getOtherGardes` filtrés par `domain/cumul.ts` (`cumulBusyRows` : un autre chien n'occupe la personne qu'au-delà de sa
+limite `getMaxDogs`, ou si l'un des chiens doit être gardé seul), réglages du chien, suggestions pour les trous d'après les dispos). Carte
 `components/planning/plan-card.tsx` (frise, ajustement, confirmation par `confirmPlan` → `confirm_plan`) sur
 `/requests/[id]` ; réglages `components/planning/planning-rules.tsx` sur la fiche du chien. Une offre peut avoir
 plusieurs plages (`offerIntervals`), un plafond de nuits propre (`maxNights`, 0 = jamais la nuit) et un lieu
 (`place`) ; `planOffers` y joint les préférences (`getHelperPrefs`) et limite une proposition acceptée à ses
 créneaux.
 
-« Planifier une absence » : page `/plan` (serveur) → `domain/absence.ts` (`planAbsence` : offres tirées des dispos
-par `availabilityOffers` / `availableIntervals`, plan, propositions par personne, candidats du cercle pour les
-trous) ; `components/planning/absence-form.tsx` (dates dans l'URL) et `absence-planner.tsx` (trous et trois
-issues, « Sans X », envoi par `planAbsence` dans `server/actions/proposals.ts` → `plan_absence` : demande et
-`send_proposals` dans une seule transaction). Propositions : `components/planning/proposals.tsx` (`ProposalsSection` sur la demande côté
+« Planifier une absence » : page `/plan` (serveur, `dog=id,id` pour plusieurs chiens) → `domain/absence.ts`
+(`planAbsence` : plan commun des chiens qui peuvent être ensemble, puis chien par chien pour le reste, chiens
+« gardés seuls » en dernier ; offres tirées des dispos par `availableIntervals`, occupation par `cumulBusy` avec les
+parts déjà données ; propositions par personne et par chien, créneaux « séparés », candidats du cercle par trou) ;
+`components/planning/absence-form.tsx` (chiens et dates dans l'URL) et `absence-planner.tsx` (une frise par chien,
+lignes regroupées quand une personne garde plusieurs chiens, trous et trois issues, « Sans X », envoi par
+`planAbsence` dans `server/actions/proposals.ts` → `plan_absence_multi` : demandes liées et `send_proposals` dans
+une seule transaction). `groupProposals` réunit les propositions d'une absence en une carte (une réponse). Propositions : `components/planning/proposals.tsx` (`ProposalsSection` sur la demande côté
 responsable ; `ProposalCard` dans « Demandes », « Chiens confiés » et sur la demande côté personne sollicitée),
 données `getRequestProposals` / `getMyPendingProposals`.
 
