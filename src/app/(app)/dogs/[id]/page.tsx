@@ -10,5 +10,5 @@ export default async function DogPage({ params }: PageProps<"/dogs/[id]">) {
   const { id } = await params;
   if (!uuid.safeParse(id).success) notFound();
   const { userId } = await requireAppContext();
-  return <DogScreen dogId={id} userId={userId} mode="group" back={{ href: "/profile", label: "Profil" }} />;
+  return <DogScreen dogId={id} userId={userId} mode="group" back={{ href: "/dogs", label: "Chiens" }} />;
 }

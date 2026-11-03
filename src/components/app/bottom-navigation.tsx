@@ -3,67 +3,60 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "motion/react";
-import { CalendarCheck2, CalendarDays, Inbox, UserRound, type LucideIcon } from "lucide-react";
+import { CalendarDays, House, PawPrint, UserRound, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type Tab = { href: string; label: string; icon: LucideIcon; match: (p: string) => boolean };
 
 const TABS: Tab[] = [
-  { href: "/", label: "Calendrier", icon: CalendarDays, match: (p) => p === "/" || p.startsWith("/calendar") },
-  { href: "/availability", label: "Mes dispos", icon: CalendarCheck2, match: (p) => p.startsWith("/availability") },
-  { href: "/requests", label: "Demandes", icon: Inbox, match: (p) => p.startsWith("/requests") },
   {
-    href: "/profile",
-    label: "Profil",
-    icon: UserRound,
-    match: (p) => p.startsWith("/profile") || p.startsWith("/dogs") || p.startsWith("/groups") || p.startsWith("/notifications"),
+    href: "/",
+    label: "Accueil",
+    icon: House,
+    match: (p) => p === "/" || p.startsWith("/requests") || p.startsWith("/notifications") || p.startsWith("/plan"),
   },
+  { href: "/calendar", label: "Agenda", icon: CalendarDays, match: (p) => p.startsWith("/calendar") || p.startsWith("/availability") },
+  { href: "/dogs", label: "Chiens", icon: PawPrint, match: (p) => p.startsWith("/dogs") },
+  { href: "/profile", label: "Profil", icon: UserRound, match: (p) => p.startsWith("/profile") || p.startsWith("/groups") },
 ];
 
-export function BottomNavigation({ toAnswer }: { toAnswer: number }) {
+/** Floating round buttons; the black disc slides to the current one. */
+export function BottomNavigation({ toDo }: { toDo: number }) {
   const pathname = usePathname();
   return (
     <nav
       aria-label="Navigation principale"
-      className="pointer-events-none fixed inset-x-0 z-30 px-4"
+      className="pointer-events-none fixed inset-x-0 z-30 flex justify-center px-4"
       style={{ bottom: "calc(var(--safe-bottom) + var(--nav-gap))" }}
     >
-      <ul className="glass pointer-events-auto mx-auto flex h-[var(--nav-height)] max-w-md items-stretch justify-around rounded-full px-1.5">
+      <ul className="glass pointer-events-auto flex items-center gap-2 rounded-full p-2 shadow-[0_10px_30px_rgba(28,27,25,0.14)]">
         {TABS.map((tab) => {
           const active = tab.match(pathname);
-          const badge = tab.href === "/requests" && toAnswer > 0 ? toAnswer : 0;
+          const badge = tab.href === "/" && toDo > 0 ? toDo : 0;
           return (
-            <li key={tab.href} className="flex flex-1">
+            <li key={tab.href}>
               <Link
                 href={tab.href}
                 aria-current={active ? "page" : undefined}
                 aria-label={badge ? `${tab.label}, ${badge} à répondre` : tab.label}
-                className={cn(
-                  "relative flex flex-1 flex-col items-center justify-center gap-0.5 text-[11px] font-medium transition-colors",
-                  active ? "text-ink" : "text-ink-3",
-                )}
+                className="relative flex size-14 items-center justify-center rounded-full active:scale-95"
               >
-                <span className="relative flex h-8 w-14 items-center justify-center">
-                  {/* the dark pill slides from one tab to the next */}
-                  {active && (
-                    <motion.span
-                      layoutId="nav-active"
-                      className="absolute inset-0 rounded-full bg-ink"
-                      transition={{ type: "spring", stiffness: 420, damping: 34 }}
-                    />
-                  )}
-                  <tab.icon
-                    className={cn("relative size-[20px] transition-colors", active && "text-surface")}
-                    strokeWidth={active ? 2.25 : 1.75}
-                    aria-hidden
+                {active && (
+                  <motion.span
+                    layoutId="nav-active"
+                    className="absolute inset-0 rounded-full bg-ink"
+                    transition={{ type: "spring", stiffness: 420, damping: 30 }}
                   />
-                  {badge > 0 && (
-                    <span className="absolute -top-1 right-0.5 min-w-5 rounded-full bg-[#b3261e] px-1.5 text-center text-[11px] font-semibold leading-5 text-white ring-2 ring-surface">
-                      {badge > 99 ? "99+" : badge}
-                    </span>
-                  )}
-                </span>
-                {tab.label}
+                )}
+                <tab.icon className={cn("relative size-[22px] transition-colors", active ? "text-surface" : "text-ink")} strokeWidth={1.9} aria-hidden />
+                {badge > 0 && (
+                  <span
+                    aria-hidden
+                    className="absolute top-1 right-1 min-w-5 rounded-full bg-[#b3261e] px-1.5 text-center text-[11px] font-semibold leading-5 text-white ring-2 ring-surface"
+                  >
+                    {badge > 99 ? "99+" : badge}
+                  </span>
+                )}
               </Link>
             </li>
           );

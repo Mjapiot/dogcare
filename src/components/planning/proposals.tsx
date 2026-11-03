@@ -9,6 +9,7 @@ import { formatPeriod } from "@/lib/format";
 import { hapticSuccess } from "@/lib/native";
 import { cn } from "@/lib/utils";
 import { Card, PillButton, SectionTitle } from "@/components/ui/kit";
+import { ToneCard } from "@/components/ui/editorial";
 import type { CareProposalRow, ProposalStatus } from "@/lib/types";
 import type { IncomingGroup } from "@/domain/absence";
 import { joinNames } from "@/domain/absence-intent";
@@ -24,7 +25,7 @@ function Slices({ proposal }: { proposal: { slices: ReadonlyArray<{ starts_at: s
   return (
     <ul className="flex flex-col">
       {proposal.slices.map((s) => (
-        <li key={s.starts_at} className="text-[14px] text-ink-2">
+        <li key={s.starts_at} className="text-[15px] font-medium">
           {formatPeriod(s.starts_at, s.ends_at)}
         </li>
       ))}
@@ -114,25 +115,26 @@ export function ProposalCard({ proposal }: { proposal: IncomingProposal }) {
     });
 
   return (
-    <Card className="flex flex-col gap-3 p-4">
-      <div>
-        <p className="text-[13px] font-medium uppercase tracking-wide text-ink-3">Proposition de garde</p>
-        <p className="text-[17px] font-semibold tracking-tight text-ink">Pouvez-vous garder {dogs} ?</p>
-        {onePlace && (
-          <p className="inline-flex items-center gap-1 text-[14px] text-ink-2">
-            <Home className="size-3.5" aria-hidden /> {parts[0].place === "owner" ? "Chez le propriétaire" : "Chez vous"}
-          </p>
-        )}
-      </div>
+    <ToneCard
+      tone="pending"
+      icon={Clock}
+      tag={proposal.ownerName ? `Proposition · ${proposal.ownerName}` : "Proposition de garde"}
+      title={`Pouvez-vous garder ${dogs} ?`}
+    >
+      {onePlace && (
+        <p className="-mt-1 inline-flex items-center gap-1 text-[14px]">
+          <Home className="size-3.5" aria-hidden /> {parts[0].place === "owner" ? "Chez le propriétaire" : "Chez vous"}
+        </p>
+      )}
       {sameSlices(parts) && onePlace ? (
         <Slices proposal={parts[0]} />
       ) : (
         <ul className="flex flex-col gap-2">
           {parts.map((p) => (
             <li key={p.dogName}>
-              <p className="text-[14px] font-semibold text-ink">
+              <p className="text-[14px] font-semibold">
                 {p.dogName}
-                {!onePlace && <span className="font-normal text-ink-3"> · {p.place === "owner" ? "chez le propriétaire" : "chez vous"}</span>}
+                {!onePlace && <span className="font-normal"> · {p.place === "owner" ? "chez le propriétaire" : "chez vous"}</span>}
               </p>
               <Slices proposal={p} />
             </li>
@@ -143,13 +145,13 @@ export function ProposalCard({ proposal }: { proposal: IncomingProposal }) {
         <PillButton loading={pending} onClick={() => answer(true)}>
           <Check className="size-4" aria-hidden /> Accepter
         </PillButton>
-        <PillButton variant="outline" disabled={pending} onClick={() => answer(false)}>
+        <PillButton variant="outline" disabled={pending} onClick={() => answer(false)} className="border-transparent bg-surface text-ink">
           <X className="size-4" aria-hidden /> Refuser
         </PillButton>
       </div>
-      <p className="text-[13px] text-ink-3">
+      <p className="text-[13px]">
         {several ? "Votre réponse vaut pour tous ces chiens. " : ""}Accepter n&apos;engage pas encore : le propriétaire confirme ensuite la garde.
       </p>
-    </Card>
+    </ToneCard>
   );
 }

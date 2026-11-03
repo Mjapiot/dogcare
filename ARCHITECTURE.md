@@ -52,6 +52,15 @@ réponses). Côté invité, `/circle` liste ses demandes et `/circle/requests/[i
 demande ouverte depuis `/requests/[id]` par quelqu'un hors de son groupe redirige vers `/circle/requests/[id]` ; une
 personne sans groupe arrive sur `/circle` (y compris depuis une notification).
 
+## Accueil et navigation
+
+`app/(app)/page.tsx` (« À faire maintenant ») : `domain/home.ts` (`buildHomeTodo` : reconfirmations, propositions,
+réponses attendues hors demandes déjà proposées, « Oui » à confirmer, trous de mes chiens, gardes en cours avec
+leurs nuits, prochaine garde) à partir des mêmes éléments que l'écran « Demandes » (`fromGroupView`,
+`fromInvitedView`, `groupProposals`). Briques visuelles `components/ui/editorial.tsx` (`BigDate`, `BigNumber`,
+`SegmentGauge`, `ToneCard`, `PillTabs`, `WeekStrip`). Barre du bas `components/app/bottom-navigation.tsx` (Accueil,
+Agenda = `/calendar` + `/availability`, Chiens = `app/(app)/dogs/page.tsx`, Profil).
+
 ## Écran « Demandes »
 
 `app/(app)/requests/page.tsx` réunit les demandes du groupe courant (`buildRequestViews`) et celles des cercles

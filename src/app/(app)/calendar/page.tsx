@@ -4,7 +4,7 @@ import { getGroupSnapshot } from "@/server/data";
 import { buildRequestViews } from "@/domain/views";
 import { addDays, dateRange, parseLocalDate, startOfWeek, todayLocal, formatLocalDate as fmtDate } from "@/domain/time";
 import { availableOn, calSummary, filterCalItems, toCalItem, type CalFocus, type CalScope } from "@/domain/calendar";
-import { TopSwitch } from "@/components/calendar/top-switch";
+import { PillTabs } from "@/components/ui/editorial";
 import { CalendarView } from "@/components/calendar/calendar-view";
 import { requestNow } from "@/server/clock";
 
@@ -66,7 +66,13 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
 
   return (
     <div className="flex flex-col gap-5 pt-2">
-      <TopSwitch active="calendar" />
+      <PillTabs
+        label="Agenda"
+        items={[
+          { href: "/calendar", label: "Besoins", active: true },
+          { href: "/availability", label: "Mes dispos", active: false },
+        ]}
+      />
       <CalendarView
         view={view}
         anchor={view === "month" ? firstOfMonth(anchor) : from}

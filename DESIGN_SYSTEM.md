@@ -37,6 +37,13 @@ Très grands chiffres pour les dates (64–76 px, interlettrage −0.05em), titr
 
 Rayons généreux : cartes 24–32 px, champs 16 px, boutons en pilule.
 
+## Refonte du parcours (novembre 2026)
+
+D'après les références du porteur du projet : peu d'éléments par écran, grandes cartes pastel (couleur = statut,
+toujours avec icône + libellé), pilules noires pour le choix actif, boutons ronds, très grands chiffres et dates
+(graisse légère, approche serrée), jauges en segments (pointillés pour le vide), hachures pour ce qui manque, barre
+du bas flottante à boutons ronds.
+
 ## Ambiance (octobre 2026)
 
 Inspirée des maquettes santé « sauge » : lumière douce, surfaces givrées, grands chiffres.
@@ -56,8 +63,9 @@ Marges latérales 16 px, espacement vertical 20–28 px entre sections.
 
 | Composant | Fichier |
 | --- | --- |
+| BigDate, BigNumber, SegmentGauge (segments pleins / pointillés), ToneCard (carte pastel d'un statut, pastille icône + libellé), PillTabs (pilules noires), WeekStrip (« Cette semaine ») | `components/ui/editorial.tsx` |
 | AppShell (en-tête + onglets) | `app/(app)/layout.tsx`, `components/app/*` |
-| BottomNavigation (flottante, givrée) | `components/app/bottom-navigation.tsx` |
+| BottomNavigation (flottante, 4 boutons ronds, disque noir qui glisse) | `components/app/bottom-navigation.tsx` |
 | PassportHero, PassportSection, PassportShare | `components/dogs/passport-*.tsx` |
 | Stagger / Rise (apparition, jouée une seule fois par session : changer d'onglet ne « recharge » pas) | `components/ui/motion.tsx` |
 | CalendarHeader / CalendarGrid / CalendarDay | `components/calendar/calendar-view.tsx` |

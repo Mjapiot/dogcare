@@ -10,6 +10,7 @@ import { habitsSummary, needsByDay, weekStarts } from "@/domain/availability-scr
 import { requestNow } from "@/server/clock";
 import { PageTitle } from "@/components/ui/kit";
 import { Rise, Stagger } from "@/components/ui/motion";
+import { PillTabs } from "@/components/ui/editorial";
 import { ScreenTabs } from "@/components/requests/screen-tabs";
 import { WeekEditor } from "@/components/availability/week-editor";
 import { RulesEditor } from "@/components/availability/rules-editor";
@@ -47,6 +48,15 @@ export default async function AvailabilityPage({ searchParams }: PageProps<"/ava
 
   return (
     <Stagger className="flex flex-col gap-5 pt-2">
+      <Rise>
+        <PillTabs
+          label="Agenda"
+          items={[
+            { href: "/calendar", label: "Besoins", active: false },
+            { href: "/availability", label: "Mes dispos", active: true },
+          ]}
+        />
+      </Rise>
       <Rise>
         <PageTitle title="Mes dispos" subtitle="Indiquez à l'avance quand vous pourriez aider. Ce n'est jamais un engagement." />
       </Rise>

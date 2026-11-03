@@ -29,7 +29,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
         unread={unread}
       />
       <main className="flex-1 px-4 pb-nav">{children}</main>
-      <BottomNavigation toAnswer={toAnswer} />
+      <BottomNavigation toDo={toAnswer} />
       <LiveUpdates groupId={group.id} userId={userId} />
     </div>
   );

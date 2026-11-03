@@ -38,7 +38,12 @@ export function AppHeader({
         </button>
         <div className="flex items-center gap-2">
           <RoundIconLink href="/notifications" icon={Bell} label="Notifications" badge={unread} />
-          <RoundIconLink href="/requests/new" icon={Plus} label="Ajouter un besoin" className="bg-ink text-surface hover:bg-ink/90" />
+          <Link
+            href="/plan"
+            className="inline-flex min-h-11 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-ink pr-4 pl-3 text-[15px] font-medium text-surface active:scale-[0.97]"
+          >
+            <Plus className="size-[18px]" aria-hidden /> <span className="max-[359px]:sr-only">Besoin d&apos;une garde</span>
+          </Link>
         </div>
       </div>
 

@@ -168,6 +168,23 @@ Pour une demande donnée, chaque membre est :
 `Potentiellement disponible` (tous les créneaux touchés sont « disponible »), `À vérifier` (une partie
 seulement), `Indisponible` (tout est « indisponible ») ou `Disponibilité inconnue`.
 
+## Navigation et accueil (refonte du parcours, novembre 2026)
+
+- **Barre du bas flottante, 4 boutons ronds** (icône seule, libellé pour VoiceOver), la pastille noire glisse sur
+  le bouton courant : **Accueil**, **Agenda** (pilules « Besoins » / « Mes dispos »), **Chiens** (pilules « Mes
+  chiens » / « Qu'on me confie ») et **Profil**. La pastille rouge de l'Accueil compte les demandes à répondre.
+- **En-tête** : le groupe courant (changement de groupe), les notifications et la pilule noire **« Besoin d'une
+  garde »**, seule entrée pour demander une garde (elle ouvre « Planifier une absence »).
+- **Accueil « À faire maintenant »** : grande date, compteurs « à faire » et « gardes en cours », bandeau
+  « Cette semaine » (un point par jour qui a un besoin, couleur du statut ; chaque jour ouvre l'agenda), puis une
+  carte pastel par chose attendue de moi, dans cet ordre : horaires changés à reconfirmer, propositions de garde
+  (accepter / refuser), demandes à répondre (« Oui, je peux » / « Non » d'un geste ; 3 au plus, puis « Tout
+  voir »), « Oui » reçus à confirmer pour mes chiens, besoins de mes chiens encore à organiser (« Trouver
+  quelqu'un »), puis les gardes en cours (jauge des nuits, dernière nouvelle du carnet, « Ouvrir le carnet ») ou ma
+  prochaine garde de la semaine. Une demande déjà proposée à quelqu'un n'apparaît qu'une fois (sa proposition).
+  Rien à faire : « Rien à faire pour l'instant ».
+- L'écran « Demandes » reste accessible (« Tout voir », liens des notifications), sans onglet propre.
+
 ## Demandes de garde
 
 Types : **Chien seul** (information), **Visite ou promenade**, **Garde**, **Garde partielle**.

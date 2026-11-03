@@ -61,7 +61,7 @@
 
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
-  --nav-height: 64px;
+  --nav-height: 72px;
   /* the tab bar floats above the bottom edge */
   --nav-gap: 12px;
 }

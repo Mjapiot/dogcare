@@ -1,205 +1,239 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, BellRing, CalendarPlus, CalendarRange, CircleAlert, CircleCheck, CircleDashed, Clock, Inbox, NotebookPen, PawPrint, UserCheck } from "lucide-react";
+import { ArrowRight, BellRing, CheckCheck, CircleCheck, Clock, NotebookPen, UserCheck } from "lucide-react";
 import { requireAppContext } from "@/server/session";
-import { getGroupSnapshot, getLatestCareNews, signDogPhotos } from "@/server/data";
-import { CARE_LOG_LABELS, isOngoing } from "@/domain/care-log";
-import { buildRequestViews, dashboardCounts } from "@/domain/views";
-import { addDays, todayLocal } from "@/domain/time";
-import { needsOrganizing } from "@/domain/status";
-import { monthShort, weekdayLabel, formatPeriod, formatTime } from "@/lib/format";
-import { CareRequestCard } from "@/components/domain/request-bits";
-import { TONE_CLASSES } from "@/components/domain/tone";
-import { TopSwitch } from "@/components/calendar/top-switch";
-import { EmptyState, PillLink } from "@/components/ui/kit";
-import { cn } from "@/lib/utils";
-import { InstallHint } from "@/components/pwa/install-hint";
+import { getGroupSnapshot, getLatestCareNews, getMyInvitedRequests, getMyPendingProposals } from "@/server/data";
+import { CARE_LOG_LABELS } from "@/domain/care-log";
+import { buildRequestViews, bucketByDay } from "@/domain/views";
+import { buildInvitedView } from "@/domain/invited";
+import { fromGroupView, fromInvitedView } from "@/domain/requests-screen";
+import { groupProposals } from "@/domain/absence";
+import { buildHomeTodo } from "@/domain/home";
+import { STATUS_LABELS, TONE_LABELS } from "@/domain/status";
+import { addDays, startOfWeek, todayLocal } from "@/domain/time";
+import { formatDayShort, formatLocalDate, formatPeriod, formatTime } from "@/lib/format";
 import { requestNow } from "@/server/clock";
+import { PillLink } from "@/components/ui/kit";
+import { BigDate, BigNumber, SegmentGauge, ToneCard, WeekStrip } from "@/components/ui/editorial";
 import { Rise, Stagger } from "@/components/ui/motion";
+import { STATUS_ICONS } from "@/components/domain/tone";
+import { ResponseButtons } from "@/components/domain/response-buttons";
+import { AssignmentActions } from "@/components/domain/assignment-actions";
+import { ProposalCard } from "@/components/planning/proposals";
+import { InstallHint } from "@/components/pwa/install-hint";
 
-export const metadata: Metadata = { title: "Aujourd'hui" };
+export const metadata: Metadata = { title: "Accueil" };
 
-export default async function TodayPage() {
+/** Answers shown on the home screen; the others are one tap away ("Tout voir"). */
+const MAX_ANSWERS = 3;
+
+/**
+ * "À faire maintenant": the date, this week, then one pastel card per thing
+ * expected from me (reconfirm, a proposal, an answer, a "Oui" to confirm, a
+ * hole in my dogs' needs), then the gardes happening now.
+ */
+export default async function HomePage() {
   const { userId, group } = await requireAppContext();
   const now = requestNow();
   const today = todayLocal(now);
-  const snapshot = await getGroupSnapshot(group.id, userId, { from: today, to: addDays(today, 27) });
-  const views = buildRequestViews(snapshot, now);
-  const counts = dashboardCounts(views, now);
-  const photos = await signDogPhotos(snapshot.dogs);
+  const monday = startOfWeek(today);
+  // a garde happening now may have started weeks ago
+  const [snapshot, invited, proposals] = await Promise.all([
+    getGroupSnapshot(group.id, userId, { from: addDays(today, -31), to: addDays(today, 27) }),
+    getMyInvitedRequests(),
+    getMyPendingProposals(userId).then(groupProposals),
+  ]);
+  const views = buildRequestViews(snapshot, now).filter((v) => v.request.lifecycle_status === "active");
+  const items = [...views.map((v) => fromGroupView(v, now)), ...invited.map((r) => fromInvitedView(buildInvitedView(r, now)))];
+  const todo = buildHomeTodo({ views, items, proposals, now });
+  const news = await getLatestCareNews(todo.ongoing.map((o) => o.assignmentId));
 
-  const upcoming = views
-    .filter((v) => v.request.lifecycle_status === "active" && v.period.end > now)
-    .sort((a, b) => a.period.start - b.period.start);
-  const reconfirm = views.filter((v) => v.myAssignments.some((a) => a.status === "pending_reconfirmation"));
-  const myGuards = upcoming.filter((v) => v.myAssignments.some((a) => a.status === "confirmed"));
-  // my dogs being looked after right now, with the care log's latest news
-  const ongoing = views
-    .filter((v) => v.iAmCaretaker && v.request.lifecycle_status === "active")
-    .flatMap((v) => v.assignments.filter((a) => isOngoing(a, now)).map((a) => ({ view: v, assignment: a })))
-    .slice(0, 3);
-  const news = await getLatestCareNews(ongoing.map((o) => o.assignment.id));
-  const ownsADog = snapshot.dogs.some((d) => !d.archived_at && snapshot.caretakers.some((c) => c.dog_id === d.id && c.user_id === userId));
-  const [dd, mm] = [today.slice(8, 10), today.slice(5, 7)];
-
-  const tiles = [
-    { label: "Sans solution", value: counts.uncovered, icon: CircleAlert, tone: "uncovered", href: "/calendar?status=uncovered" },
-    { label: "Partielles", value: counts.partial, icon: CircleDashed, tone: "partial", href: "/calendar?status=organize" },
-    { label: "À confirmer", value: counts.toConfirm, icon: UserCheck, tone: "pending", href: "/calendar?status=organize" },
-    { label: "Confirmées", value: counts.confirmed, icon: CircleCheck, tone: "covered", href: "/calendar?status=confirmed" },
-  ] as const;
+  const week = bucketByDay(views, monday, addDays(monday, 6)).map((b) => ({
+    date: b.date,
+    tone: b.tone,
+    href: `/calendar?start=${b.date}`,
+    label: `${formatLocalDate(b.date, { weekday: "long", day: "numeric", month: "long" })}${b.items.length ? ` : ${TONE_LABELS[b.tone].toLowerCase()}` : ""}`,
+  }));
 
   return (
-    <Stagger className="flex flex-col gap-6 pt-2">
+    <Stagger className="flex flex-col gap-5 pt-2">
       <Rise>
-        <TopSwitch active="today" />
+        <BigDate
+          date={today}
+          aside={
+            <>
+              <p>
+                <span className="block text-[28px] font-medium leading-none tracking-tight tabular">{todo.count}</span>
+                <span className="text-[13px] text-ink-2">à faire</span>
+              </p>
+              <p>
+                <span className="block text-[28px] font-medium leading-none tracking-tight tabular">{todo.ongoing.length}</span>
+                <span className="text-[13px] text-ink-2">garde{todo.ongoing.length > 1 ? "s" : ""} en cours</span>
+              </p>
+            </>
+          }
+        />
       </Rise>
 
       <Rise>
-        <section aria-label="Date du jour" className="flex items-stretch justify-between gap-4 px-1">
-          <div>
-            <p className="text-[17px] text-ink-2">{weekdayLabel(today)}</p>
-            <p className="mt-1 text-[76px] font-medium leading-[0.86] tracking-[-0.06em] text-ink tabular">
-              {dd}.{mm}
-            </p>
-            <p className="text-[76px] font-medium leading-[0.92] tracking-[-0.06em] text-ink">{monthShort(today)}</p>
-          </div>
-          <div className="flex flex-col justify-center gap-4 border-l border-ink/70 pl-4">
-            <div>
-              <p className="text-[26px] font-medium leading-none tabular">{counts.toOrganize}</p>
-              <p className="mt-1 text-[13px] text-ink-2">à organiser</p>
-            </div>
-            <div>
-              <p className="text-[26px] font-medium leading-none tabular">{counts.upcoming}</p>
-              <p className="mt-1 text-[13px] text-ink-2">besoins à venir</p>
-            </div>
-          </div>
-        </section>
-      </Rise>
-
-      <Rise>
-        <section aria-label="Tableau de bord" className="grid grid-cols-2 gap-2">
-          {tiles.map((t) => (
-            <Link
-              key={t.label}
-              href={t.href}
-              className={cn(
-                "flex items-center gap-3 rounded-2xl px-4 py-3 transition-transform active:scale-[0.98]",
-                t.value > 0 ? cn(TONE_CLASSES[t.tone], "shadow-soft") : "glass text-ink-2",
-              )}
-            >
-              <t.icon className="size-5 shrink-0" aria-hidden />
-              <span className="min-w-0">
-                <span className="block text-[22px] font-semibold leading-none tabular">{t.value}</span>
-                <span className="block truncate text-[13px] font-medium">{t.label}</span>
-              </span>
+        <WeekStrip
+          days={week}
+          today={today}
+          action={
+            <Link href="/calendar" className="inline-flex min-h-11 items-center text-[13px] text-ink-2">
+              Voir l&apos;agenda
             </Link>
-          ))}
-        </section>
+          }
+        />
       </Rise>
 
-      {reconfirm.length > 0 && (
-        <Link
-          href={`/requests/${reconfirm[0].request.id}`}
-          className="flex items-center gap-3 rounded-2xl bg-ink p-4 text-surface"
-        >
-          <BellRing className="size-5 shrink-0" aria-hidden />
-          <span className="flex-1 text-[15px] font-medium">
-            Les horaires d&apos;une garde ont changé : merci de reconfirmer ({reconfirm[0].dog?.name}).
-          </span>
-          <ArrowRight className="size-5" aria-hidden />
-        </Link>
+      <Rise>
+        <h1 className="px-1 text-[26px] tracking-[-0.02em] text-ink">
+          À <b className="font-semibold">faire</b> maintenant
+        </h1>
+      </Rise>
+
+      {todo.count === 0 && (
+        <Rise>
+          <div className="flex items-center gap-3 rounded-[30px] bg-surface p-5">
+            <CheckCheck className="size-6 shrink-0 text-sage" aria-hidden />
+            <p className="text-[16px] text-ink">
+              <b className="font-semibold">Rien à faire pour l&apos;instant.</b> Les demandes et les propositions apparaîtront ici.
+            </p>
+          </div>
+        </Rise>
       )}
 
-      {ongoing.map(({ view: v, assignment: a }) => {
-        const last = news[a.id];
+      {todo.reconfirm.map((i) => (
+        <Rise key={i.key}>
+          <ToneCard tone="pending" icon={BellRing} tag="Horaires changés" title={`${i.dogName} : merci de reconfirmer`}>
+            <p className="text-[15px]">{formatPeriod(i.period.start, i.period.end)}</p>
+            <AssignmentActions assignments={i.myAssignments} />
+          </ToneCard>
+        </Rise>
+      ))}
+
+      {todo.proposals.map((p) => (
+        <Rise key={p.id}>
+          <ProposalCard proposal={p} />
+        </Rise>
+      ))}
+
+      {todo.answer.slice(0, MAX_ANSWERS).map((i) => (
+        <Rise key={i.key}>
+          <ToneCard
+            tone="pending"
+            icon={Clock}
+            tag={`À répondre · ${i.ownerNames.join(", ") || "un membre"}`}
+            title={
+              <Link href={i.href} className="underline-offset-4 hover:underline">
+                {i.dogName} a besoin d&apos;aide
+              </Link>
+            }
+          >
+            <p className="text-[15px] font-medium">{formatPeriod(i.period.start, i.period.end)}</p>
+            {i.description && <p className="line-clamp-2 text-[14px]">« {i.description} »</p>}
+            <ResponseButtons requestId={i.requestId} current={null} period={i.period} splittable={i.splittable} size="sm" />
+          </ToneCard>
+        </Rise>
+      ))}
+      {todo.answer.length > MAX_ANSWERS && (
+        <Rise>
+          <PillLink href="/requests" variant="outline" className="w-full">
+            Tout voir ({todo.answer.length} demandes à répondre)
+          </PillLink>
+        </Rise>
+      )}
+
+      {todo.confirm.map((v) => {
+        const yes = v.helpers.filter((h) => h.response === "yes" && h.assignments.length === 0).map((h) => h.name);
         return (
-          <Link key={a.id} href={`/requests/${v.request.id}`} className="glass shadow-soft flex items-center gap-3 rounded-2xl p-4">
-            <NotebookPen className="size-5 shrink-0 text-sage" aria-hidden />
+          <Rise key={v.request.id}>
+            <ToneCard tone="pending" icon={UserCheck} tag="À confirmer" title={`${yes.join(" et ") || "Quelqu'un"} peut garder ${v.dog?.name ?? "votre chien"}`}>
+              <p className="text-[15px] font-medium">{formatPeriod(v.period.start, v.period.end)}</p>
+              <PillLink href={`/requests/${v.request.id}`}>
+                Voir et confirmer <ArrowRight className="size-4" aria-hidden />
+              </PillLink>
+            </ToneCard>
+          </Rise>
+        );
+      })}
+
+      {todo.holes.map((v) => {
+        const Icon = STATUS_ICONS[v.status.status];
+        return (
+          <Rise key={v.request.id}>
+            <ToneCard tone={v.status.tone} icon={Icon} tag={STATUS_LABELS[v.status.status]} title={v.dog?.name ?? "Votre chien"}>
+              <p className="text-[15px] font-medium">{formatPeriod(v.period.start, v.period.end)}</p>
+              {v.coverage.gaps.length > 0 && v.coverage.gaps.length < 4 && v.status.status !== "awaiting_responses" && (
+                <p className="text-[14px]">
+                  Reste à couvrir : {v.coverage.gaps.map((g) => formatPeriod(g.start, g.end)).join(" ; ")}
+                </p>
+              )}
+              <div className="hatch h-3.5 rounded-full bg-white/35" aria-hidden />
+              <PillLink href={`/requests/${v.request.id}`}>
+                Trouver quelqu&apos;un <ArrowRight className="size-4" aria-hidden />
+              </PillLink>
+            </ToneCard>
+          </Rise>
+        );
+      })}
+
+      {todo.ongoing.map((o) => {
+        const last = news[o.assignmentId];
+        return (
+          <Rise key={o.key}>
+            <ToneCard
+              tone="covered"
+              icon={CircleCheck}
+              tag="Garde en cours"
+              title={o.role === "helper" ? `Vous gardez ${o.dogName}` : `${o.dogName} chez ${o.keeper}`}
+              aside={<span className="pt-1.5 text-right text-[13px]">jusqu&apos;au {formatDayShort(o.end)}, {formatTime(o.end)}</span>}
+            >
+              {o.nights > 0 && (
+                <>
+                  <BigNumber value={`${o.nightsDone}`} unit={`/${o.nights} nuit${o.nights > 1 ? "s" : ""}`} />
+                  <SegmentGauge total={o.nights} done={o.nightsDone} label={`${o.nightsDone} nuit${o.nightsDone > 1 ? "s" : ""} sur ${o.nights}`} />
+                </>
+              )}
+              <div className="flex items-center gap-3">
+                <PillLink href={`/requests/${o.requestId}#carnet`} variant="outline" className="flex-1 border-transparent bg-surface text-ink">
+                  <NotebookPen className="size-4" aria-hidden /> Ouvrir le carnet
+                </PillLink>
+                <span className="text-right text-[13px] leading-tight">
+                  {last ? (
+                    <>
+                      Dernière nouvelle
+                      <br />
+                      {CARE_LOG_LABELS[last.kind]}, {formatTime(last.occurred_at)}
+                    </>
+                  ) : (
+                    "Pas encore de nouvelles"
+                  )}
+                </span>
+              </div>
+            </ToneCard>
+          </Rise>
+        );
+      })}
+
+      {todo.next && (
+        <Rise>
+          <Link href={todo.next.href} className="flex items-center gap-3 rounded-[30px] bg-surface p-5 active:scale-[0.99]">
+            <CircleCheck className="size-6 shrink-0 text-sage" aria-hidden />
             <span className="min-w-0 flex-1">
-              <span className="block text-[15px] font-semibold text-ink">
-                {v.dog?.name ?? "Votre chien"} chez {a.name}
-              </span>
-              <span className="block text-[14px] text-ink-2">
-                {last ? `Dernière nouvelle : ${CARE_LOG_LABELS[last.kind].toLowerCase()} à ${formatTime(last.occurred_at)}` : "Pas encore de nouvelles dans le carnet"}
+              <span className="block text-[13px] text-ink-2">Votre prochaine garde</span>
+              <span className="block text-[17px] font-semibold text-ink">
+                {todo.next.dogName} · {formatPeriod(todo.next.period.start, todo.next.period.end)}
               </span>
             </span>
             <ArrowRight className="size-5 text-ink-2" aria-hidden />
           </Link>
-        );
-      })}
-
-      {counts.toAnswer > 0 && (
-        <Link href="/requests" className="glass flex items-center gap-3 rounded-2xl p-4">
-          <Inbox className="size-5 shrink-0 text-ink" aria-hidden />
-          <span className="flex-1 text-[15px] font-medium text-ink">
-            {counts.toAnswer} demande{counts.toAnswer > 1 ? "s attendent" : " attend"} votre réponse
-          </span>
-          <ArrowRight className="size-5 text-ink-2" aria-hidden />
-        </Link>
+        </Rise>
       )}
 
-      {ownsADog && (
-        <Link href="/plan" className="glass flex items-center gap-3 rounded-2xl p-4">
-          <CalendarRange className="size-5 shrink-0 text-sage" aria-hidden />
-          <span className="min-w-0 flex-1">
-            <span className="block text-[15px] font-semibold text-ink">Planifier une absence</span>
-            <span className="block text-[14px] text-ink-2">L&apos;app propose qui garde quand, d&apos;après les dispos</span>
-          </span>
-          <ArrowRight className="size-5 text-ink-2" aria-hidden />
-        </Link>
-      )}
-
-      <Rise className="-mx-4">
-        <section className="shadow-soft flex flex-col gap-3 rounded-t-[32px] bg-surface/90 px-3 pt-5 pb-6 ring-1 ring-white/70">
-          <div className="flex items-center justify-between px-2">
-            <h2 className="text-[17px] font-semibold text-ink">Prochains besoins</h2>
-            <PillLink href="/requests" variant="soft" size="sm">
-              Mes réponses
-            </PillLink>
-          </div>
-
-          {myGuards.length > 0 && (
-            <div className="mx-1 flex items-center gap-2 rounded-2xl bg-[var(--tone-covered)] px-4 py-3 text-[14px] font-medium text-[var(--tone-covered-ink)]">
-              <PawPrint className="size-4" aria-hidden />
-              Prochaine garde pour vous : {myGuards[0].dog?.name} · {formatPeriod(myGuards[0].period.start, myGuards[0].period.end)}
-            </div>
-          )}
-
-          {upcoming.length === 0 ? (
-            <EmptyState
-              icon={CalendarPlus}
-              title="Aucun besoin dans les 4 prochaines semaines"
-              description="Quand un membre aura besoin d'aide pour son chien, sa demande apparaîtra ici."
-              action={
-                <PillLink href="/requests/new" size="md">
-                  Ajouter un besoin
-                </PillLink>
-              }
-              className="bg-surface-2"
-            />
-          ) : (
-            <ul className="flex flex-col gap-2.5">
-              {upcoming.slice(0, 8).map((v) => (
-                <li key={v.request.id}>
-                  <CareRequestCard view={v} photoUrl={v.dog ? photos[v.dog.id] : null} href={`/requests/${v.request.id}`} />
-                </li>
-              ))}
-            </ul>
-          )}
-          {upcoming.length > 8 && (
-            <PillLink href="/calendar" variant="outline" className="mx-2">
-              Voir tout le calendrier
-            </PillLink>
-          )}
-          {upcoming.some((v) => needsOrganizing(v.status.status)) && (
-            <p className="flex items-center gap-1.5 px-3 text-[13px] text-ink-3">
-              <Clock className="size-3.5" aria-hidden />
-              Une demande sans réponse n&apos;est jamais considérée comme refusée.
-            </p>
-          )}
-          <InstallHint />
-        </section>
+      <Rise>
+        <InstallHint />
       </Rise>
     </Stagger>
   );
