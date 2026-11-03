@@ -8,7 +8,7 @@ import { adminClient, cleanup, createTestUser, gotoStable, signIn } from "./help
 
 /** The current hour in Paris, "HH:00" (inside the garde, today). */
 const parisHour = () =>
-  `${new Intl.DateTimeFormat("fr-FR", { timeZone: "Europe/Paris", hour: "2-digit", hourCycle: "h23" }).format(new Date())}:00`;
+  `${new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Paris", hour: "2-digit", hourCycle: "h23" }).format(new Date()).replace(/\D/g, "").padStart(2, "0")}:00`;
 
 test("routines: added by the owner, checked off by the helper, seen by the owner", async ({ browser }) => {
   test.setTimeout(150_000);
@@ -77,7 +77,7 @@ test("routines: added by the owner, checked off by the helper, seen by the owner
     const today = emma.getByRole("region", { name: "Routines du jour" });
     await expect(today.getByText("½ comprimé")).toBeVisible({ timeout: 15_000 });
     await today.getByRole("button", { name: /Médicament de .* : cocher/ }).click();
-    await expect(today.getByText(/^Fait à/)).toBeVisible({ timeout: 15_000 });
+    await expect(today.getByRole("button", { name: /Médicament de .* : décocher/ })).toHaveAttribute("aria-pressed", "true", { timeout: 15_000 });
 
     // Julie sees it done, by Emma
     await gotoStable(julie, `/requests/${requestId}`);
