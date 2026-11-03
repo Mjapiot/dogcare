@@ -1,11 +1,11 @@
 /**
- * Calendar: a 3-day need shows once in the agenda and as a bar in the month;
- * the day sheet lists who declared themselves available.
+ * Agenda, "Besoins": a 3-day need shows once, as a card on its first day, with
+ * who declared themselves available that day; the next month has its own list.
  */
 import { expect, test } from "@playwright/test";
 import { adminClient, cleanup, createTestUser, signIn } from "./helpers";
 
-test("calendar: one card per need, month bars, available members", async ({ browser }) => {
+test("agenda: one card per need, available members, month switch", async ({ browser }) => {
   test.setTimeout(120_000);
   const admin = adminClient();
   const owner = await createTestUser(admin, "Julie");
@@ -33,7 +33,7 @@ test("calendar: one card per need, month bars, available members", async ({ brow
     dogId = dog!.id as string;
     must(await admin.from("dog_caretakers").insert({ dog_id: dogId, user_id: owner.id, role: "owner" }), "caretaker");
     must(await admin.from("group_dogs").insert({ group_id: group!.id, dog_id: dogId }), "group dog");
-    // from the day after tomorrow, 3 days; Emma is free the morning of its second day
+    // from the day after tomorrow, 3 days; Emma is free the morning of its first day
     const start = Date.now() + 2 * 86_400_000;
     const end = start + 3 * 86_400_000;
     must(
@@ -48,31 +48,22 @@ test("calendar: one card per need, month bars, available members", async ({ brow
       }),
       "request",
     );
-    const freeDay = parisDate(start + 86_400_000);
+    const freeDay = parisDate(start);
     must(await admin.from("availability_entries").insert({ user_id: emma.id, date: freeDay, slot: "morning", status: "available" }), "availability");
 
-    const page = await signIn(context, admin, owner.email, "/calendar");
-    await page.waitForURL(/\/calendar$/);
-    // agenda: one card for the whole need, the next days say it goes on
-    await expect(page.getByRole("link", { name: /Aston · Garde/ })).toHaveCount(1);
-    await expect(page.getByText(/en cours : Aston/).first()).toBeVisible();
+    const page = await signIn(context, admin, owner.email, `/calendar?start=${freeDay}`);
+    await page.waitForURL(/\/calendar/);
+    // one card for the whole need, on its first day, with who is available that day
+    const card = page.getByRole("link", { name: /Aston/ });
+    await expect(card).toHaveCount(1, { timeout: 15_000 });
+    await expect(card).toContainText("Dispo ce jour : Emma");
+    await expect(card).toHaveAttribute("href", /\/requests\/[0-9a-f-]{36}$/);
 
-    // the day sheet lists Emma as available that morning
-    const [y, m, d] = freeDay.split("-").map(Number);
-    const label = new Date(Date.UTC(y, m - 1, d)).toLocaleDateString("fr-FR", { timeZone: "UTC", weekday: "short", day: "numeric", month: "short" });
-    await page.getByRole("button", { name: new RegExp(label.replace(".", "\\.")) }).first().click();
-    const sheet = page.getByRole("dialog");
-    await expect(sheet.getByText("Disponibles ce jour")).toBeVisible();
-    await expect(sheet.getByText("Emma")).toBeVisible();
-    await page.keyboard.press("Escape");
-
-    // month: the need is a bar; tapping one of its days opens it
-    await page.getByRole("radio", { name: "Mois" }).click();
-    await page.waitForURL(/view=month/);
-    const dayCell = page.getByRole("gridcell", { name: / : Aston, / }).first();
-    await expect(dayCell).toBeVisible();
-    await dayCell.click();
-    await expect(page.getByRole("dialog").getByRole("link", { name: /Aston · Garde/ })).toBeVisible();
+    // the month after: the need is not there (unless it runs into it)
+    await page.getByRole("link", { name: /Mois suivant/ }).click();
+    await page.waitForURL(/start=\d{4}-\d{2}-01/);
+    const runsInto = parisDate(end - 1).slice(0, 7) !== freeDay.slice(0, 7);
+    await expect(page.getByRole("link", { name: /Aston/ })).toHaveCount(runsInto ? 1 : 0);
   } finally {
     // after a timeout the context may already be closed: never skip the cleanup
     await Promise.allSettled([context.close()]);

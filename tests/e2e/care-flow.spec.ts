@@ -65,16 +65,12 @@ test("full care coordination flow", async ({ browser }) => {
       await page.close();
     }
 
-    // 4. Emma declares availability (whole "Après-midi" column, this week and next: tomorrow may be next week)
+    // 4. Emma declares availability (the whole week, this one and next: tomorrow may be next week)
     const emma = await emmaCtx.newPage();
     await gotoStable(emma, "/availability");
     for (const week of [0, 1]) {
       if (week) await emma.getByRole("button", { name: "Semaine suivante" }).click();
-      // during the slide, the old and new weeks are both on screen for a moment
-      const column = emma.getByRole("button", { name: /Sélectionner tous les créneaux Après-midi/ });
-      await expect(column).toHaveCount(1);
-      await column.click();
-      await emma.getByRole("button", { name: "Dispo", exact: true }).click();
+      await emma.getByRole("button", { name: "Toute la semaine" }).click();
       await expect(emma.getByText(/marqués? disponibles?/).first()).toBeVisible();
     }
 
@@ -126,7 +122,10 @@ test("full care coordination flow", async ({ browser }) => {
     // 11. Chloé offers help, 12. Julie confirms Chloé
     const chloe = await chloeCtx.newPage();
     await gotoStable(chloe, requestUrl);
-    await chloe.getByRole("button", { name: "Oui, je peux" }).click();
+    // centred first: at the bottom of the page the floating bar may cover it while the page settles
+    const chloeYes = chloe.getByRole("button", { name: "Oui, je peux" });
+    await chloeYes.evaluate((e) => e.scrollIntoView({ block: "center" }));
+    await chloeYes.click();
     await gotoStable(julie, requestUrl);
     await julie.getByRole("button", { name: "Confirmer", exact: true }).first().click();
     await julie.getByRole("button", { name: /Confirmer Chloé/ }).click();

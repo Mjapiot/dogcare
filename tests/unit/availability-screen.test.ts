@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { copyPreviousWeek, filledCount, habitsSummary, needsByDay, presetCells, weekStarts } from "@/domain/availability-screen";
+import { availableCount, copyPreviousWeek, filledCount, habitsSummary, needsByDay, nextTap, presetCells, weekStarts } from "@/domain/availability-screen";
 import { zonedInstant } from "@/domain/time";
 
 // Wednesday 11 November 2026
@@ -80,5 +80,25 @@ describe("habits summary", () => {
     expect(habitsSummary(["morning", "afternoon", "evening", "night"].map((s) => ({ weekday: 7, slot: s as "morning", status: "available" as const })))).toBe(
       "Disponible le dimanche toute la journée.",
     );
+  });
+});
+
+describe("tapping a slot", () => {
+  it("cycles: not filled → available → unavailable → nothing entered; a habit is overridden for the day", () => {
+    expect(nextTap({ status: "unknown", source: "none" })).toBe("available");
+    expect(nextTap({ status: "available", source: "entry" })).toBe("unavailable");
+    expect(nextTap({ status: "unavailable", source: "entry" })).toBe("clear");
+    expect(nextTap({ status: "available", source: "rule" })).toBe("unavailable");
+    expect(nextTap({ status: "unavailable", source: "rule" })).toBe("available");
+  });
+
+  it("counts the available slots among the days ahead", () => {
+    const entries = [
+      { date: "2026-11-10", slot: "morning" as const, status: "available" as const },
+      { date: "2026-11-09", slot: "morning" as const, status: "available" as const },
+    ];
+    const rules = [{ weekday: 7, slot: "evening" as const, status: "available" as const }];
+    // Tuesday 10: Monday is past
+    expect(availableCount("2026-11-09", "2026-11-10", entries, rules)).toEqual({ available: 2, total: 24 });
   });
 });

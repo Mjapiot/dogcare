@@ -63,7 +63,7 @@ réponses attendues hors demandes déjà proposées, « Oui » à confirmer, tro
 leurs nuits, prochaine garde) à partir des mêmes éléments que l'écran « Demandes » (`fromGroupView`,
 `fromInvitedView`, `groupProposals`). Briques visuelles `components/ui/editorial.tsx` (`BigDate`, `BigNumber`,
 `SegmentGauge`, `ToneCard`, `PillTabs`, `WeekStrip`). Barre du bas `components/app/bottom-navigation.tsx` (Accueil,
-Agenda = `/calendar` + `/availability`, Chiens = `app/(app)/dogs/page.tsx`, Profil).
+Agenda = `/calendar` (« Besoins » : `needCards`, `availableNames` dans `domain/calendar.ts`, cartes rendues par la page) + `/availability` (`week-editor.tsx` : `availableCount`, `nextTap`), Chiens = `app/(app)/dogs/page.tsx`, Profil).
 
 ## Écran « Demandes »
 

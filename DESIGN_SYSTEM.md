@@ -68,8 +68,8 @@ Marges latérales 16 px, espacement vertical 20–28 px entre sections.
 | BottomNavigation (flottante, 4 boutons ronds, disque noir qui glisse) | `components/app/bottom-navigation.tsx` |
 | PassportHero, PassportSection, PassportShare | `components/dogs/passport-*.tsx` |
 | Stagger / Rise (apparition, jouée une seule fois par session : changer d'onglet ne « recharge » pas) | `components/ui/motion.tsx` |
-| CalendarHeader / CalendarGrid / CalendarDay | `components/calendar/calendar-view.tsx` |
-| AvailabilityMatrix / AvailabilitySelector | `components/availability/*` |
+| Agenda « Besoins » : carte pastel par besoin (grande date, pastille de statut, « Dispo ce jour ») | `app/(app)/calendar/page.tsx` |
+| Mes dispos : compteur en segments, semaine, tuiles de créneaux (un toucher change l'état), remplissage d'un geste | `components/availability/week-editor.tsx` |
 | DogAvatar, CareRequestCard, CoverageIndicator, RequestStatusBadge | `components/domain/request-bits.tsx` |
 | CareRequestForm | `components/domain/care-request-form.tsx` |
 | ResponseButtons | `components/domain/response-buttons.tsx` |

@@ -64,6 +64,30 @@ export function filledCount(
   return { filled, total: days.length * SLOT_KEYS.length };
 }
 
+/** Slots I said I am available for (entry or habit) among the days still ahead in the week. */
+export function availableCount(
+  monday: LocalDate,
+  today: LocalDate,
+  entries: readonly AvailabilityEntry[],
+  rules: readonly AvailabilityRule[],
+): { available: number; total: number } {
+  const days = weekDays(monday).filter((d) => d >= today);
+  let available = 0;
+  for (const d of days) for (const s of SLOT_KEYS) if (resolveSlot(d, s, entries, rules).status === "available") available++;
+  return { available, total: days.length * SLOT_KEYS.length };
+}
+
+/**
+ * What a tap on a slot does: not filled → available → unavailable → back to
+ * nothing entered that day (the habit, if any, applies again). A habit is
+ * overridden by an entry for that day only.
+ */
+export function nextTap(r: { status: "available" | "unavailable" | "unknown"; source: "entry" | "rule" | "none" }): "available" | "unavailable" | "clear" {
+  if (r.status === "unknown") return "available";
+  if (r.status === "available") return "unavailable";
+  return r.source === "entry" ? "clear" : "available";
+}
+
 export type DayNeed = { requestId: string; href: string; dogName: string };
 
 /** Needs waiting for my answer, on each day they touch. */

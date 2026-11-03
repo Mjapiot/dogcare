@@ -153,14 +153,15 @@ Repas, Promenade, Médicament, Déposé (prise en charge), Récupéré, Photo, N
 - Les disponibilités sont saisies une fois et partagées groupe par groupe (interrupteur, activé par défaut).
   Aucun motif d'indisponibilité n'est demandé ni affiché.
 
-### Écran « Mes dispos »
+### Écran « Mes dispos » (Agenda › Mes dispos)
 
-Trois onglets : **Prochains jours** (une semaine à la fois sur 4 semaines, flèches ou glisser, jauge « créneaux
-renseignés », raccourcis Toute la semaine / Les soirs / Le week-end qui préparent une sélection, « Comme la semaine
-dernière » qui recopie les saisies jour par jour de la semaine précédente — les habitudes s'appliquent déjà
-d'elles-mêmes), **Habitudes** (grille hebdomadaire et résumé en clair) et **Partage** (par groupe). Un besoin du
-groupe qui attend ma réponse apparaît sur ses jours (« Aston a besoin d'aide · Répondre ») : répondre reste un geste
-séparé, une dispo n'est jamais une réponse.
+« Quand puis-je aider ? » ; onglets **Prochains jours**, **Habitudes**, **Partage**. Prochains jours, une semaine
+à la fois sur 4 : grand compteur « N/24 créneaux » où je suis dispo (jauge en segments), les 7 jours (un point
+quand je suis dispo ce jour-là), puis les **4 créneaux du jour choisi en grandes tuiles** : un toucher fait
+« non renseigné → dispo → pas dispo → plus rien saisi ce jour » (une habitude s'applique de nouveau ; elle est
+signalée « habitude »). Remplir d'un geste : « Toute la semaine », « Les soirs », « Le week-end » (jours à venir
+seulement) et « Comme la semaine dernière ». Les besoins du groupe qui attendent ma réponse cette semaine sont
+listés avec « Répondre ». Une dispo n'est jamais un engagement.
 
 ### Évaluation d'une période
 
@@ -357,15 +358,13 @@ Dimension stockée : `lifecycle_status` (active / cancelled). Dimension calculé
 Éligibles = membres du groupe et personnes du cercle sollicitées sur la demande, moins les responsables du chien. **L'absence de réponse n'est jamais un refus** :
 on n'affiche jamais « sans solution » tant que quelqu'un n'a pas répondu.
 
-## Calendrier
+## Calendrier (Agenda › Besoins)
 
-- **Agenda** (vue par défaut, 4 semaines) : une carte par besoin, même sur plusieurs jours (période, couverture,
-  gardiens, statut) ; les jours où rien ne commence sont regroupés (« rien de prévu » ou « en cours : Aston »).
-- **Mois** : chaque besoin est une barre sur ses jours (coupée par semaine, au plus 3 lignes, « +n » au-delà).
-- Résumé de la période (sans solution, à organiser, couverts) qui sert de filtre ; portée Tout / Mes chiens /
-  Mes gardes ; filtres par chien et propriétaire ; glisser pour changer de période.
-- La feuille d'un jour montre ses besoins et **qui s'est déclaré disponible**, créneau par créneau (seulement les
-  dispos partagées avec le groupe) — une indication, jamais un engagement.
+Un mois à la fois (« OCT · NOV · DÉC », flèches ; le mois en cours commence aujourd'hui) : **une grande carte
+pastel par besoin**, sur son premier jour affiché (un besoin déjà commencé apparaît le premier jour), couleur du
+statut avec sa pastille (icône + libellé), le chien, la période, qui garde, et pour un besoin à organiser
+**« Dispo ce jour : … »** (membres qui partagent leurs dispos). Toucher une carte ouvre la demande. Plus de grille
+du mois ni de filtres (décision du 2026-11-03) : « mes chiens » et « mes gardes » sont sur l'Accueil.
 
 ## Profil
 

@@ -55,7 +55,6 @@ test("availability: needs on my days, weekend shortcut", async ({ browser }) => 
     await expect(badge).toHaveAttribute("href", /\/requests\/[0-9a-f-]{36}$/);
 
     await page.getByRole("button", { name: "Le week-end" }).click();
-    await page.getByRole("button", { name: "Dispo", exact: true }).click();
     await expect(page.getByText(/marqués? disponibles?/)).toBeVisible();
     const { data: entries } = await admin.from("availability_entries").select("date, slot, status").eq("user_id", emma.id);
     expect(entries!.length).toBeGreaterThan(0);

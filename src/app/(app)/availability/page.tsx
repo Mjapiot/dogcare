@@ -8,7 +8,6 @@ import { buildInvitedView } from "@/domain/invited";
 import { fromGroupView, fromInvitedView } from "@/domain/requests-screen";
 import { habitsSummary, needsByDay, weekStarts } from "@/domain/availability-screen";
 import { requestNow } from "@/server/clock";
-import { PageTitle } from "@/components/ui/kit";
 import { Rise, Stagger } from "@/components/ui/motion";
 import { PillTabs } from "@/components/ui/editorial";
 import { ScreenTabs } from "@/components/requests/screen-tabs";
@@ -58,7 +57,9 @@ export default async function AvailabilityPage({ searchParams }: PageProps<"/ava
         />
       </Rise>
       <Rise>
-        <PageTitle title="Mes dispos" subtitle="Indiquez à l'avance quand vous pourriez aider. Ce n'est jamais un engagement." />
+        <h1 className="text-[40px] font-light leading-[1.02] tracking-[-0.035em] text-ink">
+          Quand puis-je <b className="font-semibold">aider</b> ?
+        </h1>
       </Rise>
       <Rise>
         <ScreenTabs
