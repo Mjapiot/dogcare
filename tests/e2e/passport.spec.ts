@@ -4,7 +4,7 @@
  * revokes it and the link stops working.
  */
 import { expect, test } from "@playwright/test";
-import { adminClient, cleanup, createTestUser, gotoStable, signIn } from "./helpers";
+import { adminClient, cleanup, createTestUser, gotoStable, openTile, signIn } from "./helpers";
 
 test("passport: fill in, share without an account, revoke", async ({ browser }) => {
   const admin = adminClient();
@@ -35,6 +35,7 @@ test("passport: fill in, share without an account, revoke", async ({ browser }) 
 
     // health and emergency sections
     await gotoStable(page, `/dogs/${dogId}`);
+    await openTile(page, "Santé");
     await page.getByRole("button", { name: "Modifier : Santé" }).click();
     await page.getByLabel("Allergies").fill("Poulet");
     await page.getByRole("button", { name: "Enregistrer" }).click();
@@ -47,6 +48,7 @@ test("passport: fill in, share without an account, revoke", async ({ browser }) 
     await expect(page.getByRole("link", { name: "Appeler Samantha" })).toBeVisible();
 
     // share with health included
+    await openTile(page, "Réglages");
     await page.getByRole("button", { name: "Créer un lien" }).click();
     await page.getByLabel("Inclure : Santé").click();
     await page.getByRole("button", { name: "Créer et partager" }).click();
@@ -65,6 +67,7 @@ test("passport: fill in, share without an account, revoke", async ({ browser }) 
     // revoke: the link stops working
     await page.getByRole("button", { name: "Terminé" }).click();
     await page.reload();
+    await openTile(page, "Réglages");
     await expect(page.getByText("1 ouverture")).toBeVisible();
     await page.getByRole("button", { name: "Révoquer" }).click();
     await page.getByRole("button", { name: "Révoquer" }).last().click();

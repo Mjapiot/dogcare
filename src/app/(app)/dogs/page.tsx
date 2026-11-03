@@ -21,6 +21,7 @@ export default async function DogsPage({ searchParams }: PageProps<"/dogs">) {
   const trusted = params.vue === "confies";
   const [dogs, circleDogs] = await Promise.all([getMyDogs(userId), getMyCircleDogs()]);
   const mine = dogs.filter((d) => !d.archived_at);
+  const archived = dogs.filter((d) => d.archived_at);
   const photos = await signDogPhotos([...mine, ...circleDogs.map((d) => ({ id: d.dog_id, photo_path: d.photo_path }))]);
   const cards = trusted
     ? circleDogs.map((d) => ({ id: d.dog_id, name: d.name, sub: CIRCLE_KIND_LABELS[d.role] }))
@@ -78,6 +79,22 @@ export default async function DogsPage({ searchParams }: PageProps<"/dogs">) {
           </ul>
         )}
       </Rise>
+      {!trusted && archived.length > 0 && (
+        <Rise>
+          <details className="rounded-2xl bg-surface/60 px-4 py-1 text-[14px] text-ink-2">
+            <summary className="flex min-h-11 cursor-pointer items-center font-medium">Chiens archivés ({archived.length})</summary>
+            <ul className="flex flex-col pb-2">
+              {archived.map((d) => (
+                <li key={d.id}>
+                  <Link href={`/dogs/${d.id}`} className="flex min-h-11 items-center underline-offset-2 hover:underline">
+                    {d.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </details>
+        </Rise>
+      )}
     </Stagger>
   );
 }

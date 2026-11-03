@@ -4,7 +4,7 @@
  * sees it done, by Emma.
  */
 import { expect, test } from "@playwright/test";
-import { adminClient, cleanup, createTestUser, gotoStable, signIn } from "./helpers";
+import { adminClient, cleanup, createTestUser, gotoStable, openTile, signIn } from "./helpers";
 
 /** The current hour in Paris, "HH:00" (inside the garde, today). */
 const parisHour = () =>
@@ -58,6 +58,7 @@ test("routines: added by the owner, checked off by the helper, seen by the owner
     // the owner turns routines on and adds the medication at this hour
     const julie = await signIn(contexts[0], admin, owner.email, `/dogs/${dogId}`);
     await julie.waitForURL(new RegExp(`/dogs/${dogId}$`));
+    await openTile(julie, "Routines");
     await julie.getByRole("switch", { name: "Activer les routines" }).click();
     await expect(julie.getByText("Routines activées")).toBeVisible({ timeout: 15_000 });
     await julie.getByRole("button", { name: "Ajouter une routine" }).click();

@@ -42,7 +42,8 @@ Rayons généreux : cartes 24–32 px, champs 16 px, boutons en pilule.
 D'après les références du porteur du projet : peu d'éléments par écran, grandes cartes pastel (couleur = statut,
 toujours avec icône + libellé), pilules noires pour le choix actif, boutons ronds, très grands chiffres et dates
 (graisse légère, approche serrée), jauges en segments (pointillés pour le vide), hachures pour ce qui manque, barre
-du bas flottante à boutons ronds.
+du bas flottante à boutons ronds. `scroll-padding` sur `html` : un élément mis en vue (focus, ancre) ne passe jamais
+sous l'en-tête ni sous la barre flottante.
 
 ## Ambiance (octobre 2026)
 
@@ -66,6 +67,7 @@ Marges latérales 16 px, espacement vertical 20–28 px entre sections.
 | BigDate, BigNumber, SegmentGauge (segments pleins / pointillés), ToneCard (carte pastel d'un statut, pastille icône + libellé), PillTabs (pilules noires), WeekStrip (« Cette semaine ») | `components/ui/editorial.tsx` |
 | AppShell (en-tête + onglets) | `app/(app)/layout.tsx`, `components/app/*` |
 | BottomNavigation (flottante, 4 boutons ronds, disque noir qui glisse) | `components/app/bottom-navigation.tsx` |
+| DogPanels (tuiles de la fiche d'un chien, la partie ouverte sous les tuiles) | `components/dogs/dog-panels.tsx` |
 | PassportHero, PassportSection, PassportShare | `components/dogs/passport-*.tsx` |
 | Stagger / Rise (apparition, jouée une seule fois par session : changer d'onglet ne « recharge » pas) | `components/ui/motion.tsx` |
 | Agenda « Besoins » : carte pastel par besoin (grande date, pastille de statut, « Dispo ce jour ») | `app/(app)/calendar/page.tsx` |

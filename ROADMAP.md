@@ -80,8 +80,8 @@ Vision : « Toute la vie de votre animal, partagée avec les bonnes personnes »
   - [x] Lots 1 et 2 : briques visuelles, barre du bas flottante (Accueil, Agenda, Chiens, Profil), « Besoin d'une garde » dans l'en-tête, Accueil « À faire maintenant » — en production le 2026-11-03 (E2E 15/15, 2 relancés après un aléa de minutage)
   - [x] Lot 3 : « Besoin d'une garde » en 3 étapes (Pour qui, Quand, On vous propose ; publier sans proposer), types « pour info », « souhaitée », « non partageable » supprimés à la création — en production le 2026-11-03 (E2E 15/15 du premier coup)
   - [x] Lot 4 : Agenda comme la maquette (Besoins : une grande carte par besoin et par mois, dispos du jour ; Mes dispos : compteur, semaine, créneaux en tuiles, remplissage d'un geste), sans grille du mois — en production le 2026-11-03 (E2E 15/15 du premier coup)
-  - [ ] Lot 5 : Chiens (fusion de `/circle`, fiche en 4 tuiles)
-  - [ ] Lot 6 : Profil, page d'une demande allégée, ménage
+  - [x] Lot 5 : Chiens (`/circle` renvoie vers l'onglet avec un groupe ; chiens archivés dans l'onglet ; fiche en tuiles Passeport, Santé, Cercle, Routines, Réglages, « Faire garder X » en tête) — développé le 2026-11-03
+  - [x] Lot 6 : Profil allégé (grand chiffre « Cette année », groupes, réglages), page d'une demande avec l'action d'abord et les précisions repliées, marges de défilement sous l'en-tête et au-dessus de la barre flottante — développé le 2026-11-03
 - Mode sombre
 - Types TypeScript générés depuis la base (`supabase gen types`)
 

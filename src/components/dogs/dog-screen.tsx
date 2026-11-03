@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
-import { ArrowLeft, CalendarRange, HeartPulse, IdCard, ListChecks, Lock, Phone, Utensils } from "lucide-react";
+import { ArrowLeft, CalendarRange, HeartPulse, IdCard, ListChecks, Lock, Phone, Settings2, Users, Utensils } from "lucide-react";
 import { Card, PillLink } from "@/components/ui/kit";
 import { RoutineList, RoutinesCard } from "@/components/dogs/routines-card";
 import { getMyGroups } from "@/server/session";
@@ -32,6 +32,7 @@ import { LeaveCircleButton } from "@/components/dogs/leave-circle-button";
 import { PlanningRules } from "@/components/planning/planning-rules";
 import { Rise, Stagger } from "@/components/ui/motion";
 import { OrganizeCard } from "@/components/dogs/organize-card";
+import { DogPanels } from "@/components/dogs/dog-panels";
 
 const PRIVATE_NOTE = "Visible selon les réglages du cercle de confiance.";
 
@@ -101,13 +102,31 @@ export async function DogScreen({
         />
       </Rise>
 
-      {editable && (
+      {editable && mode === "group" && (
         <Rise>
-          <PassportShare dogId={dog.id} dogName={dog.name} origin={origin} links={links} />
+          <PillLink href={`/plan?dog=${dog.id}`} size="lg" className="w-full">
+            <CalendarRange className="size-4" aria-hidden /> Faire garder {dog.name}
+          </PillLink>
+        </Rise>
+      )}
+
+      {editable && mode === "solo" && (
+        <Rise>
+          <OrganizeCard />
         </Rise>
       )}
 
       <Rise>
+        <DogPanels
+          panels={[
+            {
+              id: "passport",
+              title: "Passeport",
+              sub: "Identité, habitudes",
+              icon: <IdCard />,
+              tone: "bg-beige",
+              content: (
+                <>
         <PassportSection
           id="identity"
           title="Identité"
@@ -132,9 +151,6 @@ export async function DogScreen({
         >
           <IdentityView dog={dog} />
         </PassportSection>
-      </Rise>
-
-      <Rise>
         <PassportSection
           id="habits"
           title="Habitudes"
@@ -156,30 +172,19 @@ export async function DogScreen({
         >
           <HabitsView dog={dog} />
         </PassportSection>
-      </Rise>
-
-      {editable ? (
-        <Rise>
-          <RoutinesCard dogId={dog.id} dogName={dog.name} enabled={dog.routines_enabled} routines={routines} />
-        </Rise>
-      ) : (
-        dog.routines_enabled &&
-        routines.length > 0 && (
-          <Rise>
-            <Card className="flex flex-col gap-3">
-              <h2 className="flex items-center gap-2 text-[17px] font-semibold tracking-tight text-ink">
-                <ListChecks className="size-5" aria-hidden /> Routines
-              </h2>
-              <RoutineList routines={routines} />
-            </Card>
-          </Rise>
-        )
-      )}
-
-      {priv.access.health || priv.access.emergency ? (
-        <>
-          {priv.access.health && (
-            <Rise>
+                </>
+              ),
+            },
+            {
+              id: "health",
+              title: "Santé",
+              sub: priv.access.health || priv.access.emergency ? "Vétérinaire, urgences" : "Pendant vos gardes",
+              icon: <HeartPulse />,
+              tone: "bg-[var(--tone-uncovered)]",
+              content:
+                priv.access.health || priv.access.emergency ? (
+                  <>
+                    {priv.access.health && (
               <PassportSection
                 id="health"
                 title="Santé"
@@ -204,11 +209,8 @@ export async function DogScreen({
               >
                 <HealthView health={priv.health} />
               </PassportSection>
-            </Rise>
-          )}
-
-          {priv.access.emergency && (
-            <Rise>
+                    )}
+                    {priv.access.emergency && (
               <PassportSection
                 id="emergency"
                 title="Urgences"
@@ -225,10 +227,9 @@ export async function DogScreen({
               >
                 <EmergencyView emergency={priv.emergency} />
               </PassportSection>
-            </Rise>
-          )}
-        </>
-      ) : (
+                    )}
+                  </>
+                ) : (
         <div className="flex items-start gap-3 rounded-3xl bg-surface-2 px-5 py-4">
           <Lock className="mt-0.5 size-5 shrink-0 text-ink-2" aria-hidden />
           <p className="text-[14px] text-ink-2">
@@ -236,10 +237,17 @@ export async function DogScreen({
             {deName(dog.name)}, ou si ses responsables vous les ouvrent dans son cercle de confiance.
           </p>
         </div>
-      )}
-
-      {editable && (
-        <Rise>
+                ),
+            },
+            ...(editable
+              ? [
+                  {
+                    id: "circle",
+                    title: "Cercle",
+                    sub: `${circle.length} personne${circle.length > 1 ? "s" : ""}`,
+                    icon: <Users />,
+                    tone: "bg-[var(--tone-info)]",
+                    content: (
           <CircleCard
             dogId={dog.id}
             dogName={dog.name}
@@ -250,39 +258,61 @@ export async function DogScreen({
             prefs={helperPrefs}
             defaultMaxNights={dog.plan_max_nights}
           />
-        </Rise>
-      )}
-
-      {editable && mode === "group" && (
-        <Rise>
-          <PillLink href={`/plan?dog=${dog.id}`} variant="soft" className="w-full">
-            <CalendarRange className="size-4" aria-hidden /> Faire garder {dog.name}
-          </PillLink>
-        </Rise>
-      )}
-
-      {editable && mode === "group" && (
-        <Rise>
-          <PlanningRules dogId={dog.id} maxNights={dog.plan_max_nights} minSliceHours={dog.plan_min_slice_hours} aloneOnly={dog.alone_only} />
-        </Rise>
-      )}
-
-      {editable && mode === "solo" && (
-        <Rise>
-          <OrganizeCard />
-        </Rise>
-      )}
-
-      {isCaretaker && (
-        <div className="mt-4">
+                    ),
+                  },
+                ]
+              : []),
+            ...(editable || (dog.routines_enabled && routines.length > 0)
+              ? [
+                  {
+                    id: "routines",
+                    title: "Routines",
+                    sub: dog.routines_enabled ? `${routines.length} routine${routines.length > 1 ? "s" : ""}` : "Désactivées",
+                    icon: <ListChecks />,
+                    tone: "bg-[var(--tone-covered)]",
+                    content: editable ? (
+                      <RoutinesCard dogId={dog.id} dogName={dog.name} enabled={dog.routines_enabled} routines={routines} />
+                    ) : (
+                      <Card className="flex flex-col gap-3">
+                        <h2 className="flex items-center gap-2 text-[17px] font-semibold tracking-tight text-ink">
+                          <ListChecks className="size-5" aria-hidden /> Routines
+                        </h2>
+                        <RoutineList routines={routines} />
+                      </Card>
+                    ),
+                  },
+                ]
+              : []),
+            ...(isCaretaker
+              ? [
+                  {
+                    id: "settings",
+                    title: "Réglages",
+                    sub: editable ? "Partage du passeport, planning des gardes, groupes" : "Groupes, archivage",
+                    icon: <Settings2 />,
+                    tone: "bg-surface-2",
+                    wide: true,
+                    content: (
+                      <>
+                        {editable && <PassportShare dogId={dog.id} dogName={dog.name} origin={origin} links={links} />}
+                        {editable && mode === "group" && (
+                          <PlanningRules dogId={dog.id} maxNights={dog.plan_max_nights} minSliceHours={dog.plan_min_slice_hours} aloneOnly={dog.alone_only} />
+                        )}
           <DogManage
             dogId={dog.id}
             archived={Boolean(dog.archived_at)}
             groups={myGroups.map((g) => ({ id: g.id, name: g.name }))}
             sharedGroupIds={groupIds}
           />
-        </div>
-      )}
+                      </>
+                    ),
+                  },
+                ]
+              : []),
+          ]}
+        />
+      </Rise>
+
       {!isCaretaker && visibleGroups[0] && (
         <ReportButton groupId={visibleGroups[0].id} targetType="dog" targetId={dog.id} label="Signaler cette fiche" />
       )}

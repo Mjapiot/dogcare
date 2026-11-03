@@ -185,6 +185,16 @@ seulement), `Indisponible` (tout est « indisponible ») ou `Disponibilité inco
   prochaine garde de la semaine. Une demande déjà proposée à quelqu'un n'apparaît qu'une fois (sa proposition).
   Rien à faire : « Rien à faire pour l'instant ».
 - L'écran « Demandes » reste accessible (« Tout voir », liens des notifications), sans onglet propre.
+- **Chiens** : mes chiens et ceux qu'on me confie (cartes), chiens archivés repliés. Avec un groupe, `/circle`
+  renvoie ici (les demandes et propositions du cercle sont sur l'Accueil) ; sans groupe, « Mes chiens » (`/circle`)
+  reste l'accueil. **Fiche d'un chien** : en-tête, « Faire garder X » (ou « Organiser des gardes entre amis » sans
+  groupe), puis des **tuiles** — Passeport (identité, habitudes), Santé (santé et urgences, ou la mention de leur
+  accès), Cercle, Routines, Réglages (partage du passeport, planning des gardes, groupes, archivage). Un toucher
+  ouvre la partie sous les tuiles ; un lien `#health` (etc.) l'ouvre directement.
+- **Profil** : carte (prénom, e-mail), grand chiffre « Cette année », groupes, réglages, compte.
+- **Page d'une demande** : l'en-tête, puis ce qu'on attend de moi (proposition, « Pouvez-vous aider ? », ma garde,
+  proposition de planning pour le responsable), puis l'absence liée, le carnet, les propositions et les réponses ;
+  « Précisions et passeport » se replient (ouvertes pour qui aide).
 
 ## Demandes de garde
 

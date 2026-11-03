@@ -48,3 +48,10 @@ export async function cleanup(admin: SupabaseClient, userIds: string[], groupIds
   if (userIds.length) await admin.from("dogs").delete().in("created_by", userIds);
   for (const id of userIds) await admin.auth.admin.deleteUser(id);
 }
+
+/** Opens a tile of the dog page ("Passeport", "Santé", "Cercle", "Routines", "Réglages") if it is not open yet. */
+export async function openTile(page: Page, name: string) {
+  const tile = page.getByRole("button", { name: new RegExp(`^${name}(\\s|$)`) });
+  await tile.waitFor();
+  if ((await tile.getAttribute("aria-expanded")) !== "true") await tile.click();
+}

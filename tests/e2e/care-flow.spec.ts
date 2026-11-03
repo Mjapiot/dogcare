@@ -122,10 +122,7 @@ test("full care coordination flow", async ({ browser }) => {
     // 11. Chloé offers help, 12. Julie confirms Chloé
     const chloe = await chloeCtx.newPage();
     await gotoStable(chloe, requestUrl);
-    // centred first: at the bottom of the page the floating bar may cover it while the page settles
-    const chloeYes = chloe.getByRole("button", { name: "Oui, je peux" });
-    await chloeYes.evaluate((e) => e.scrollIntoView({ block: "center" }));
-    await chloeYes.click();
+    await chloe.getByRole("button", { name: "Oui, je peux" }).click();
     await gotoStable(julie, requestUrl);
     await julie.getByRole("button", { name: "Confirmer", exact: true }).first().click();
     await julie.getByRole("button", { name: /Confirmer Chloé/ }).click();

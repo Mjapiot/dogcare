@@ -49,6 +49,7 @@ test("availability: needs on my days, weekend shortcut", async ({ browser }) => 
     const page = await signIn(context, admin, emma.email, "/availability");
     await page.waitForURL(/\/availability$/);
     // the need is in this week or the next one
+    await expect(page.getByRole("heading", { name: "Cette semaine, je suis dispo" })).toBeVisible({ timeout: 15_000 });
     const badge = page.getByRole("link", { name: /Aston a besoin d'aide/ });
     if (!(await badge.isVisible())) await page.getByRole("button", { name: "Semaine suivante" }).click();
     await expect(badge).toBeVisible();

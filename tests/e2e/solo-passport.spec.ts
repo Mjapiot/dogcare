@@ -4,7 +4,7 @@
  * creates a group and shares the dog with it.
  */
 import { expect, test } from "@playwright/test";
-import { adminClient, cleanup, createTestUser, gotoStable, signIn } from "./helpers";
+import { adminClient, cleanup, createTestUser, gotoStable, openTile, signIn } from "./helpers";
 
 test("passport without a group, then shared with a new group", async ({ browser }) => {
   test.setTimeout(150_000);
@@ -31,10 +31,12 @@ test("passport without a group, then shared with a new group", async ({ browser 
     await page.waitForURL(/\/circle\/dogs\/[0-9a-f-]{36}$/, { timeout: 15_000 });
     dogId = page.url().split("/").at(-1)!;
 
+    await openTile(page, "Santé");
     await page.getByRole("button", { name: "Modifier : Santé" }).click();
     await page.getByLabel("Allergies").fill("Poulet");
     await page.getByRole("button", { name: "Enregistrer" }).click();
     await expect(page.getByText("Poulet")).toBeVisible({ timeout: 15_000 });
+    await openTile(page, "Réglages");
     await page.getByRole("button", { name: "Créer un lien" }).click();
     await page.getByRole("button", { name: "Créer et partager" }).click();
     await expect(page.getByRole("dialog").getByText(/\/p\//)).toBeVisible({ timeout: 15_000 });

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { ArrowLeft, HeartHandshake, Info, PawPrint, Users } from "lucide-react";
+import { ArrowLeft, ChevronDown, HeartHandshake, Info, PawPrint, Users } from "lucide-react";
 import { getMyGroups, requireAppContext } from "@/server/session";
 import {
   getAbsenceSiblings,
@@ -18,7 +18,7 @@ import { groupProposals } from "@/domain/absence";
 import { cumulBusyRows } from "@/domain/cumul";
 import { buildRequestViews } from "@/domain/views";
 import { NECESSITY_LABELS, REQUEST_TYPE_LABELS } from "@/domain/status";
-import { formatDuration, formatPeriod } from "@/lib/format";
+import { deName, formatDuration, formatPeriod } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { TONE_CLASSES } from "@/components/domain/tone";
 import { CoverageIndicator, DogAvatar, RequestStatusBadge } from "@/components/domain/request-bits";
@@ -129,64 +129,7 @@ export default async function RequestDetailPage({ params }: PageProps<"/requests
         </p>
       )}
 
-      {siblings.length > 0 && (
-        <section className="flex flex-col gap-1 rounded-[24px] bg-surface p-4" aria-labelledby="same-absence">
-          <h2 id="same-absence" className="flex items-center gap-2 text-[15px] font-semibold text-ink">
-            <PawPrint className="size-4" aria-hidden /> Même absence
-          </h2>
-          <p className="text-[14px] text-ink-3">Une demande par chien, aux mêmes dates :</p>
-          <ul className="flex flex-wrap gap-2 pt-1">
-            {siblings.map((sib) => (
-              <li key={sib.id}>
-                <Link href={`/requests/${sib.id}`} className="inline-flex min-h-11 items-center rounded-full bg-surface-2 px-4 text-[15px] font-medium text-ink">
-                  {sib.dogName}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      {r.description && (
-        <section className="rounded-[24px] bg-surface p-4">
-          <h2 className="text-[15px] font-semibold text-ink">Précisions</h2>
-          <p className="mt-1 whitespace-pre-line text-[15px] text-ink-2">{r.description}</p>
-        </section>
-      )}
-
-      {view.dog && (
-        <section className="rounded-[24px] bg-surface p-4">
-          <h2 className="flex items-center gap-2 text-[15px] font-semibold text-ink">
-            <Info className="size-4" aria-hidden /> À savoir sur {view.dog.name}
-          </h2>
-          {view.dog.care_notes && <p className="mt-1 whitespace-pre-line text-[15px] text-ink-2">{view.dog.care_notes}</p>}
-          <Link
-            href={`/dogs/${view.dog.id}`}
-            className="mt-2 inline-flex min-h-11 items-center gap-1 text-[15px] font-medium text-ink underline underline-offset-2"
-          >
-            Voir son passeport
-          </Link>
-        </section>
-      )}
-
-      {!cancelled && view.myAssignments.length > 0 && (
-        <section className="flex flex-col gap-2">
-          <h2 className="px-1 text-[17px] font-semibold text-ink">Ma garde</h2>
-          <AssignmentActions assignments={view.myAssignments} />
-        </section>
-      )}
-
-      <CareLogSection
-        requestId={r.id}
-        groupId={groupId}
-        me={userId}
-        dog={view.dog ? { id: view.dog.id, name: view.dog.name, meals: view.dog.meals, walks: view.dog.walks } : null}
-        myAssignments={cancelled ? [] : view.myAssignments}
-        iAmCaretaker={view.iAmCaretaker}
-        names={Object.fromEntries(view.helpers.map((h) => [h.userId, h.name]))}
-        liveAssignments={cancelled ? [] : view.assignments}
-      />
-
+      {/* what is expected from me first */}
       {myProposal && <ProposalCard proposal={myProposal} />}
 
       {!cancelled && view.iAmEligible && view.myAssignments.length === 0 && r.necessity !== "info" && !view.status.isPast && (
@@ -208,6 +151,13 @@ export default async function RequestDetailPage({ params }: PageProps<"/requests
         </section>
       )}
 
+      {!cancelled && view.myAssignments.length > 0 && (
+        <section className="flex flex-col gap-2">
+          <h2 className="px-1 text-[17px] font-semibold text-ink">Ma garde</h2>
+          <AssignmentActions assignments={view.myAssignments} />
+        </section>
+      )}
+
       {plan && (
         <PlanCard
           key={`${r.revision}-${view.assignments.length}-${plan.offers.map((o) => `${o.userId}:${offerIntervals(o).map((i) => `${i.start}-${i.end}`).join("+")}`).join(",")}`}
@@ -220,6 +170,35 @@ export default async function RequestDetailPage({ params }: PageProps<"/requests
           suggestions={plan.suggestions}
         />
       )}
+
+      {siblings.length > 0 && (
+        <section className="flex flex-col gap-1 rounded-[24px] bg-surface p-4" aria-labelledby="same-absence">
+          <h2 id="same-absence" className="flex items-center gap-2 text-[15px] font-semibold text-ink">
+            <PawPrint className="size-4" aria-hidden /> Même absence
+          </h2>
+          <p className="text-[14px] text-ink-3">Une demande par chien, aux mêmes dates :</p>
+          <ul className="flex flex-wrap gap-2 pt-1">
+            {siblings.map((sib) => (
+              <li key={sib.id}>
+                <Link href={`/requests/${sib.id}`} className="inline-flex min-h-11 items-center rounded-full bg-surface-2 px-4 text-[15px] font-medium text-ink">
+                  {sib.dogName}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      <CareLogSection
+        requestId={r.id}
+        groupId={groupId}
+        me={userId}
+        dog={view.dog ? { id: view.dog.id, name: view.dog.name, meals: view.dog.meals, walks: view.dog.walks } : null}
+        myAssignments={cancelled ? [] : view.myAssignments}
+        iAmCaretaker={view.iAmCaretaker}
+        names={Object.fromEntries(view.helpers.map((h) => [h.userId, h.name]))}
+        liveAssignments={cancelled ? [] : view.assignments}
+      />
 
       {view.iAmCaretaker && <ProposalsSection proposals={proposals} names={Object.fromEntries(view.helpers.map((h) => [h.userId, h.name]))} />}
 
@@ -248,6 +227,37 @@ export default async function RequestDetailPage({ params }: PageProps<"/requests
         />
       )}
 
+      {(r.description || view.dog) && (
+        <details className="group rounded-[24px] bg-surface p-4" open={!view.iAmCaretaker}>
+          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between text-[15px] font-semibold text-ink [&::-webkit-details-marker]:hidden">
+            {view.dog ? `Précisions et passeport ${deName(view.dog.name)}` : "Précisions"}
+            <ChevronDown className="size-5 text-ink-3 transition-transform group-open:rotate-180" aria-hidden />
+          </summary>
+          <div className="flex flex-col gap-3 pt-2">
+            {r.description && (
+              <div>
+                <h2 className="text-[15px] font-semibold text-ink">Précisions</h2>
+                <p className="mt-1 whitespace-pre-line text-[15px] text-ink-2">{r.description}</p>
+              </div>
+            )}
+
+            {view.dog && (
+              <div>
+                <h2 className="flex items-center gap-2 text-[15px] font-semibold text-ink">
+                  <Info className="size-4" aria-hidden /> À savoir sur {view.dog.name}
+                </h2>
+                {view.dog.care_notes && <p className="mt-1 whitespace-pre-line text-[15px] text-ink-2">{view.dog.care_notes}</p>}
+                <Link
+                  href={`/dogs/${view.dog.id}`}
+                  className="mt-2 inline-flex min-h-11 items-center gap-1 text-[15px] font-medium text-ink underline underline-offset-2"
+                >
+                  Voir son passeport
+                </Link>
+              </div>
+            )}
+          </div>
+        </details>
+      )}
       {view.iAmCaretaker && !cancelled && (
         <OwnerActions
           requestId={r.id}

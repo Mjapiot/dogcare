@@ -38,6 +38,8 @@ export default async function CirclePage() {
     getMyPendingProposals(userId).then(groupProposals),
     getMyDogs(userId),
   ]);
+  // with a group, dogs live in the app's "Chiens" tab (requests and proposals: on its home)
+  if (groups.length) redirect("/dogs");
   const mine = ownDogs.filter((d) => !d.archived_at);
   const photos = await signDogPhotos([...dogs.map((d) => ({ id: d.dog_id, photo_path: d.photo_path })), ...mine]);
   // with a group, a dog's page lives in the app

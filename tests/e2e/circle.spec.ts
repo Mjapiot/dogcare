@@ -4,7 +4,7 @@
  * health nor any group; the owner removes them and access stops.
  */
 import { expect, test } from "@playwright/test";
-import { adminClient, cleanup, createTestUser, gotoStable, signIn } from "./helpers";
+import { adminClient, cleanup, createTestUser, gotoStable, openTile, signIn } from "./helpers";
 
 test("circle: invite a guest, guest sees the passport only, removal", async ({ browser }) => {
   // two sign-ups against a deployed app: slower than the default budget
@@ -37,6 +37,7 @@ test("circle: invite a guest, guest sees the passport only, removal", async ({ b
     const dogId = dog!.dog_id as string;
 
     await gotoStable(page, `/dogs/${dogId}`);
+    await openTile(page, "Santé");
     await page.getByRole("button", { name: "Modifier : Santé" }).click();
     await page.getByLabel("Allergies").fill("Poulet");
     await page.getByRole("button", { name: "Enregistrer" }).click();
@@ -47,6 +48,7 @@ test("circle: invite a guest, guest sees the passport only, removal", async ({ b
     await expect(page.getByRole("button", { name: "Modifier : Urgences" })).toBeVisible();
 
     // invite a guest, without health
+    await openTile(page, "Cercle");
     await page.getByRole("button", { name: "Inviter dans le cercle" }).click();
     await page.getByLabel("Voir la santé").click();
     await page.getByRole("button", { name: "Créer et partager le lien" }).click();
@@ -72,6 +74,7 @@ test("circle: invite a guest, guest sees the passport only, removal", async ({ b
     await gotoStable(page, "/notifications");
     await expect(page.getByText("Lea a rejoint le cercle d'Aston")).toBeVisible();
     await gotoStable(page, `/dogs/${dogId}`);
+    await openTile(page, "Cercle");
     // garde preferences: never at night, with a reason
     await page.getByRole("button", { name: /Lea, Invité/ }).click();
     await page.getByLabel("Nuits d'affilée maximum").selectOption("0");

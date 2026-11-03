@@ -114,6 +114,9 @@
     @apply font-sans;
     -webkit-text-size-adjust: 100%;
     -webkit-tap-highlight-color: transparent;
+    /* scrolling to an element (focus, anchors, "scroll into view") keeps it clear of the sticky header and the floating bar */
+    scroll-padding-top: calc(var(--safe-top) + 72px);
+    scroll-padding-bottom: calc(var(--nav-height) + var(--nav-gap) + var(--safe-bottom) + 16px);
   }
   body {
     @apply bg-background text-foreground antialiased;

@@ -53,6 +53,7 @@ Safari iOS puis PWA installée (Partager → « Sur l'écran d'accueil »).
 | 23 | Nouvelle barre du bas et Accueil | la pastille noire glisse ; chaque bouton est annoncé par VoiceOver ; les cartes « à faire » se lisent sans dépendre de la couleur ; rien n'est caché derrière la barre en fin de page |
 | 24 | « Besoin d'une garde » sur iPhone | étapes 1 → 2 → 3 sans perte, champs date et heure natifs, « Modifier » revient à l'étape 2, l'assistant passe directement à l'étape 2 |
 | 25 | Agenda sur iPhone | Besoins : une carte par besoin, mois précédent / suivant, « Revenir à aujourd'hui » ; Mes dispos : toucher une tuile change son état sans attendre, raccourcis, semaine suivante |
+| 26 | Fiche d'un chien, Profil, page d'une demande | tuiles : un toucher ouvre, un second referme, l'éditeur garde sa saisie ; « Faire garder X » ; Profil sans rangées de chiens ; demande : la réponse est en haut, « Précisions et passeport » se replie ; rien ne passe sous la barre en bas de page |
 
 ## 3. Vérifications post-déploiement
 

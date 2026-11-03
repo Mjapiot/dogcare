@@ -4,7 +4,7 @@
  * sees her garde; removed from the circle, her garde is cancelled.
  */
 import { expect, test } from "@playwright/test";
-import { adminClient, cleanup, createTestUser, gotoStable, signIn } from "./helpers";
+import { adminClient, cleanup, createTestUser, gotoStable, openTile, signIn } from "./helpers";
 
 test("circle invitee: asked on a request, answers, is confirmed, removal cancels", async ({ browser }) => {
   // two sign-ups against a deployed app: slower than the default budget
@@ -38,6 +38,7 @@ test("circle invitee: asked on a request, answers, is confirmed, removal cancels
 
     // invite the pet-sitter as a guest (default: today → in 3 days)
     await gotoStable(page, `/dogs/${dogId}`);
+    await openTile(page, "Cercle");
     await page.getByRole("button", { name: "Inviter dans le cercle" }).click();
     await page.getByRole("button", { name: "Créer et partager le lien" }).click();
     const url = await page.locator("p[title*='/circle/join/']").getAttribute("title");
@@ -97,6 +98,7 @@ test("circle invitee: asked on a request, answers, is confirmed, removal cancels
 
     // removed from the circle: her garde is cancelled
     await gotoStable(page, `/dogs/${dogId}`);
+    await openTile(page, "Cercle");
     await page.getByRole("button", { name: /Lea, Invité/ }).click();
     await page.getByRole("button", { name: "Retirer du cercle" }).click();
     await page.getByRole("button", { name: "Retirer", exact: true }).click();
