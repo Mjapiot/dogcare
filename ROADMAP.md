@@ -77,7 +77,7 @@ Vision : « Toute la vie de votre animal, partagée avec les bonnes personnes »
 - [x] Lot de polissage (accessibilité, fiabilité, détails d'interface) : « Personne à solliciter », VoiceOver du mois, textes agrandis, feuille du jour et sens des animations, cartes sortantes inactives, planning sans doublon, tris par instants, photos du carnet dans l'app, compte du dernier responsable, limites photos, rafraîchissements — en production le 2026-11-02
 - [x] Correctifs de la revue du 2026-10-29 : blocage et engagements, suppression de groupe, lien des invités, bouton Fermer 44 px, planning et nuits confirmées, ménage quotidien, pastille allégée, mineurs (en production le 2026-10-29)
 - [ ] Refonte du parcours (prototype validé le 2026-11-03), 6 lots :
-  - [x] Lots 1 et 2 : briques visuelles, barre du bas flottante (Accueil, Agenda, Chiens, Profil), « Besoin d'une garde » dans l'en-tête, Accueil « À faire maintenant » — développés le 2026-11-03
+  - [x] Lots 1 et 2 : briques visuelles, barre du bas flottante (Accueil, Agenda, Chiens, Profil), « Besoin d'une garde » dans l'en-tête, Accueil « À faire maintenant » — en production le 2026-11-03 (E2E 15/15, 2 relancés après un aléa de minutage)
   - [ ] Lot 3 : le « + » unique en 3 étapes (types « pour info », « souhaitée », « non partageable » supprimés à la création)
   - [ ] Lot 4 : Agenda comme la maquette (Besoins en grandes cartes, Mes dispos), sans grille du mois
   - [ ] Lot 5 : Chiens (fusion de `/circle`, fiche en 4 tuiles)
