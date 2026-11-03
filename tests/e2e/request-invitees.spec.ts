@@ -46,15 +46,23 @@ test("circle invitee: asked on a request, answers, is confirmed, removal cancels
     await sitterPage.getByRole("button", { name: "Accepter l'invitation" }).click();
     await sitterPage.waitForURL(new RegExp(`/circle/${dogId}$`));
 
-    // the owner asks her on a request for tomorrow ("Demander aussi à", on by default)
+    // the owner publishes a need for tomorrow, then asks her on it ("Demander aussi à")
     const tomorrow = new Date(Date.now() + 86_400_000).toLocaleDateString("sv-SE", { timeZone: "Europe/Paris" });
-    await gotoStable(page, `/requests/new?date=${tomorrow}`);
-    await expect(page.getByText("Demander aussi à")).toBeVisible();
-    await expect(page.getByRole("switch", { name: /Lea/ })).toBeChecked();
+    await gotoStable(page, `/plan?date=${tomorrow}`);
+    await expect(page.getByRole("heading", { name: /Pour qui|Quand/ })).toBeVisible({ timeout: 15_000 });
+    const toDates = page.getByRole("button", { name: "Continuer" });
+    if (await toDates.isVisible()) await toDates.click();
+    await page.getByRole("button", { name: "Voir qui peut le garder" }).click();
+    await expect(page.getByRole("heading", { name: "On vous propose" })).toBeVisible({ timeout: 15_000 });
     await page.getByRole("button", { name: "Publier la demande" }).click();
     await page.waitForURL(/\/requests\/[0-9a-f-]{36}$/);
     const requestUrl = page.url();
     const requestId = requestUrl.split("/").pop()!;
+    await gotoStable(page, `${requestUrl}/edit`);
+    await expect(page.getByText("Demander aussi à")).toBeVisible();
+    await page.getByRole("switch", { name: /Lea/ }).click();
+    await page.getByRole("button", { name: "Enregistrer les modifications" }).click();
+    await page.waitForURL(new RegExp(`/requests/${requestId}$`));
     // her notification has no group: its link leads to her own request page (/circle/requests/…)
     const { data: notes } = await admin
       .from("notifications")

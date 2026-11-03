@@ -52,6 +52,10 @@ réponses). Côté invité, `/circle` liste ses demandes et `/circle/requests/[i
 demande ouverte depuis `/requests/[id]` par quelqu'un hors de son groupe redirige vers `/circle/requests/[id]` ; une
 personne sans groupe arrive sur `/circle` (y compris depuis une notification).
 
+## Modifier une demande
+
+`app/(app)/requests/[id]/edit/page.tsx` → `RequestEditForm` (`components/domain/care-request-form.tsx`) → `updateCareRequest` (`requestEditSchema` : dates, précisions, personnes du cercle ; le type et la nécessité ne changent pas).
+
 ## Accueil et navigation
 
 `app/(app)/page.tsx` (« À faire maintenant ») : `domain/home.ts` (`buildHomeTodo` : reconfirmations, propositions,
@@ -102,7 +106,7 @@ plusieurs plages (`offerIntervals`), un plafond de nuits propre (`maxNights`, 0 
 (`place`) ; `planOffers` y joint les préférences (`getHelperPrefs`) et limite une proposition acceptée à ses
 créneaux.
 
-« Planifier une absence » : page `/plan` (serveur, `dog=id,id` pour plusieurs chiens) → `domain/absence.ts`
+« Besoin d'une garde » (seule création de demande ; `/requests/new` redirige) : page `/plan` (serveur ; `dog=id,id`, `date` depuis le calendrier, `desc` pour les précisions ; étapes 1 et 2 dans `absence-form.tsx`, étape 3 calculée par la page) → `domain/absence.ts`
 (`planAbsence` : plan commun des chiens qui peuvent être ensemble, puis chien par chien pour le reste, chiens
 « gardés seuls » en dernier ; offres tirées des dispos par `availableIntervals`, occupation par `cumulBusy` avec les
 parts déjà données ; propositions par personne et par chien, créneaux « séparés », candidats du cercle par trou) ;

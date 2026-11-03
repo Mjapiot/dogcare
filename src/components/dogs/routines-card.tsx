@@ -53,6 +53,12 @@ export function RoutineList({ routines, onEdit }: { routines: Routine[]; onEdit?
 export function RoutinesCard({ dogId, dogName, enabled, routines }: { dogId: string; dogName: string; enabled: boolean; routines: Routine[] }) {
   const router = useRouter();
   const [on, setOn] = useState(enabled);
+  // follow the server's value without remounting (a remount would close a sheet opened meanwhile)
+  const [serverOn, setServerOn] = useState(enabled);
+  if (enabled !== serverOn) {
+    setServerOn(enabled);
+    setOn(enabled);
+  }
   const [, startTransition] = useTransition();
   // the sheet keeps its routine while it closes
   const [editing, setEditing] = useState<Routine | null>(null);

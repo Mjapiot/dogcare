@@ -90,8 +90,8 @@ export function DaySheet({
                 <p className="text-[12px] text-ink-3">Une disponibilité est une indication, pas un engagement : seule une garde confirmée compte.</p>
               </section>
 
-              <PillLink href={`/requests/new?date=${date}`} className="w-full" onClick={onClose}>
-                <Plus className="size-4" aria-hidden /> Ajouter un besoin ce jour
+              <PillLink href={`/plan?date=${date}`} className="w-full" onClick={onClose}>
+                <Plus className="size-4" aria-hidden /> Besoin d&apos;une garde ce jour-là
               </PillLink>
             </div>
           </>

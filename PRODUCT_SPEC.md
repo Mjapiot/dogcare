@@ -174,7 +174,7 @@ seulement), `Indisponible` (tout est « indisponible ») ou `Disponibilité inco
   le bouton courant : **Accueil**, **Agenda** (pilules « Besoins » / « Mes dispos »), **Chiens** (pilules « Mes
   chiens » / « Qu'on me confie ») et **Profil**. La pastille rouge de l'Accueil compte les demandes à répondre.
 - **En-tête** : le groupe courant (changement de groupe), les notifications et la pilule noire **« Besoin d'une
-  garde »**, seule entrée pour demander une garde (elle ouvre « Planifier une absence »).
+  garde »**, seule entrée pour demander une garde (parcours en 3 étapes, ci-dessous).
 - **Accueil « À faire maintenant »** : grande date, compteurs « à faire » et « gardes en cours », bandeau
   « Cette semaine » (un point par jour qui a un besoin, couleur du statut ; chaque jour ouvre l'agenda), puis une
   carte pastel par chose attendue de moi, dans cet ordre : horaires changés à reconfirmer, propositions de garde
@@ -187,10 +187,15 @@ seulement), `Indisponible` (tout est « indisponible ») ou `Disponibilité inco
 
 ## Demandes de garde
 
-Types : **Chien seul** (information), **Visite ou promenade**, **Garde**, **Garde partielle**.
-Nécessité : information / souhaitable / indispensable (« Chien seul » est toujours une information).
-Champs : chien, groupe (groupe courant), type, début, fin, nécessité, précisions, partage possible entre
-plusieurs personnes. Durée maximale : 31 jours.
+Un seul parcours, **« Besoin d'une garde »** (pilule de l'en-tête, fiche du chien « Faire garder X », jour du
+calendrier) en 3 étapes : **Pour qui ?** (grandes cartes des chiens, tous cochés ; ou une phrase pour l'assistant),
+**Quand ?** (départ et retour, nombre de nuits en grand, précisions facultatives), puis **On vous propose** (part
+couverte en grand avec sa jauge, qui garde quand, trous et personnes du cercle à solliciter). On envoie les
+propositions, ou on **publie sans proposer** à quelqu'un (demande habituelle pour le groupe). Une nouvelle demande
+est toujours une **garde nécessaire et partageable** : les types « chien seul » (information), « visite »,
+« garde partielle », la nécessité « souhaitable » et « non partageable » ne se créent plus (décision du
+2026-11-03) ; les demandes existantes les gardent et s'affichent comme avant. Modifier une demande : dates,
+précisions et personnes du cercle sollicitées (« Demander aussi à »). Durée maximale : 31 jours.
 
 ### Écran « Demandes »
 

@@ -160,7 +160,7 @@ export async function DogScreen({
 
       {editable ? (
         <Rise>
-          <RoutinesCard key={String(dog.routines_enabled)} dogId={dog.id} dogName={dog.name} enabled={dog.routines_enabled} routines={routines} />
+          <RoutinesCard dogId={dog.id} dogName={dog.name} enabled={dog.routines_enabled} routines={routines} />
         </Rise>
       ) : (
         dog.routines_enabled &&
@@ -256,7 +256,7 @@ export async function DogScreen({
       {editable && mode === "group" && (
         <Rise>
           <PillLink href={`/plan?dog=${dog.id}`} variant="soft" className="w-full">
-            <CalendarRange className="size-4" aria-hidden /> Planifier une absence
+            <CalendarRange className="size-4" aria-hidden /> Faire garder {dog.name}
           </PillLink>
         </Rise>
       )}

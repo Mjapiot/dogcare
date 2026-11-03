@@ -78,13 +78,21 @@ test("full care coordination flow", async ({ browser }) => {
       await expect(emma.getByText(/marqués? disponibles?/).first()).toBeVisible();
     }
 
-    // 5. Julie posts a request for Oscar tomorrow 13:00–17:00
+    // 5. Julie posts a need for Oscar tomorrow 13:00–17:00 ("Besoin d'une garde", from a day of the calendar)
     const tomorrow = new Date(Date.now() + 86_400_000).toLocaleDateString("sv-SE", { timeZone: "Europe/Paris" });
     await gotoStable(julie, `/requests/new?date=${tomorrow}`);
-    await julie.getByRole("button", { name: /Garde partielle/ }).click();
-    await julie.getByLabel("Heure").first().fill("13:00");
-    await julie.getByLabel("Heure").nth(1).fill("17:00");
-    await julie.getByRole("button", { name: "Publier la demande" }).click();
+    await julie.waitForURL(/\/plan\?date=/);
+    await expect(julie.getByRole("heading", { name: /Pour qui|Quand/ })).toBeVisible({ timeout: 15_000 });
+    const toDates = julie.getByRole("button", { name: "Continuer" });
+    if (await toDates.isVisible()) await toDates.click();
+    await julie.locator("#absence-start-time").fill("13:00");
+    await julie.locator("#absence-end-time").fill("17:00");
+    await julie.getByRole("button", { name: "Voir qui peut le garder" }).click();
+    await expect(julie.getByRole("heading", { name: "On vous propose" })).toBeVisible({ timeout: 15_000 });
+    // a plain request for the group: nobody targeted
+    const publishOnly = julie.getByRole("button", { name: "Publier sans proposer à quelqu'un" });
+    if (await publishOnly.isVisible()) await publishOnly.click();
+    else await julie.getByRole("button", { name: "Publier la demande" }).click();
     await julie.waitForURL(/\/requests\/[0-9a-f-]{36}$/);
     const requestUrl = julie.url();
     await expect(julie.getByText("Aides potentielles").first()).toBeVisible();

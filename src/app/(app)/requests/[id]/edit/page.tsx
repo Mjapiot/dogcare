@@ -5,7 +5,7 @@ import { getGroupSnapshot, getInviteeCandidates, getRequestGroupId } from "@/ser
 import { toLocalDate, toLocalTime } from "@/domain/time";
 import { uuid } from "@/lib/validation";
 import { PageTitle } from "@/components/ui/kit";
-import { CareRequestForm } from "@/components/domain/care-request-form";
+import { RequestEditForm } from "@/components/domain/care-request-form";
 
 export const metadata: Metadata = { title: "Modifier la demande" };
 
@@ -27,23 +27,18 @@ export default async function EditRequestPage({ params }: PageProps<"/requests/[
   return (
     <div className="flex flex-col gap-6 pt-2">
       <PageTitle title="Modifier" subtitle={dog ? `Demande pour ${dog.name}` : undefined} />
-      <CareRequestForm
-        groupId={groupId}
+      <RequestEditForm
         requestId={id}
         hasAssignments={hasAssignments}
-        dogs={dog ? [{ id: dog.id, name: dog.name }] : []}
         candidates={candidates}
         initialInvitees={(snapshot.invitees ?? []).map((i) => i.user_id)}
         initial={{
           dogId: r.dog_id,
-          requestType: r.request_type,
-          necessity: r.necessity,
           startDate: toLocalDate(r.starts_at),
           startTime: toLocalTime(r.starts_at),
           endDate: toLocalDate(r.ends_at),
           endTime: toLocalTime(r.ends_at),
           description: r.description ?? "",
-          splittable: r.splittable,
         }}
       />
     </div>

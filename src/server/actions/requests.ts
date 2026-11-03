@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import { careRequestSchema, planSliceSchema, responseSchema, uuid } from "@/lib/validation";
+import { planSliceSchema, requestEditSchema, responseSchema, uuid } from "@/lib/validation";
 import { zonedInstant } from "@/domain/time";
 import { requireUserId } from "@/server/session";
 import { toUserMessage } from "@/server/errors";
@@ -31,50 +31,12 @@ async function saveInvitees(requestId: string, inviteeIds: string[] | undefined)
   return error ? toUserMessage(error) : null;
 }
 
-export async function createCareRequest(
-  input: z.input<typeof careRequestSchema>,
-): Promise<ActionResult<{ requestId: string; inviteError: string | null }>> {
-  const parsed = careRequestSchema.safeParse(input);
-  if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message };
-  const v = parsed.data;
-  const { start, end } = toPeriod(v);
-  const periodError = validatePeriod(start, end);
-  if (periodError) return { ok: false, error: periodError };
-
-  await requireUserId();
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("care_requests")
-    .insert({
-      group_id: v.groupId,
-      dog_id: v.dogId,
-      request_type: v.requestType,
-      necessity: v.necessity,
-      starts_at: new Date(start).toISOString(),
-      ends_at: new Date(end).toISOString(),
-      description: v.description || null,
-      splittable: v.splittable,
-    })
-    .select("id")
-    .single();
-  if (error) {
-    if (error.code === "42501") return { ok: false, error: "Seul un responsable de ce chien peut publier une demande." };
-    if (error.code === "23503") return { ok: false, error: "Ce chien n'est pas visible dans ce groupe." };
-    return { ok: false, error: toUserMessage(error) };
-  }
-  const requestId = (data as { id: string }).id;
-  // the request exists even if asking circle people fails: never ask to publish it twice
-  const inviteError = v.inviteeIds?.length ? await saveInvitees(requestId, v.inviteeIds) : null;
-  schedulePushDispatch();
-  revalidatePath("/", "layout");
-  return { ok: true, data: { requestId, inviteError } };
-}
-
+/** New needs are created by "Besoin d'une garde" (plan_absence_multi); here only dates, details, circle people. */
 export async function updateCareRequest(
   requestId: string,
-  input: z.input<typeof careRequestSchema>,
+  input: z.input<typeof requestEditSchema>,
 ): Promise<ActionResult<{ inviteError: string | null }>> {
-  const parsed = careRequestSchema.safeParse(input);
+  const parsed = requestEditSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message };
   if (!uuid.safeParse(requestId).success) return { ok: false, error: "Demande introuvable." };
   const v = parsed.data;
@@ -86,12 +48,9 @@ export async function updateCareRequest(
   const { data, error } = await supabase
     .from("care_requests")
     .update({
-      request_type: v.requestType,
-      necessity: v.necessity,
       starts_at: new Date(start).toISOString(),
       ends_at: new Date(end).toISOString(),
       description: v.description || null,
-      splittable: v.splittable,
     })
     .eq("id", requestId)
     .select("id");

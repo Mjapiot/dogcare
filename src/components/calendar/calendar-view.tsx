@@ -252,8 +252,8 @@ export function CalendarView({ view, anchor, from, to, today, items, summary, sc
           title={focus === "all" && scope === "all" && !activeFilterCount ? "Rien de prévu sur cette période" : "Aucun besoin ne correspond à ce filtre"}
           description="Les besoins de garde de tous les chiens du groupe apparaissent ici."
           action={
-            <PillLink href="/requests/new" size="md">
-              <Plus className="size-4" aria-hidden /> Ajouter un besoin
+            <PillLink href="/plan" size="md">
+              <Plus className="size-4" aria-hidden /> Besoin d&apos;une garde
             </PillLink>
           }
         />

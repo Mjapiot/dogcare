@@ -51,7 +51,7 @@ export default async function RequestsPage({ searchParams }: PageProps<"/request
           title="Demandes"
           subtitle="Un « oui » est une proposition : la garde n'est confiée qu'une fois confirmée."
           action={
-            <PillLink href="/requests/new" size="sm" variant="soft">
+            <PillLink href="/plan" size="sm" variant="soft">
               <Plus className="size-4" aria-hidden /> Besoin
             </PillLink>
           }
@@ -132,8 +132,8 @@ export default async function RequestsPage({ searchParams }: PageProps<"/request
               icon={Inbox}
               title="Aucune demande en cours pour vos chiens"
               action={
-                <PillLink href="/requests/new">
-                  <Plus className="size-4" aria-hidden /> Ajouter un besoin
+                <PillLink href="/plan">
+                  <Plus className="size-4" aria-hidden /> Besoin d&apos;une garde
                 </PillLink>
               }
             />

@@ -15,7 +15,7 @@ import { AbsencePlanner } from "@/components/planning/absence-planner";
 import { decodeRules, encodeRules, type AbsenceRule } from "@/domain/absence-intent";
 import { assistantEnabled } from "@/server/ai";
 
-export const metadata: Metadata = { title: "Planifier une absence" };
+export const metadata: Metadata = { title: "Besoin d'une garde" };
 
 const param = (v: string | string[] | undefined) => (typeof v === "string" ? v : undefined);
 
@@ -34,7 +34,7 @@ export default async function PlanAbsencePage({ searchParams }: PageProps<"/plan
   if (myDogs.length === 0) {
     return (
       <div className="flex flex-col gap-6 pt-2">
-        <PageTitle title="Planifier une absence" />
+        <PageTitle title="Besoin d'une garde" />
         <EmptyState
           icon={PawPrint}
           title="Aucun chien dans ce groupe"
@@ -49,12 +49,16 @@ export default async function PlanAbsencePage({ searchParams }: PageProps<"/plan
   // several dogs: "dog=id,id"; one dog of mine: that one; none chosen: all of them
   const dogParam = (param(params.dog) ?? "").split(",").filter(Boolean);
   const chosen = dogParam.length ? myDogs.filter((d) => dogParam.includes(d.id)) : myDogs;
+  // a day chosen in the calendar: that day, daytime; otherwise a long weekend from tomorrow
+  const day = localDate.safeParse(param(params.date)).data;
+  const oneDay = day && day >= today ? day : null;
   const form = {
     dogIds: chosen.map((d) => d.id),
-    startDate: localDate.safeParse(param(params.from)).data ?? addDays(today, 1),
-    startTime: localTime.safeParse(param(params.fromTime)).data ?? "18:00",
-    endDate: localDate.safeParse(param(params.to)).data ?? addDays(today, 4),
-    endTime: localTime.safeParse(param(params.toTime)).data ?? "09:00",
+    startDate: localDate.safeParse(param(params.from)).data ?? oneDay ?? addDays(today, 1),
+    startTime: localTime.safeParse(param(params.fromTime)).data ?? (oneDay ? "09:00" : "18:00"),
+    endDate: localDate.safeParse(param(params.to)).data ?? oneDay ?? addDays(today, 4),
+    endTime: localTime.safeParse(param(params.toTime)).data ?? (oneDay ? "18:00" : "09:00"),
+    description: (param(params.desc) ?? "").slice(0, 1000),
   };
   const submitted = Boolean(chosen.length && params.from && params.to);
   const start = zonedInstant(form.startDate, form.startTime);
@@ -158,16 +162,16 @@ export default async function PlanAbsencePage({ searchParams }: PageProps<"/plan
   }
 
   return (
-    <div className="flex flex-col gap-6 pt-2">
-      <PageTitle title="Planifier une absence" subtitle="L'app propose qui garde quand, d'après les dispos de chacun. Rien n'est envoyé sans vous." />
+    <div className="flex flex-col gap-5 pt-2">
       <AbsenceForm
-        key={`${form.dogIds.join(",")}-${form.startDate}-${form.endDate}-${param(params.rules) ?? ""}`}
+        key={`${form.dogIds.join(",")}-${form.startDate}-${form.endDate}-${param(params.rules) ?? ""}-${submitted}`}
         groupId={group.id}
         dogs={myDogs.map((d) => ({ id: d.id, name: d.name }))}
         initial={form}
         initialRules={rules}
         error={error}
         assistant={assistantEnabled()}
+        submitted={Boolean(result)}
       />
       {result}
     </div>

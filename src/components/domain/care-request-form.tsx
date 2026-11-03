@@ -4,65 +4,40 @@ import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { AlertTriangle, HeartHandshake } from "lucide-react";
-import { createCareRequest, updateCareRequest } from "@/server/actions/requests";
-import {
-  NECESSITY_LABELS,
-  REQUEST_TYPE_LABELS,
-  defaultNecessity,
-  type NecessityLevel,
-  type RequestType,
-} from "@/domain/status";
-import { addDays, toLocalDate, zonedInstant, type LocalDate } from "@/domain/time";
+import { updateCareRequest } from "@/server/actions/requests";
+import { toLocalDate, zonedInstant, type LocalDate } from "@/domain/time";
 import { CIRCLE_KIND_LABELS, circleCovers, lastGuestDay } from "@/domain/circle";
 import type { InviteeCandidateRow } from "@/lib/types";
 import { formatDuration } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { Field, PillButton, Segmented, TextArea, TextInput } from "@/components/ui/kit";
+import { Field, PillButton, TextArea, TextInput } from "@/components/ui/kit";
 import { Switch } from "@/components/ui/switch";
-import { DogAvatar, REQUEST_TYPE_ICONS } from "./request-bits";
 
 export type RequestFormValues = {
   dogId: string;
-  requestType: RequestType;
-  necessity: NecessityLevel;
   startDate: LocalDate;
   startTime: string;
   endDate: LocalDate;
   endTime: string;
   description: string;
-  splittable: boolean;
-};
-
-const TYPE_HINTS: Record<RequestType, string> = {
-  alone_info: "Pour information, sans demande d'intervention",
-  visit: "Une promenade ou un passage serait apprécié",
-  care: "Journée, soirée, nuit ou plusieurs jours",
-  partial_care: "Un créneau précis à couvrir",
-};
-
-const TYPE_DEFAULT_TIMES: Record<RequestType, [string, string, number]> = {
-  alone_info: ["09:00", "18:00", 0],
-  visit: ["12:00", "13:00", 0],
-  care: ["09:00", "18:00", 0],
-  partial_care: ["18:00", "22:00", 0],
 };
 
 const DAY = new Intl.DateTimeFormat("fr-FR", { timeZone: "UTC", day: "numeric", month: "long" });
 const dayLabel = (date: LocalDate) => DAY.format(new Date(`${date}T00:00:00Z`));
 
-export function CareRequestForm({
-  groupId,
-  dogs,
+/**
+ * Editing a request: dates, details and the circle people asked. New needs go
+ * through "Besoin d'une garde" (/plan).
+ */
+export function RequestEditForm({
   initial,
   requestId,
   hasAssignments = false,
   candidates = [],
   initialInvitees = [],
 }: {
-  groupId: string;
-  dogs: Array<{ id: string; name: string; photoUrl?: string | null }>;
   initial: RequestFormValues;
-  requestId?: string;
+  requestId: string;
   hasAssignments?: boolean;
   /** Close people and guests of the dogs, outside the group ("Demander aussi à"). */
   candidates?: InviteeCandidateRow[];
@@ -73,7 +48,6 @@ export function CareRequestForm({
   const [v, setV] = useState(initial);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
-  const editing = Boolean(requestId);
 
   const set = <K extends keyof RequestFormValues>(k: K, value: RequestFormValues[K]) => setV((prev) => ({ ...prev, [k]: value }));
 
@@ -93,40 +67,25 @@ export function CareRequestForm({
     .map((c) => {
       const fits = period ? circleCovers(c, period) : false;
       const allowed = fits || initialInvitees.includes(c.user_id);
-      const on = allowed && (inviteChoice[c.user_id] ?? (editing ? initialInvitees.includes(c.user_id) : fits));
+      const on = allowed && (inviteChoice[c.user_id] ?? initialInvitees.includes(c.user_id));
       return { ...c, allowed, on };
     });
   // people asked earlier but no longer listed (e.g. dates ended) are kept as they are
   const unlisted = initialInvitees.filter((id) => !circle.some((c) => c.user_id === id));
-  const inviteeIds = v.requestType === "alone_info" ? [] : [...circle.filter((c) => c.on).map((c) => c.user_id), ...unlisted];
-
-  const changeType = (type: RequestType) => {
-    setV((prev) => {
-      const next = { ...prev, requestType: type, necessity: defaultNecessity(type) };
-      if (!editing) {
-        const [s, e, extra] = TYPE_DEFAULT_TIMES[type];
-        next.startTime = s;
-        next.endTime = e;
-        next.endDate = addDays(prev.startDate, extra);
-      }
-      return next;
-    });
-  };
+  const inviteeIds = [...circle.filter((c) => c.on).map((c) => c.user_id), ...unlisted];
 
   const submit = () => {
     setError(null);
     startTransition(async () => {
-      const payload = { groupId, ...v, inviteeIds };
-      const result = editing ? await updateCareRequest(requestId!, payload) : await createCareRequest(payload);
+      const { startDate, startTime, endDate, endTime, description } = v;
+      const result = await updateCareRequest(requestId, { startDate, startTime, endDate, endTime, description, inviteeIds });
       if (!result.ok) {
         setError(result.error);
         return;
       }
-      const { inviteError } = result.data as { inviteError: string | null };
-      if (inviteError) toast.error(`Demande ${editing ? "modifiée" : "publiée"}, mais : ${inviteError}`);
-      else toast.success(editing ? "Demande modifiée" : "Demande publiée, les membres sont prévenus");
-      const id = "requestId" in result.data ? result.data.requestId : requestId!;
-      router.replace(`/requests/${id}`);
+      if (result.data.inviteError) toast.error(`Demande modifiée, mais : ${result.data.inviteError}`);
+      else toast.success("Demande modifiée");
+      router.replace(`/requests/${requestId}`);
       router.refresh();
     });
   };
@@ -139,55 +98,6 @@ export function CareRequestForm({
         submit();
       }}
     >
-      {!editing && (
-        <fieldset className="flex flex-col gap-2">
-          <legend className="mb-2 text-sm font-medium text-ink-2">Chien concerné</legend>
-          <div className="flex flex-wrap gap-2">
-            {dogs.map((d) => (
-              <button
-                key={d.id}
-                type="button"
-                aria-pressed={v.dogId === d.id}
-                onClick={() => set("dogId", d.id)}
-                className={cn(
-                  "flex min-h-12 items-center gap-2 rounded-full py-1.5 pr-4 pl-1.5 text-[15px] font-medium transition-colors",
-                  v.dogId === d.id ? "bg-ink text-surface" : "bg-surface text-ink",
-                )}
-              >
-                <DogAvatar name={d.name} photoUrl={d.photoUrl} size={36} />
-                {d.name}
-              </button>
-            ))}
-          </div>
-        </fieldset>
-      )}
-
-      <fieldset className="flex flex-col gap-2">
-        <legend className="mb-2 text-sm font-medium text-ink-2">Type de besoin</legend>
-        <div className="grid grid-cols-2 gap-2">
-          {(Object.keys(REQUEST_TYPE_LABELS) as RequestType[]).map((type) => {
-            const Icon = REQUEST_TYPE_ICONS[type];
-            const active = v.requestType === type;
-            return (
-              <button
-                key={type}
-                type="button"
-                aria-pressed={active}
-                onClick={() => changeType(type)}
-                className={cn(
-                  "flex min-h-24 flex-col items-start gap-1.5 rounded-[22px] p-3.5 text-left transition-colors",
-                  active ? "bg-ink text-surface" : "bg-surface text-ink",
-                )}
-              >
-                <Icon className="size-5" aria-hidden />
-                <span className="text-[15px] font-semibold">{REQUEST_TYPE_LABELS[type]}</span>
-                <span className={cn("text-[12px] leading-snug", active ? "text-surface/75" : "text-ink-3")}>{TYPE_HINTS[type]}</span>
-              </button>
-            );
-          })}
-        </div>
-      </fieldset>
-
       <div className="grid grid-cols-[1fr_auto] gap-x-2 gap-y-3">
         <Field label="Début" htmlFor="start-date">
           <TextInput
@@ -215,38 +125,7 @@ export function CareRequestForm({
         </p>
       </div>
 
-      <div className="flex flex-col gap-2">
-        <span className="text-sm font-medium text-ink-2" id="necessity-label">
-          Niveau de nécessité
-        </span>
-        {v.requestType === "alone_info" ? (
-          <p className="rounded-2xl bg-[var(--tone-info)] px-4 py-3 text-[14px] text-[var(--tone-info-ink)]">
-            Information seulement : personne n&apos;est sollicité et le jour n&apos;apparaîtra jamais « sans solution ».
-          </p>
-        ) : (
-          <Segmented
-            label="Niveau de nécessité"
-            value={v.necessity === "info" ? "nice_to_have" : v.necessity}
-            onChange={(n) => set("necessity", n)}
-            options={[
-              { value: "nice_to_have", label: NECESSITY_LABELS.nice_to_have },
-              { value: "required", label: NECESSITY_LABELS.required },
-            ]}
-          />
-        )}
-      </div>
-
-      {(v.requestType === "care" || v.requestType === "partial_care") && (
-        <div className="flex items-center justify-between gap-4 rounded-2xl bg-surface px-4 py-3">
-          <label htmlFor="splittable" className="flex flex-col">
-            <span className="text-[15px] font-medium text-ink">Partager entre plusieurs personnes</span>
-            <span className="text-[13px] text-ink-3">Chacun peut proposer une partie de la période</span>
-          </label>
-          <Switch id="splittable" checked={v.splittable} onCheckedChange={(c) => set("splittable", c)} />
-        </div>
-      )}
-
-      {v.requestType !== "alone_info" && circle.length > 0 && (
+      {circle.length > 0 && (
         <fieldset className="flex flex-col gap-2">
           <legend className="mb-1 flex items-center gap-1.5 text-sm font-medium text-ink-2">
             <HeartHandshake className="size-4" aria-hidden /> Demander aussi à
@@ -287,7 +166,7 @@ export function CareRequestForm({
         <TextArea id="description" maxLength={1000} value={v.description} onChange={(e) => set("description", e.target.value)} />
       </Field>
 
-      {editing && hasAssignments && (
+      {hasAssignments && (
         <p className="flex items-start gap-2 rounded-2xl bg-[var(--tone-pending)] px-4 py-3 text-[14px] text-[var(--tone-pending-ink)]">
           <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
           Des gardes sont déjà confirmées. Si leurs horaires changent, les gardiens seront prévenus et devront reconfirmer.
@@ -301,8 +180,8 @@ export function CareRequestForm({
         </p>
       )}
 
-      <PillButton type="submit" size="lg" loading={pending} disabled={!v.dogId || !(duration > 0)}>
-        {editing ? "Enregistrer les modifications" : "Publier la demande"}
+      <PillButton type="submit" size="lg" loading={pending} disabled={!(duration > 0)}>
+        Enregistrer les modifications
       </PillButton>
     </form>
   );

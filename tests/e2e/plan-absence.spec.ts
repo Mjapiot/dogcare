@@ -52,8 +52,9 @@ test("plan an absence: proposal sent, accepted, then confirmed", async ({ browse
     // the owner plans the absence: the app proposes Emma for all of it
     const page = await signIn(ownerCtx, admin, owner.email, `/plan?dog=${dogId}&from=${d1}&fromTime=18:00&to=${d2}&toTime=18:00`);
     await page.waitForURL(/\/plan\?/);
-    await expect(page.getByRole("heading", { name: "Proposition pour Aston" })).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByText("Couvre 100 % de l'absence · 1 personne · 0 relais")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "On vous propose" })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("img", { name: "100\u202f% de l'absence couverte" })).toBeVisible();
+    await expect(page.getByText("1 personne · 0 relais")).toBeVisible();
     await page.getByRole("button", { name: "Envoyer les propositions" }).click();
     await page.waitForURL(/\/requests\/[0-9a-f-]{36}$/, { timeout: 15_000 });
     const requestId = page.url().split("/").at(-1)!;

@@ -53,8 +53,9 @@ test("an absence of two dogs: kept together, one notice, one answer", async ({ b
     // the owner plans the absence for both dogs: Emma keeps them together
     const page = await signIn(ownerCtx, admin, owner.email, `/plan?dog=${dogIds.join(",")}&from=${d1}&fromTime=18:00&to=${d2}&toTime=18:00`);
     await page.waitForURL(/\/plan\?/);
-    await expect(page.getByRole("heading", { name: "Proposition pour Aston et Nala" })).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByText("Couvre 100 % de l'absence · 1 personne · 0 relais")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "On vous propose" })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText(/^Pour Aston et Nala · /)).toBeVisible();
+    await expect(page.getByText("1 personne · 0 relais · gardés ensemble")).toBeVisible();
     await expect(page.getByText(/· Aston et Nala/)).toBeVisible();
     await page.getByRole("button", { name: "Envoyer les propositions" }).click();
     await page.waitForURL(/\/requests\/[0-9a-f-]{36}$/, { timeout: 15_000 });

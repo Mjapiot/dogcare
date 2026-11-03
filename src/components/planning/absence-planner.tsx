@@ -4,7 +4,7 @@ import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { AlertTriangle, BriefcaseBusiness, CalendarRange, Home, Moon, Send, ShieldAlert, Sparkles, Split, UserMinus, UserPlus, Users } from "lucide-react";
+import { AlertTriangle, BriefcaseBusiness, CalendarRange, Home, Moon, Send, ShieldAlert, Split, UserMinus, UserPlus, Users } from "lucide-react";
 import { planAbsence as sendAbsence } from "@/server/actions/proposals";
 import { nightAnchors, type PlanHole, type PlanSlice } from "@/domain/planner";
 import { joinNames } from "@/domain/absence-intent";
@@ -15,6 +15,8 @@ import { formatPeriod } from "@/lib/format";
 import { hapticSuccess } from "@/lib/native";
 import { cn } from "@/lib/utils";
 import { PillButton } from "@/components/ui/kit";
+import { BigNumber, SegmentGauge } from "@/components/ui/editorial";
+import { StepDots } from "./absence-form";
 
 type Place = "helper" | "owner";
 type Form = { dogIds: string[]; startDate: string; startTime: string; endDate: string; endTime: string };
@@ -143,12 +145,12 @@ export function AbsencePlanner({
   }, [proposals, rows, asked, placeOf, nightsOf, names, dogs]);
   const people = new Set(outgoing.map((o) => o.userId)).size;
 
-  const send = () =>
+  const send = (withProposals = true) =>
     startTransition(async () => {
       const r = await sendAbsence({
         groupId,
         ...form,
-        proposals: outgoing.map((o) => ({
+        proposals: (withProposals ? outgoing : []).map((o) => ({
           dogId: o.dogId,
           userId: o.userId,
           place: o.place,
@@ -160,23 +162,31 @@ export function AbsencePlanner({
         return;
       }
       hapticSuccess();
-      toast.success(people ? `Propositions envoyées à ${people} personne${people > 1 ? "s" : ""}` : several ? "Demandes publiées" : "Demande publiée");
+      toast.success(withProposals && people ? `Propositions envoyées à ${people} personne${people > 1 ? "s" : ""}` : several ? "Demandes publiées, le groupe est prévenu" : "Demande publiée, le groupe est prévenu");
       router.push(`/requests/${r.data.requestIds[0]}`);
     });
 
   return (
     <section className="flex flex-col gap-4" aria-labelledby="absence-plan">
-      <div className="shadow-soft flex flex-col gap-4 rounded-[28px] bg-surface p-4 ring-1 ring-white/70">
-        <div className="flex items-start gap-3">
-          <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-sage/15 text-ink">
-            <Sparkles className="size-5" aria-hidden />
-          </span>
-          <div>
-            <h2 id="absence-plan" className="text-[17px] font-semibold tracking-tight text-ink">
-              Proposition pour {namesOf(dogs.map((d) => d.id))}
-            </h2>
-            <p className="text-[14px] text-ink-3">{formatPeriod(period.start, period.end)}</p>
-          </div>
+      <StepDots step={3} />
+      <div className="flex flex-col gap-4">
+        <div>
+          <h2 id="absence-plan" className="text-[40px] font-light leading-[1.02] tracking-[-0.035em] text-ink">
+            On vous <b className="font-semibold">propose</b>
+          </h2>
+          <p className="mt-1 text-[14px] text-ink-2">
+            Pour {namesOf(dogs.map((d) => d.id))} · {formatPeriod(period.start, period.end)}
+          </p>
+        </div>
+
+        <div className={cn("rounded-[26px] p-5", coverage === 100 ? "bg-[var(--tone-covered)] text-[var(--tone-covered-ink)]" : "bg-[var(--tone-pending)] text-[var(--tone-pending-ink)]")}>
+          <BigNumber value={coverage} unit={"\u202f% couvert"} />
+          <SegmentGauge className="mt-3" total={10} done={Math.round(coverage / 10)} label={`${coverage}\u202f% de l'absence couverte`} />
+          <p className="mt-3 text-[14px] font-medium">
+            {proposals.length === 0
+              ? "Personne n'a déclaré de dispo sur cette période"
+              : `${proposals.length} personne${proposals.length > 1 ? "s" : ""} · ${handoffs} relais${several && separated.length === 0 ? " · gardés ensemble" : ""}`}
+          </p>
         </div>
 
         <div className="flex flex-col gap-1.5" aria-hidden>
@@ -198,11 +208,6 @@ export function AbsencePlanner({
           ))}
         </div>
 
-        <p className="text-[14px] font-medium text-ink-2">
-          {proposals.length === 0
-            ? "Personne n'a déclaré de dispo sur cette période"
-            : `Couvre ${coverage}\u202f% de l'absence · ${proposals.length} personne${proposals.length > 1 ? "s" : ""} · ${handoffs} relais`}
-        </p>
 
         {separated.length > 0 && (
           <div className="flex items-start gap-2 rounded-2xl bg-[var(--tone-pending)] px-3 py-2 text-[14px] text-[var(--tone-pending-ink)]" role="note">
@@ -221,7 +226,7 @@ export function AbsencePlanner({
           </p>
         )}
 
-        <ul className="flex flex-col divide-y divide-line rounded-2xl bg-surface-2">
+        <ul className="flex flex-col divide-y divide-line rounded-[26px] bg-surface">
           {rows.map((p) =>
             p.kind === "slice" ? (
               <li key={`s-${p.userId}-${p.start}-${p.end}`} className="flex items-start gap-3 px-4 py-3">
@@ -304,7 +309,7 @@ export function AbsencePlanner({
       )}
 
       <div className="flex flex-col gap-2">
-        <PillButton size="lg" loading={pending} onClick={send}>
+        <PillButton size="lg" loading={pending} onClick={() => send()}>
           <Send className="size-4" aria-hidden /> {outgoing.length ? "Envoyer les propositions" : several ? "Publier les demandes" : "Publier la demande"}
         </PillButton>
         <p className="text-center text-[13px] text-ink-3">
@@ -314,6 +319,16 @@ export function AbsencePlanner({
               ? "Une demande par chien est publiée dans le groupe, comme un besoin habituel."
               : "La demande est publiée dans le groupe, comme un besoin habituel."}
         </p>
+        {outgoing.length > 0 && (
+          <button
+            type="button"
+            disabled={pending}
+            onClick={() => send(false)}
+            className="mx-auto min-h-11 text-[15px] font-medium text-ink underline underline-offset-4"
+          >
+            Publier sans proposer à quelqu&apos;un
+          </button>
+        )}
       </div>
     </section>
   );

@@ -124,28 +124,20 @@ export const ruleSchema = z.object({
   status: z.enum(["available", "unavailable", "clear"]),
 });
 
-export const requestTypeSchema = z.enum(["alone_info", "visit", "care", "partial_care"]);
-export const necessitySchema = z.enum(["info", "nice_to_have", "required"]);
-
-export const careRequestSchema = z
-  .object({
-    groupId: uuid,
-    dogId: uuid,
-    requestType: requestTypeSchema,
-    necessity: necessitySchema,
-    startDate: localDate,
-    startTime: localTime,
-    endDate: localDate,
-    endTime: localTime,
-    description: z.string().trim().max(1000, "1000 caractères maximum.").optional().default(""),
-    splittable: z.boolean().default(true),
-    /** Circle people asked too ("Demander aussi à"); undefined leaves them unchanged. */
-    inviteeIds: z.array(uuid).max(20, "20 personnes au plus.").optional(),
-  })
-  .refine((v) => v.requestType !== "alone_info" || v.necessity === "info", {
-    message: "« Chien seul » est une simple information.",
-    path: ["necessity"],
-  });
+/**
+ * Editing a request: its dates, details and the circle people asked. Its kind
+ * is not chosen any more: new needs are always a garde, required and shareable
+ * (older requests keep theirs).
+ */
+export const requestEditSchema = z.object({
+  startDate: localDate,
+  startTime: localTime,
+  endDate: localDate,
+  endTime: localTime,
+  description: z.string().trim().max(1000, "1000 caractères maximum.").optional().default(""),
+  /** Circle people asked too ("Demander aussi à"); undefined leaves them unchanged. */
+  inviteeIds: z.array(uuid).max(20, "20 personnes au plus.").optional(),
+});
 
 export const responseSchema = z.object({
   requestId: uuid,
