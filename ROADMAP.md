@@ -61,7 +61,7 @@ Vision : « Toute la vie de votre animal, partagée avec les bonnes personnes »
    - [x] Assistant « Décrivez votre absence » (langage naturel → dates et règles, Gemini gratuit) — en production le 2026-11-02, vérifié avec une vraie phrase
    - [x] Une demande à la fois : nuits d'affilée max, tranche minimale, conflits, confirmation tout ou rien (en production le 2026-10-29)
    - [ ] Plusieurs demandes ou chiens à la fois ; lieux et incompatibilités entre chiens
-5. [ ] Routines (désactivées par défaut)
+5. [ ] Routines (désactivées par défaut) : type, heures, jours, consigne ; cochées dans le carnet pendant la garde, suivies par le propriétaire, citées dans le rappel de la veille — implémentées, tests unitaires et base OK ; E2E après mise en production
 - [x] Passeport sans groupe (« passeport d'abord ») : choix à l'inscription, espace « Mes chiens », fiche complète en solo (lien de partage, cercle), partage proposé en entrant dans un groupe — en production le 2026-11-02
 
 - Résumé hebdomadaire (préférence déjà prévue en base) — les rappels de la veille sont dans le sprint en cours

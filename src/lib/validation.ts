@@ -191,6 +191,22 @@ export const absenceSchema = z.object({
 
 export const careLogKindSchema = z.enum(["meal", "walk", "medication", "drop_off", "pick_up", "photo", "note"]);
 
+export const routineSchema = z.object({
+  kind: z.enum(["meal", "walk", "medication", "other"]),
+  label: z.string().trim().min(1, "Donnez un nom à la routine.").max(60, "60 caractères maximum."),
+  times: z.array(localTime).min(1, "Ajoutez au moins une heure.").max(6, "6 heures au plus."),
+  /** ISO weekdays; empty = every day. */
+  weekdays: z.array(z.number().int().min(1).max(7)).max(7),
+  instructions: z.string().trim().max(140, "140 caractères maximum.").optional().default(""),
+});
+
+/** Checking a routine occurrence off in the care log. */
+export const routineCheckSchema = z.object({
+  assignmentId: uuid,
+  routineId: uuid,
+  routineAt: z.iso.datetime({ offset: true }),
+});
+
 export const careLogSchema = z.object({
   assignmentId: uuid,
   kind: careLogKindSchema,

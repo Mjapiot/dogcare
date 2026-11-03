@@ -11,6 +11,7 @@ import {
   dogIdentitySchema,
   dogSchema,
   planningRulesSchema,
+  routineSchema,
   shareLinkSchema,
   uuid,
 } from "@/lib/validation";
@@ -251,5 +252,48 @@ export async function removeCaretaker(dogId: string, userId: string): Promise<Ac
   if (error) return { ok: false, error: toUserMessage(error) };
   if (!data?.length) return { ok: false, error: "Action non autorisée." };
   revalidatePath("/", "layout");
+  return { ok: true, data: undefined };
+}
+
+function revalidateDog(dogId: string) {
+  revalidatePath(`/dogs/${dogId}`);
+  revalidatePath(`/circle/dogs/${dogId}`);
+}
+
+/** Routines are off by default; the dog's caretakers turn them on. */
+export async function setRoutinesEnabled(dogId: string, enabled: boolean): Promise<ActionResult> {
+  const r = await updateDogColumns(dogId, { routines_enabled: enabled });
+  if (r.ok) revalidateDog(dogId);
+  return r;
+}
+
+export async function saveRoutine(dogId: string, routineId: string | null, input: z.input<typeof routineSchema>): Promise<ActionResult<{ id: string }>> {
+  const parsed = routineSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message };
+  if (!uuid.safeParse(dogId).success || (routineId !== null && !uuid.safeParse(routineId).success)) return { ok: false, error: "Routine introuvable." };
+  await requireUserId();
+  const v = parsed.data;
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("set_dog_routine", {
+    p_dog_id: dogId,
+    p_id: routineId,
+    p_kind: v.kind,
+    p_label: v.label,
+    p_times: v.times,
+    p_weekdays: v.weekdays,
+    p_instructions: v.instructions || null,
+  });
+  if (error) return { ok: false, error: toUserMessage(error) };
+  revalidateDog(dogId);
+  return { ok: true, data: { id: data as string } };
+}
+
+export async function deleteRoutine(dogId: string, routineId: string): Promise<ActionResult> {
+  if (!uuid.safeParse(dogId).success || !uuid.safeParse(routineId).success) return { ok: false, error: "Routine introuvable." };
+  await requireUserId();
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("delete_dog_routine", { p_id: routineId });
+  if (error) return { ok: false, error: toUserMessage(error) };
+  revalidateDog(dogId);
   return { ok: true, data: undefined };
 }

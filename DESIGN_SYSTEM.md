@@ -69,6 +69,7 @@ Marges latérales 16 px, espacement vertical 20–28 px entre sections.
 | ConfirmationDialog | `components/domain/confirmation-dialog.tsx` |
 | PlanCard, AbsenceForm, AbsencePlanner (planning) | `components/planning/*` |
 | ProposalsSection, ProposalCard (propositions de garde) | `components/planning/proposals.tsx` |
+| RoutinesCard, RoutineList (fiche du chien), RoutineChecklist (carnet) | `components/dogs/routines-card.tsx`, `components/care-log/routine-checklist.tsx` |
 | NotificationCenter | `app/(app)/notifications/page.tsx` |
 | EmptyState, ScreenSkeleton (squelette à la forme d'un onglet), ErrorState, PillButton, Field… | `components/ui/kit.tsx`, `app/(app)/error.tsx` |
 

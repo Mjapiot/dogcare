@@ -1,13 +1,15 @@
 import Link from "next/link";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
-import { ArrowLeft, CalendarRange, HeartPulse, IdCard, Lock, Phone, Utensils } from "lucide-react";
-import { PillLink } from "@/components/ui/kit";
+import { ArrowLeft, CalendarRange, HeartPulse, IdCard, ListChecks, Lock, Phone, Utensils } from "lucide-react";
+import { Card, PillLink } from "@/components/ui/kit";
+import { RoutineList, RoutinesCard } from "@/components/dogs/routines-card";
 import { getMyGroups } from "@/server/session";
 import {
   getDog,
   getDogCircle,
   getDogPassportPrivate,
+  getDogRoutines,
   getDogShareLinks,
   getMyCircleDogs,
   getHelperPrefs,
@@ -53,7 +55,7 @@ export async function DogScreen({
   if (!data) notFound();
   const { dog, caretakers, groupIds } = data;
   const isCaretaker = caretakers.some((c) => c.user_id === userId);
-  const [photos, myGroups, priv, links, circle, invitations, h, circleDogs, helperPrefs] = await Promise.all([
+  const [photos, myGroups, priv, links, circle, invitations, h, circleDogs, helperPrefs, routines] = await Promise.all([
     signDogPhotos([dog]),
     getMyGroups(),
     getDogPassportPrivate(dog.id),
@@ -63,6 +65,7 @@ export async function DogScreen({
     headers(),
     isCaretaker ? Promise.resolve([]) : getMyCircleDogs(),
     isCaretaker ? getHelperPrefs(dog.id) : Promise.resolve([]),
+    getDogRoutines(dog.id),
   ]);
   const origin = `${h.get("x-forwarded-proto") ?? "https"}://${h.get("x-forwarded-host") ?? h.get("host")}`;
   const visibleGroups = myGroups.filter((g) => groupIds.includes(g.id));
@@ -154,6 +157,24 @@ export async function DogScreen({
           <HabitsView dog={dog} />
         </PassportSection>
       </Rise>
+
+      {editable ? (
+        <Rise>
+          <RoutinesCard dogId={dog.id} dogName={dog.name} enabled={dog.routines_enabled} routines={routines} />
+        </Rise>
+      ) : (
+        dog.routines_enabled &&
+        routines.length > 0 && (
+          <Rise>
+            <Card className="flex flex-col gap-3">
+              <h2 className="flex items-center gap-2 text-[17px] font-semibold tracking-tight text-ink">
+                <ListChecks className="size-5" aria-hidden /> Routines
+              </h2>
+              <RoutineList routines={routines} />
+            </Card>
+          </Rise>
+        )
+      )}
 
       {priv.access.health || priv.access.emergency ? (
         <>

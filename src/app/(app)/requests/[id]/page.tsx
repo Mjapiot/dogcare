@@ -150,6 +150,7 @@ export default async function RequestDetailPage({ params }: PageProps<"/requests
         myAssignments={cancelled ? [] : view.myAssignments}
         iAmCaretaker={view.iAmCaretaker}
         names={Object.fromEntries(view.helpers.map((h) => [h.userId, h.name]))}
+        liveAssignments={cancelled ? [] : view.assignments}
       />
 
       {myProposal && <ProposalCard proposal={myProposal} />}

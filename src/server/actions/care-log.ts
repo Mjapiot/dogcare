@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import { careLogEditSchema, careLogSchema, uuid } from "@/lib/validation";
+import { careLogEditSchema, careLogSchema, routineCheckSchema, uuid } from "@/lib/validation";
 import { requireUserId } from "@/server/session";
 import { toUserMessage } from "@/server/errors";
 import { schedulePushDispatch } from "@/server/push";
@@ -29,6 +29,25 @@ export async function addCareLog(input: z.input<typeof careLogSchema>): Promise<
     return { ok: false, error: toUserMessage(error) };
   }
   schedulePushDispatch();
+  revalidatePath("/", "layout");
+  return { ok: true, data: { id: data as string } };
+}
+
+/** Checks a routine occurrence off: an entry of the routine's kind, once per occurrence. */
+export async function checkRoutine(input: z.input<typeof routineCheckSchema>): Promise<ActionResult<{ id: string }>> {
+  const parsed = routineCheckSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "Routine invalide." };
+  const v = parsed.data;
+  await requireUserId();
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("add_care_log", {
+    p_assignment_id: v.assignmentId,
+    // the database takes the kind and label from the routine
+    p_kind: "note",
+    p_routine_id: v.routineId,
+    p_routine_at: v.routineAt,
+  });
+  if (error) return { ok: false, error: toUserMessage(error) };
   revalidatePath("/", "layout");
   return { ok: true, data: { id: data as string } };
 }

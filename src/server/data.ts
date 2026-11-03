@@ -5,6 +5,7 @@ import { addDays, toLocalDate, type LocalDate, zonedInstant } from "@/domain/tim
 import type { GroupSnapshot, MemberInfo } from "@/domain/views";
 import type { PassportEmergency, PassportHealth } from "@/domain/passport";
 import type { DirectRole } from "@/domain/circle";
+import type { Routine } from "@/domain/routines";
 import type {
   AvailabilityEntryRow,
   AvailabilityRuleRow,
@@ -32,7 +33,7 @@ const REQUEST_COLUMNS =
 const ASSIGNMENT_COLUMNS =
   "id, request_id, assigned_user_id, starts_at, ends_at, status, confirmed_by, confirmed_at, cancelled_at, cancellation_reason, previous_starts_at, previous_ends_at, place";
 const DOG_COLUMNS =
-  "id, name, breed, birth_date, photo_path, care_notes, sex, sterilized, weight_kg, identification, distinctive_marks, meals, walks, sleep, behavior, plan_max_nights, plan_min_slice_hours, created_by, archived_at";
+  "id, name, breed, birth_date, photo_path, care_notes, sex, sterilized, weight_kg, identification, distinctive_marks, meals, walks, sleep, behavior, plan_max_nights, plan_min_slice_hours, routines_enabled, created_by, archived_at";
 
 function must<T>(result: { data: T | null; error: unknown }): T {
   if (result.error) throw result.error;
@@ -436,7 +437,8 @@ export async function getMyBlockedIds(): Promise<string[]> {
   return (data ?? []).map((b) => b.blocked_id as string);
 }
 
-const CARE_LOG_COLUMNS = "id, assignment_id, request_id, dog_id, author_id, kind, occurred_at, note, photo_path, photo_removed_at, created_at";
+const CARE_LOG_COLUMNS =
+  "id, assignment_id, request_id, dog_id, author_id, kind, occurred_at, note, photo_path, photo_removed_at, created_at, routine_id, routine_at";
 
 export type CareLogEntryView = CareLogEntryRow & { photoUrl: string | null };
 
@@ -578,4 +580,20 @@ export async function getMyPendingProposals(userId: string): Promise<MyProposal[
     groupId: req!.group_id,
     requestEndsAt: req!.ends_at,
   }));
+}
+
+/** A dog's routines when they are turned on (the care log's checklist), else none. */
+export async function getActiveRoutines(dogId: string): Promise<Routine[]> {
+  const supabase = await createClient();
+  const { data } = await supabase.from("dogs").select("routines_enabled").eq("id", dogId).maybeSingle();
+  return data?.routines_enabled ? getDogRoutines(dogId) : [];
+}
+
+/** A dog's routines (read like its habits). */
+export async function getDogRoutines(dogId: string): Promise<Routine[]> {
+  const supabase = await createClient();
+  const rows = must<Array<Omit<Routine, "weekdays"> & { weekdays: number[] | null }>>(
+    await supabase.from("dog_routines").select("id, kind, label, times, weekdays, instructions").eq("dog_id", dogId).order("times").order("label"),
+  );
+  return rows;
 }

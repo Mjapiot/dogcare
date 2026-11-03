@@ -73,6 +73,7 @@ export type DogRow = {
   /** Planning rules: maximum consecutive nights per helper, minimum slice (hours). */
   plan_max_nights: number;
   plan_min_slice_hours: number;
+  routines_enabled: boolean;
   created_by: string | null;
   archived_at: string | null;
 };
@@ -115,6 +116,9 @@ export type CareLogEntryRow = {
   photo_path: string | null;
   photo_removed_at: string | null;
   created_at: string;
+  /** The routine occurrence this entry checks off, if any. */
+  routine_id?: string | null;
+  routine_at?: string | null;
 };
 
 /** A circle person asked on a request (see public.request_invitees_of). */

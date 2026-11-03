@@ -116,6 +116,12 @@ de la photo réduite par `lib/image.ts` dans le seau `care-logs` puis `addCareLo
 `/requests/[id]` et `/circle/requests/[id]` ; l'accueil montre les gardes en cours avec la dernière nouvelle
 (`getLatestCareNews`). La purge des photos tourne avec la tâche quotidienne (`runDailyJob`, `server/push.ts`).
 
+Routines : règles pures `domain/routines.ts` (`routineOccurrences` jour par jour à l'heure de Paris,
+`routineChecklist` : fait / à faire / à venir / non coché) ; carte de la fiche `components/dogs/routines-card.tsx`
+(activation, liste, feuille d'édition ; actions `setRoutinesEnabled`, `saveRoutine`, `deleteRoutine`) ; liste du jour
+`components/care-log/routine-checklist.tsx` dans la section du carnet (gardien : `checkRoutine` → `add_care_log`
+avec la routine ; responsables : lecture), données `getDogRoutines` / `getActiveRoutines`.
+
 ## Liens des notifications
 
 `requestHref` (`lib/push-payload.ts`) : `/requests/[id]` pour un membre du groupe, `/circle/requests/[id]` quand la

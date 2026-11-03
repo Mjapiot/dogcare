@@ -116,6 +116,19 @@ Repas, Promenade, Médicament, Déposé (prise en charge), Récupéré, Photo, N
 - Pendant une garde en cours, l'accueil du responsable montre « Aston chez Léa · dernière nouvelle ».
 - Les photos sont supprimées 90 jours après la fin de la garde ; le texte reste.
 
+### Routines (désactivées par défaut)
+
+- Sur la fiche du chien, un responsable **active les routines** puis les liste : type (repas, promenade,
+  médicament, autre), nom, 1 à 6 heures (heure de Paris), tous les jours ou certains jours, consigne courte
+  (« ½ comprimé dans la pâtée »). 12 routines au plus. Qui voit le chien voit ses routines.
+- Pendant une garde, le carnet du gardien commence par **« Routines du jour »** : chaque occurrence se coche d'un
+  geste (une entrée du carnet du type de la routine) et se décoche ; une occurrence ne se coche qu'une fois, pendant
+  la garde, jusqu'à 3 h avant son heure. Les responsables voient la même liste : « Fait à 08h12 par Emma »,
+  « Pas encore coché », « Non coché ».
+- Le rappel de la veille au gardien cite les routines du lendemain. Pas de notification à l'heure d'une routine ni
+  d'alerte en cas d'oubli (visibles seulement).
+- Supprimer une routine laisse dans le carnet ce qui a été coché.
+
 ## Rappels et notifications du cercle
 
 - **Rappel la veille** (vers 18 h, heure de Paris) : pour chaque garde confirmée qui commence le lendemain, le
