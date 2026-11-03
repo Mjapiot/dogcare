@@ -60,7 +60,7 @@ Vision : « Toute la vie de votre animal, partagée avec les bonnes personnes »
    - [x] Planning de vacances, livraison 2 : moteur alimenté par les dispos, propositions ciblées, parcours « Planifier une absence » — en production le 2026-11-02
    - [x] Assistant « Décrivez votre absence » (langage naturel → dates et règles, Gemini gratuit) — en production le 2026-11-02, vérifié avec une vraie phrase
    - [x] Une demande à la fois : nuits d'affilée max, tranche minimale, conflits, confirmation tout ou rien (en production le 2026-10-29)
-   - [x] Plusieurs chiens à la fois : absence de plusieurs chiens (ensemble si possible, sinon séparés et annoncés), une réponse pour tous, un avis par absence, cumul limité par personne, « Doit être gardé seul » — développé le 2026-11-03, à mettre en production
+   - [x] Plusieurs chiens à la fois : absence de plusieurs chiens (ensemble si possible, sinon séparés et annoncés), une réponse pour tous, un avis par absence, cumul limité par personne, « Doit être gardé seul » — en production le 2026-11-03 (E2E 14/14 du premier coup)
    - [ ] Transport (qui dépose, qui récupère)
 5. [x] Routines (désactivées par défaut) : type, heures, jours, consigne ; cochées dans le carnet pendant la garde, suivies par le propriétaire, citées dans le rappel de la veille — en production le 2026-11-03
 - [x] Passeport sans groupe (« passeport d'abord ») : choix à l'inscription, espace « Mes chiens », fiche complète en solo (lien de partage, cercle), partage proposé en entrant dans un groupe — en production le 2026-11-02
