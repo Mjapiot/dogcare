@@ -76,12 +76,12 @@ Vision : « Toute la vie de votre animal, partagée avec les bonnes personnes »
 - [x] Fluidité : fonctions à Dublin près de la base, cache 30 s des onglets, squelettes par onglet, animation d'entrée une fois, lectures en parallèle, absence créée en une transaction — en production le 2026-11-02 (changement d'onglet : 0,4 s au lieu de 1 à 2,5 s ; immédiat en revenant sur un onglet)
 - [x] Lot de polissage (accessibilité, fiabilité, détails d'interface) : « Personne à solliciter », VoiceOver du mois, textes agrandis, feuille du jour et sens des animations, cartes sortantes inactives, planning sans doublon, tris par instants, photos du carnet dans l'app, compte du dernier responsable, limites photos, rafraîchissements — en production le 2026-11-02
 - [x] Correctifs de la revue du 2026-10-29 : blocage et engagements, suppression de groupe, lien des invités, bouton Fermer 44 px, planning et nuits confirmées, ménage quotidien, pastille allégée, mineurs (en production le 2026-10-29)
-- [ ] Refonte du parcours (prototype validé le 2026-11-03), 6 lots :
+- [x] Refonte du parcours (prototype validé le 2026-11-03), 6 lots, en production le 2026-11-03 :
   - [x] Lots 1 et 2 : briques visuelles, barre du bas flottante (Accueil, Agenda, Chiens, Profil), « Besoin d'une garde » dans l'en-tête, Accueil « À faire maintenant » — en production le 2026-11-03 (E2E 15/15, 2 relancés après un aléa de minutage)
   - [x] Lot 3 : « Besoin d'une garde » en 3 étapes (Pour qui, Quand, On vous propose ; publier sans proposer), types « pour info », « souhaitée », « non partageable » supprimés à la création — en production le 2026-11-03 (E2E 15/15 du premier coup)
   - [x] Lot 4 : Agenda comme la maquette (Besoins : une grande carte par besoin et par mois, dispos du jour ; Mes dispos : compteur, semaine, créneaux en tuiles, remplissage d'un geste), sans grille du mois — en production le 2026-11-03 (E2E 15/15 du premier coup)
-  - [x] Lot 5 : Chiens (`/circle` renvoie vers l'onglet avec un groupe ; chiens archivés dans l'onglet ; fiche en tuiles Passeport, Santé, Cercle, Routines, Réglages, « Faire garder X » en tête) — développé le 2026-11-03
-  - [x] Lot 6 : Profil allégé (grand chiffre « Cette année », groupes, réglages), page d'une demande avec l'action d'abord et les précisions repliées, marges de défilement sous l'en-tête et au-dessus de la barre flottante — développé le 2026-11-03
+  - [x] Lot 5 : Chiens (`/circle` renvoie vers l'onglet avec un groupe ; chiens archivés dans l'onglet ; fiche en tuiles Passeport, Santé, Cercle, Routines, Réglages, « Faire garder X » en tête) — en production le 2026-11-03
+  - [x] Lot 6 : Profil allégé (grand chiffre « Cette année », groupes, réglages), page d'une demande avec l'action d'abord et les précisions repliées, marges de défilement sous l'en-tête et au-dessus de la barre flottante — en production le 2026-11-03 (E2E 15/15 ; une première exécution lancée pendant la bascule du déploiement a été relancée)
 - Mode sombre
 - Types TypeScript générés depuis la base (`supabase gen types`)
 
