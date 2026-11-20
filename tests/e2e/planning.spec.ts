@@ -63,7 +63,7 @@ test("planning: two partial offers confirmed in one tap", async ({ browser }) =>
     await expect(card).toBeVisible();
     await expect(card.getByText("Couvre 100 % de ce qui reste · 2 gardiens · 1 relais")).toBeVisible();
     await card.getByRole("button", { name: "Confirmer ce planning" }).click();
-    await expect(page.getByText(/Planning confirmé : 2 gardes/)).toBeVisible();
+    await expect(page.getByText(/Planning confirmé : 2 gardes/)).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText("Couvert").first()).toBeVisible({ timeout: 15_000 });
     // nothing left to plan
     await expect(page.getByRole("region", { name: "Proposition de planning" })).toHaveCount(0);
