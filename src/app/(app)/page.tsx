@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, BellRing, CheckCheck, CircleCheck, Clock, NotebookPen, UserCheck } from "lucide-react";
 import { requireAppContext } from "@/server/session";
-import { getGroupSnapshot, getLatestCareNews, getMyInvitedRequests, getMyPendingProposals } from "@/server/data";
+import { getCalendarFeedToken, getGroupSnapshot, getLatestCareNews, getMyInvitedRequests, getMyPendingProposals } from "@/server/data";
 import { CARE_LOG_LABELS } from "@/domain/care-log";
 import { buildRequestViews, bucketByDay } from "@/domain/views";
 import { buildInvitedView } from "@/domain/invited";
@@ -21,6 +21,7 @@ import { ResponseButtons } from "@/components/domain/response-buttons";
 import { AssignmentActions } from "@/components/domain/assignment-actions";
 import { ProposalCard } from "@/components/planning/proposals";
 import { InstallHint } from "@/components/pwa/install-hint";
+import { StayInformedCard } from "@/components/app/stay-informed-card";
 
 export const metadata: Metadata = { title: "Accueil" };
 
@@ -38,10 +39,11 @@ export default async function HomePage() {
   const today = todayLocal(now);
   const monday = startOfWeek(today);
   // a garde happening now may have started weeks ago
-  const [snapshot, invited, proposals] = await Promise.all([
+  const [snapshot, invited, proposals, feedToken] = await Promise.all([
     getGroupSnapshot(group.id, userId, { from: addDays(today, -31), to: addDays(today, 27) }),
     getMyInvitedRequests(),
     getMyPendingProposals(userId).then(groupProposals),
+    getCalendarFeedToken(),
   ]);
   const views = buildRequestViews(snapshot, now).filter((v) => v.request.lifecycle_status === "active");
   const items = [...views.map((v) => fromGroupView(v, now)), ...invited.map((r) => fromInvitedView(buildInvitedView(r, now)))];
@@ -74,6 +76,8 @@ export default async function HomePage() {
           }
         />
       </Rise>
+
+      <StayInformedCard calendarOn={Boolean(feedToken)} />
 
       <Rise>
         <WeekStrip

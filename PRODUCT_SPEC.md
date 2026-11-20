@@ -156,7 +156,7 @@ Repas, Promenade, Médicament, Déposé (prise en charge), Récupéré, Photo, N
 ### Écran « Mes dispos » (Agenda › Mes dispos)
 
 « Quand puis-je aider ? » ; onglets **Prochains jours**, **Habitudes**, **Partage**. Prochains jours, une semaine
-à la fois sur 4 : grand compteur « N/24 créneaux » où je suis dispo (jauge en segments), les 7 jours (un point
+à la fois sur **26 (six mois)**, avec une rangée de pilules de mois pour sauter au début d'un mois : grand compteur « N/24 créneaux » où je suis dispo (jauge en segments), les 7 jours (un point
 quand je suis dispo ce jour-là), puis les **4 créneaux du jour choisi en grandes tuiles** : un toucher fait
 « non renseigné → dispo → pas dispo → plus rien saisi ce jour » (une habitude s'applique de nouveau ; elle est
 signalée « habitude »). Remplir d'un geste : « Toute la semaine », « Les soirs », « Le week-end » (jours à venir
@@ -185,6 +185,9 @@ seulement), `Indisponible` (tout est « indisponible ») ou `Disponibilité inco
   prochaine garde de la semaine. Une demande déjà proposée à quelqu'un n'apparaît qu'une fois (sa proposition).
   Rien à faire : « Rien à faire pour l'instant ».
 - L'écran « Demandes » reste accessible (« Tout voir », liens des notifications), sans onglet propre.
+- **Restez prévenu** : dernière étape de l'inscription (« Prévenu »), facultative : activer les notifications sur cet
+  appareil (dans Safari sans l'app installée : comment l'installer) et s'abonner au Calendrier. Tant que l'un des
+  deux manque, une carte discrète « Restez prévenu » sur l'Accueil y mène ; « Plus tard » la masque sur cet appareil.
 - **Chiens** : mes chiens et ceux qu'on me confie (cartes), chiens archivés repliés. Avec un groupe, `/circle`
   renvoie ici (les demandes et propositions du cercle sont sur l'Accueil) ; sans groupe, « Mes chiens » (`/circle`)
   reste l'accueil. **Fiche d'un chien** : en-tête, « Faire garder X » (ou « Organiser des gardes entre amis » sans

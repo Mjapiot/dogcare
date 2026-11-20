@@ -55,6 +55,14 @@ test("availability: needs on my days, weekend shortcut", async ({ browser }) => 
     await expect(badge).toBeVisible();
     await expect(badge).toHaveAttribute("href", /\/requests\/[0-9a-f-]{36}$/);
 
+    // six months ahead: a month shortcut leads to its first week
+    const months = page.getByRole("navigation", { name: "Aller au mois" }).getByRole("button");
+    expect(await months.count()).toBeGreaterThanOrEqual(6);
+    await months.last().click();
+    await expect(page.getByRole("heading", { name: /^Semaine du / })).toBeVisible();
+    await months.first().click();
+    await expect(page.getByRole("heading", { name: "Cette semaine, je suis dispo" })).toBeVisible();
+
     await page.getByRole("button", { name: "Le week-end" }).click();
     await expect(page.getByText(/marqués? disponibles?/)).toBeVisible();
     const { data: entries } = await admin.from("availability_entries").select("date, slot, status").eq("user_id", emma.id);

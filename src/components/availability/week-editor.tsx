@@ -13,6 +13,7 @@ import {
   availableCount,
   cellKey,
   copyPreviousWeek,
+  monthJumps,
   nextTap,
   presetCells,
   weekDays,
@@ -66,6 +67,10 @@ export function WeekEditor({
   const seen = new Map<string, DayNeed & { date: LocalDate }>();
   for (const d of days) for (const n of needs[d] ?? []) if (d >= today && !seen.has(n.requestId)) seen.set(n.requestId, { ...n, date: d });
   const weekNeeds = [...seen.values()];
+
+  // jump straight to a month, up to six months ahead
+  const months = monthJumps(mondays);
+  const currentMonth = [...months].reverse().find((m) => m.index <= index)?.month;
 
   const move = (delta: -1 | 1) => {
     const next = index + delta;
@@ -163,6 +168,27 @@ export function WeekEditor({
           label={`${count.available} créneau${count.available > 1 ? "x" : ""} disponible${count.available > 1 ? "s" : ""} sur ${count.total}`}
         />
       </div>
+
+      <nav aria-label="Aller au mois" className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4">
+        {months.map((m) => {
+          const on = m.month === currentMonth;
+          return (
+            <button
+              key={m.month}
+              type="button"
+              aria-current={on ? "true" : undefined}
+              onClick={() => setIndex(m.index)}
+              aria-label={formatLocalDate(`${m.month}-01`, { month: "long", year: "numeric" })}
+              className={cn(
+                "min-h-11 shrink-0 rounded-full px-4 text-[14px] font-medium transition-colors first-letter:uppercase",
+                on ? "bg-ink text-surface" : "bg-surface text-ink",
+              )}
+            >
+              {formatLocalDate(`${m.month}-01`, { month: "short" })}
+            </button>
+          );
+        })}
+      </nav>
 
       <div className="rounded-[26px] bg-surface px-2.5 py-3">
         <ul className="grid grid-cols-7 gap-0.5">

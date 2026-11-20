@@ -10,14 +10,31 @@ import { addDays, dateRange, isoWeekday, localDatesTouched, startOfWeek, type Lo
 
 export const cellKey = (date: LocalDate, slot: SlotKey) => `${date}|${slot}`;
 
+/** Weeks offered in « Mes dispos »: about six months ahead. */
+export const WEEKS_AHEAD = 26;
+
 /** Mondays of the weeks shown: the current week and the next ones. */
-export function weekStarts(today: LocalDate, count = 4): LocalDate[] {
+export function weekStarts(today: LocalDate, count = WEEKS_AHEAD): LocalDate[] {
   const first = startOfWeek(today);
   return Array.from({ length: count }, (_, i) => addDays(first, i * 7));
 }
 
 export function weekDays(monday: LocalDate): LocalDate[] {
   return dateRange(monday, addDays(monday, 6));
+}
+
+/**
+ * Month shortcuts: for each month of the weeks shown, the first week holding
+ * its 1st day (the current month: the current week). A week belongs to the
+ * month of its Thursday, so each week has exactly one month.
+ */
+export function monthJumps(mondays: readonly LocalDate[]): Array<{ month: string; index: number }> {
+  const out: Array<{ month: string; index: number }> = [];
+  mondays.forEach((monday, index) => {
+    const month = addDays(monday, 3).slice(0, 7);
+    if (!out.some((m) => m.month === month)) out.push({ month, index });
+  });
+  return out;
 }
 
 export type Preset = "week" | "evenings" | "weekend";

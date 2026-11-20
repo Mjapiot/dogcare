@@ -10,7 +10,7 @@ import { ONBOARDING_STEPS } from "@/lib/onboarding";
 
 export const metadata: Metadata = { title: "Vos habitudes" };
 
-/** Last onboarding step (optional): weekly availability habits. */
+/** Onboarding step (optional): weekly availability habits; then « Restez prévenu ». */
 export default async function OnboardingHabitsPage({ searchParams }: PageProps<"/onboarding/habits">) {
   const userId = await requireUserId();
   const params = await searchParams;
@@ -24,7 +24,7 @@ export default async function OnboardingHabitsPage({ searchParams }: PageProps<"
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col px-5 pt-safe pb-safe">
       <div className="flex flex-1 flex-col justify-center gap-8 py-10">
-        <OnboardingProgress steps={steps} current={steps.length} />
+        <OnboardingProgress steps={steps} current={steps.length - 1} />
         <div>
           <h1 className="text-[40px] font-semibold leading-[1] tracking-[-0.04em] text-ink">Vos habitudes</h1>
           <p className="mt-3 text-[17px] text-ink-2">
@@ -34,8 +34,8 @@ export default async function OnboardingHabitsPage({ searchParams }: PageProps<"
         </div>
         <RulesEditor embedded rules={rules.map((r) => ({ weekday: r.weekday, slot: r.slot, status: r.status }))} />
         <div className="flex flex-col gap-2">
-          <PillLink href="/" size="lg">
-            {rules.length > 0 ? "Terminer" : "Passer pour l'instant"}
+          <PillLink href={params.dog === "1" ? "/onboarding/prevenu?dog=1" : "/onboarding/prevenu"} size="lg">
+            {rules.length > 0 ? "Continuer" : "Passer pour l'instant"}
           </PillLink>
           <p className="text-center text-[13px] text-ink-3">Modifiable à tout moment dans « Mes dispos ».</p>
         </div>

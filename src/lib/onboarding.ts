@@ -1,7 +1,7 @@
 /** Onboarding paths: creating a group adds the (optional) dog step. */
 export const ONBOARDING_STEPS = {
-  create: ["Prénom", "Groupe", "Chien", "Habitudes"],
-  join: ["Prénom", "Groupe", "Habitudes"],
+  create: ["Prénom", "Groupe", "Chien", "Habitudes", "Prévenu"],
+  join: ["Prénom", "Groupe", "Habitudes", "Prévenu"],
 } as const;
 
 /** Entering a group: dogs kept without one are offered to it first (skipped when there are none). */

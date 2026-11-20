@@ -82,6 +82,8 @@ Vision : « Toute la vie de votre animal, partagée avec les bonnes personnes »
   - [x] Lot 4 : Agenda comme la maquette (Besoins : une grande carte par besoin et par mois, dispos du jour ; Mes dispos : compteur, semaine, créneaux en tuiles, remplissage d'un geste), sans grille du mois — en production le 2026-11-03 (E2E 15/15 du premier coup)
   - [x] Lot 5 : Chiens (`/circle` renvoie vers l'onglet avec un groupe ; chiens archivés dans l'onglet ; fiche en tuiles Passeport, Santé, Cercle, Routines, Réglages, « Faire garder X » en tête) — en production le 2026-11-03
   - [x] Lot 6 : Profil allégé (grand chiffre « Cette année », groupes, réglages), page d'une demande avec l'action d'abord et les précisions repliées, marges de défilement sous l'en-tête et au-dessus de la barre flottante — en production le 2026-11-03 (E2E 15/15 ; une première exécution lancée pendant la bascule du déploiement a été relancée)
+- [x] Mes dispos sur six mois (pilules de mois) et « Restez prévenu » (étape d'inscription + carte sur l'Accueil) — développé le 2026-11-20
+- [ ] App iPhone : écriture directe des gardes confirmées dans un calendrier « Dogcare » de l'iPhone (nouvelle version App Store ; doublon avec l'abonnement à trancher)
 - Mode sombre
 - Types TypeScript générés depuis la base (`supabase gen types`)
 

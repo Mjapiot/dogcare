@@ -37,11 +37,21 @@ test("full care coordination flow", async ({ browser }) => {
     await julie.waitForURL(/dogs\/new/);
     await julie.getByLabel("Nom").fill("Oscar");
     await julie.getByRole("button", { name: "Ajouter ce chien" }).click();
-    // last onboarding step: weekly habits (optional)
+    // weekly habits (optional), then « Restez prévenu »: notifications and calendar, before reaching home
     await julie.waitForURL(/onboarding\/habits/);
-    await expect(julie.getByText("Étape 4 sur 4 : Habitudes")).toBeAttached();
+    await expect(julie.getByText("Étape 4 sur 5 : Habitudes")).toBeAttached();
     await julie.getByRole("link", { name: "Passer pour l'instant" }).click();
+    await julie.waitForURL(/onboarding\/prevenu/);
+    await expect(julie.getByText("Étape 5 sur 5 : Prévenu")).toBeAttached();
+    await expect(julie.getByRole("heading", { name: "Mes gardes dans le Calendrier" })).toBeVisible();
+    await expect(julie.getByRole("button", { name: "Activer l'abonnement" })).toBeVisible();
+    await julie.getByRole("link", { name: "Terminer" }).click();
     await julie.waitForURL((url) => url.pathname === "/");
+    // not set yet: the home screen offers it, until « Plus tard »
+    const reminder = julie.getByRole("complementary", { name: "Restez prévenu" });
+    await expect(reminder).toBeVisible({ timeout: 15_000 });
+    await reminder.getByRole("button", { name: "Plus tard" }).click();
+    await expect(reminder).toHaveCount(0);
     const { data: groups } = await admin.from("group_members").select("group_id").eq("user_id", users.julie.id);
     groupIds.push(...(groups ?? []).map((g) => g.group_id as string));
 

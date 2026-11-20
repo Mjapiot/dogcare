@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { availableCount, copyPreviousWeek, filledCount, habitsSummary, needsByDay, nextTap, presetCells, weekStarts } from "@/domain/availability-screen";
+import { availableCount, monthJumps, copyPreviousWeek, filledCount, habitsSummary, needsByDay, nextTap, presetCells, weekStarts } from "@/domain/availability-screen";
 import { zonedInstant } from "@/domain/time";
 
 // Wednesday 11 November 2026
 const today = "2026-11-11";
 
 describe("weeks and quick selections", () => {
-  it("shows the current week and the next three", () => {
-    expect(weekStarts(today)).toEqual(["2026-11-09", "2026-11-16", "2026-11-23", "2026-11-30"]);
+  it("starts with the current week, then the next ones", () => {
+    expect(weekStarts(today, 4)).toEqual(["2026-11-09", "2026-11-16", "2026-11-23", "2026-11-30"]);
   });
 
   it("picks the right cells and never past days", () => {
@@ -100,5 +100,17 @@ describe("tapping a slot", () => {
     const rules = [{ weekday: 7, slot: "evening" as const, status: "available" as const }];
     // Tuesday 10: Monday is past
     expect(availableCount("2026-11-09", "2026-11-10", entries, rules)).toEqual({ available: 2, total: 24 });
+  });
+});
+
+describe("six months ahead", () => {
+  it("offers 26 weeks and one shortcut per month, on the week of its Thursday", () => {
+    const mondays = weekStarts("2026-11-11");
+    expect(mondays).toHaveLength(26);
+    const jumps = monthJumps(mondays);
+    expect(jumps.map((j) => j.month)).toEqual(["2026-11", "2026-12", "2027-01", "2027-02", "2027-03", "2027-04", "2027-05"]);
+    // the week of Monday 30 November (Thursday 3 December) belongs to December
+    expect(mondays[jumps[1].index]).toBe("2026-11-30");
+    expect(jumps[0].index).toBe(0);
   });
 });
