@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { BellRing, X } from "lucide-react";
 import { readPushState } from "@/lib/push-state";
+import { nativeCalendarEnabled, nativeCalendarSupported } from "@/lib/native-calendar";
 
 const DISMISSED = "dogcare.stayInformed.dismissed";
 
@@ -28,7 +29,9 @@ export function StayInformedCard({ calendarOn }: { calendarOn: boolean }) {
       .catch(() => "off" as const)
       .then((push) => {
         if (cancelled) return;
-        const list = [...(push === "on" ? [] : ["les notifications"]), ...(calendarOn ? [] : ["vos gardes dans le Calendrier"])];
+        // in the iPhone app the calendar is written by the app; on the web, the subscription
+        const calendar = nativeCalendarSupported() ? nativeCalendarEnabled() : calendarOn;
+        const list = [...(push === "on" ? [] : ["les notifications"]), ...(calendar ? [] : ["vos gardes dans le Calendrier"])];
         setMissing(list);
       });
     return () => {

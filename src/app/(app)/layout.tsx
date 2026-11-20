@@ -6,6 +6,7 @@ import { requestNow } from "@/server/clock";
 import { AppHeader } from "@/components/app/app-header";
 import { BottomNavigation } from "@/components/app/bottom-navigation";
 import { LiveUpdates } from "@/components/app/live-updates";
+import { NativeCalendarSync } from "@/components/app/native-calendar-sync";
 
 export default async function AppLayout({ children }: LayoutProps<"/">) {
   const { userId, group } = await requireAppContext();
@@ -31,6 +32,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
       <main className="flex-1 px-4 pb-nav">{children}</main>
       <BottomNavigation toDo={toAnswer} />
       <LiveUpdates groupId={group.id} userId={userId} />
+      <NativeCalendarSync />
     </div>
   );
 }

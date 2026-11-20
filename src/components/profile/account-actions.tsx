@@ -9,6 +9,7 @@ import { deleteMyAccount } from "@/server/actions/groups";
 import { PillButton } from "@/components/ui/kit";
 import { ConfirmationDialog } from "@/components/domain/confirmation-dialog";
 import { forgetThisDevice } from "./push-settings";
+import { disableNativeCalendar } from "@/lib/native-calendar";
 
 export function AccountActions() {
   const router = useRouter();
@@ -20,6 +21,8 @@ export function AccountActions() {
         action={async () => {
           // this device must stop receiving the account's notifications
           await forgetThisDevice();
+          // the next account on this iPhone must not see these gardes
+          await disableNativeCalendar();
           await signOut();
         }}
       >
@@ -44,6 +47,7 @@ export function AccountActions() {
             if (!r.ok) return void toast.error(r.error);
             // the server side is already gone with the account
             await forgetThisDevice({ localOnly: true });
+            await disableNativeCalendar();
             router.replace("/login");
           })
         }

@@ -107,3 +107,24 @@ describe("calendar feed", () => {
     await expect(asAnon(db, (tx) => tx.query("select public.get_calendar_feed_token(true)"))).rejects.toThrow(/permission denied/);
   });
 });
+
+describe("my calendar events (the iPhone app)", () => {
+  const mine = (user: string) =>
+    asUser(db, user, (tx) => rows<{ role: string; dog_name: string; request_id: string }>(tx, "select * from public.my_calendar_events()"));
+
+  it("returns my gardes as sitter and those covering my dogs, like the subscription, without any token", async () => {
+    const s = await scenario();
+    expect((await mine(s.helper)).map((e) => [e.role, e.dog_name])).toEqual([["sitter", "Rex"]]);
+    expect((await mine(s.owner)).map((e) => [e.role, e.dog_name])).toEqual([["owner", "Rex"]]);
+    expect(await mine(s.outsider)).toEqual([]);
+    // same rows as the subscription
+    const viaFeed = await feed(await tokenOf(s.helper));
+    expect(viaFeed.map((e) => e.role)).toEqual(["sitter"]);
+  });
+
+  it("is not callable without a session, and the shared rule is not callable at all", async () => {
+    await expect(asAnon(db, (tx) => tx.query("select * from public.my_calendar_events()"))).rejects.toThrow(/permission/);
+    const s = await scenario();
+    await expect(asUser(db, s.helper, (tx) => tx.query("select * from private.calendar_events_for($1)", [s.owner]))).rejects.toThrow(/permission/);
+  });
+});

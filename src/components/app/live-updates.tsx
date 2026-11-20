@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useSyncExternalStore } from "react";
+import { NATIVE_REFRESH_EVENT } from "@/components/app/native-calendar-sync";
 import { useRouter } from "next/navigation";
 import { WifiOff } from "lucide-react";
 import { useBrowserClient } from "@/lib/supabase/client";
@@ -36,7 +37,11 @@ export function LiveUpdates({ groupId, userId }: { groupId: string; userId: stri
         return;
       }
       if (timer.current) clearTimeout(timer.current);
-      timer.current = setTimeout(() => router.refresh(), 400);
+      timer.current = setTimeout(() => {
+        router.refresh();
+        // the iPhone app's own calendar follows (components/app/native-calendar-sync.tsx)
+        window.dispatchEvent(new Event(NATIVE_REFRESH_EVENT));
+      }, 400);
     };
 
     const channel = supabase

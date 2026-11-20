@@ -353,6 +353,14 @@ ses chiens. Une garde à reconfirmer apparaît « À reconfirmer » (provisoire)
 annulée disparaît du calendrier à la prochaine actualisation. Le lien est secret, renouvelable et
 désactivable ; une réponse « Oui » non confirmée n'y figure jamais.
 
+**Dans l'app iPhone (version 1.1)**, l'abonnement est remplacé par l'**écriture directe** : « Ajouter mes gardes au
+Calendrier » demande l'accès au Calendrier (une fois), crée un calendrier « Dogcare » sur l'iPhone et y écrit les
+mêmes gardes (même règle, mêmes titres). L'app le remet à jour à l'ouverture, au retour dans l'app et à chaque
+changement reçu en direct (garde ajoutée, déplacée, à reconfirmer, annulée), sans dépendre du rythme
+d'actualisation d'Apple. « Retirer de cet iPhone » supprime ce calendrier ; se déconnecter ou supprimer son compte
+le supprime aussi (le compte suivant sur l'iPhone ne voit jamais ces gardes). Un calendrier supprimé à la main est
+recréé à la synchronisation suivante. Le site web garde l'abonnement.
+
 ## Statuts calculés
 
 Dimension stockée : `lifecycle_status` (active / cancelled). Dimension calculée (`src/domain/status.ts`) :

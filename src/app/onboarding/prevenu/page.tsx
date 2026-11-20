@@ -9,7 +9,7 @@ import { ONBOARDING_STEPS } from "@/lib/onboarding";
 import { PillLink } from "@/components/ui/kit";
 import { OnboardingProgress } from "@/components/onboarding/onboarding-progress";
 import { PushSettings } from "@/components/profile/push-settings";
-import { CalendarFeed } from "@/components/profile/calendar-feed";
+import { CalendarChoice } from "@/components/profile/calendar-choice";
 
 export const metadata: Metadata = { title: "Restez prévenu" };
 
@@ -53,7 +53,7 @@ export default async function StayInformedPage({ searchParams }: PageProps<"/onb
           <h2 id="stay-calendar" className="flex items-center gap-2 px-1 text-[17px] font-semibold text-ink">
             <CalendarPlus className="size-5" aria-hidden /> Mes gardes dans le Calendrier
           </h2>
-          <CalendarFeed key={token ?? "off"} origin={origin} initialToken={token} />
+          <CalendarChoice origin={origin} initialToken={token} />
         </section>
 
         <div className="flex flex-col gap-2">

@@ -15,6 +15,7 @@ import { SettingsRow } from "@/components/profile/settings-row";
 import { PushStatus } from "@/components/profile/push-status";
 import { InstallRow } from "@/components/profile/install-row";
 import { CareCapacity } from "@/components/profile/care-capacity";
+import { CalendarStatus } from "@/components/profile/calendar-status";
 
 export const metadata: Metadata = { title: "Profil" };
 
@@ -96,7 +97,7 @@ export default async function ProfilePage() {
               <SettingsRow href="/profile/notifications" icon={Bell} label="Notifications" status={<PushStatus />} />
             </li>
             <li>
-              <SettingsRow href="/profile/calendar" icon={CalendarPlus} label="Abonnement calendrier" status={feedToken ? "Abonné" : "Non"} />
+              <SettingsRow href="/profile/calendar" icon={CalendarPlus} label="Mes gardes dans le Calendrier" status={<CalendarStatus subscribed={Boolean(feedToken)} />} />
             </li>
             <li>
               <CareCapacity initial={profile.max_dogs_at_once} />

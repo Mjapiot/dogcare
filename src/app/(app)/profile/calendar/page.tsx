@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import { requireAppContext } from "@/server/session";
 import { getCalendarFeedToken } from "@/server/data";
 import { PageTitle } from "@/components/ui/kit";
-import { CalendarFeed } from "@/components/profile/calendar-feed";
+import { CalendarChoice } from "@/components/profile/calendar-choice";
 import { BackToProfile } from "@/components/profile/back-to-profile";
 
 export const metadata: Metadata = { title: "Mes gardes dans mon calendrier" };
@@ -16,8 +16,8 @@ export default async function CalendarFeedPage() {
     <div className="flex flex-col gap-5 pt-2">
       <BackToProfile />
       <PageTitle title="Mon calendrier" subtitle="Vos gardes confirmées dans le Calendrier de votre iPhone, mises à jour automatiquement." />
-      {/* a link renewed or turned off on another device replaces this one */}
-      <CalendarFeed key={token ?? "off"} origin={origin} initialToken={token} />
+      {/* in the iPhone app: written straight into the iPhone's calendar; on the web: the subscription */}
+      <CalendarChoice origin={origin} initialToken={token} />
     </div>
   );
 }

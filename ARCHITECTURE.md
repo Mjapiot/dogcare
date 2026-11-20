@@ -56,6 +56,16 @@ personne sans groupe arrive sur `/circle` (y compris depuis une notification).
 
 `app/(app)/requests/[id]/edit/page.tsx` → `RequestEditForm` (`components/domain/care-request-form.tsx`) → `updateCareRequest` (`requestEditSchema` : dates, précisions, personnes du cercle ; le type et la nécessité ne changent pas).
 
+## Calendrier de l'iPhone (app native)
+
+`lib/native-calendar.ts` (module `@ebarooni/capacitor-calendar` : accès complet au Calendrier, calendrier « Dogcare »,
+événements écrits et leur signature gardés sur l'appareil) → `getMyCalendarEvents` (`server/actions/calendar.ts`,
+RPC `my_calendar_events`, mêmes titres que l'abonnement via `feedRowToEvent`) → `lib/calendar-sync.ts`
+(`planCalendarSync` : créer, modifier, supprimer ; pur et testé). Déclencheurs : `components/app/native-calendar-sync.tsx`
+(ouverture, retour au premier plan, événement `dogcare:refreshed` envoyé par `LiveUpdates`). Écran :
+`components/profile/calendar-choice.tsx` (écriture directe dans l'app, abonnement sur le web), utilisé par le Profil et
+« Restez prévenu ». Déconnexion et suppression du compte retirent le calendrier.
+
 ## Accueil et navigation
 
 `app/(app)/page.tsx` (« À faire maintenant ») : `domain/home.ts` (`buildHomeTodo` : reconfirmations, propositions,

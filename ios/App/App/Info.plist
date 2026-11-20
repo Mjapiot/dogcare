@@ -64,6 +64,12 @@
 	</array>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+	<key>NSCalendarsUsageDescription</key>
+	<string>Dogcare ajoute vos gardes confirmées à un calendrier « Dogcare » et le met à jour quand elles changent.</string>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>Dogcare ajoute vos gardes confirmées à un calendrier « Dogcare » et le met à jour ou les retire quand elles changent ou sont annulées.</string>
+	<key>NSCalendarsWriteOnlyAccessUsageDescription</key>
+	<string>Dogcare ajoute vos gardes confirmées à votre calendrier.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Dogcare utilise l'appareil photo pour prendre la photo de votre chien.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
